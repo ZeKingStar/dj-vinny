@@ -1,0 +1,32 @@
+# /etc/nginx/sites-available/djvinny  (puis lien dans sites-enabled)
+# Le tunnel SSH du laptop expose le serveur DJ Vinny sur 127.0.0.1:3010 du VPS.
+# Seuls les chemins des invités sont relayés ; le dashboard (/host, /login, /remote, routes de contrôle) reste local.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name djvinny.korvia.ca;
+
+    # Page d'accueil des invités
+    location = / {
+        proxy_pass http://127.0.0.1:3010;
+        include /etc/nginx/djvinny-proxy.conf;
+    }
+
+    # Pages, fichiers et API réservés aux invités
+    location ~ ^/(index\.html|souhaits\.html|style\.css|anim\.js|favicon\.ico|manifest\.webmanifest|sw\.js|vinny[-0-9a-z]*\.(svg|png)|login\.html|remote|api/(state|events|search|request|wish|config|remote|remote/status|gain|linedance|fx|queue/reorder|queue/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+))$ {
+        proxy_pass http://127.0.0.1:3010;
+        include /etc/nginx/djvinny-proxy.conf;
+    }
+
+    # Connexion de l'hôte (télécommande) : très peu d'essais par minute et par adresse
+    location = /login {
+        limit_req zone=djv_login burst=5 nodelay;
+        proxy_pass http://127.0.0.1:3010;
+        include /etc/nginx/djvinny-proxy.conf;
+    }
+
+    # Tout le reste : refusé
+    location / {
+        return 404;
+    }
+}

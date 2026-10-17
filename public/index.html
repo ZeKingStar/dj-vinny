@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/vinny.svg?v=2"><link rel="apple-touch-icon" href="/vinny-48.png?v=2"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DJ Vinny : trouve ta toune</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css"></head>
+<body><div class="bg-anim"></div>
+<div class="wrap">
+  <div class="hero">
+    <i class="deco d1"></i><i class="deco d2"></i><i class="deco d3"></i><i class="deco d4"></i>
+    <p id="phase" style="margin:0" hidden></p>
+    <h1>DJ<br>Vinny</h1>
+    <p style="margin:8px 0 0;font-weight:700">Trouve ta toune</p>
+  </div>
+  <div class="card" id="np"></div>
+  <div class="card">
+    <label for="name" class="muted" style="font-weight:700">Ton prénom (annoncé avec ta demande)</label>
+    <input type="text" id="name" maxlength="20" placeholder="Optionnel" style="margin:6px 0 14px">
+    <label for="q" class="muted" style="font-weight:700">Quelle toune ?</label>
+    <input type="text" id="q" placeholder="Titre ou artiste" autocomplete="off" style="margin-top:6px">
+    <p class="muted" id="closed" hidden>Les demandes sont fermées pour le moment.</p>
+    <div id="results"></div>
+  </div>
+  <div class="card"><h2>À suivre</h2><div id="queue"></div></div>
+</div>
+<script src="/anim.js"></script>
+<script>
+// code de la soirée (lu dans le QR, puis retiré de l'adresse)
+let ev = '';
+try { const u = new URL(location.href), e = u.searchParams.get('e'); if (e) { localStorage.djEvent = e; history.replaceState(null, '', u.pathname); } ev = localStorage.djEvent || ''; } catch {}
+let guestId = localStorage.guestId;
+if (!guestId) guestId = localStorage.guestId = 'g' + Math.random().toString(36).slice(2, 12);
+let state = null, lastNow = null;
+const nameInput = document.getElementById('name');
+try { nameInput.value = localStorage.guestName || ''; } catch {}
+nameInput.onchange = () => { localStorage.guestName = nameInput.value; };
+
+const row = (s, extra = '') => `<div class="row slide-in"><img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)}</span></div>${extra}</div>`;
+
+function render() {
+  applyTheme(state.theme);
+  document.body.className = state.phase ? state.phase.intensity : '';
+  const n = state.nowPlaying;
+  document.getElementById('np').className = 'card' + (n ? ' playing' : '');
+  document.getElementById('np').innerHTML = n
+    ? `<div class="np"><div class="cover" style="background-image:url('${esc(n.artwork)}')"></div><div class="t"><span class="eq"><i></i><i></i><i></i><i></i></span><div><b>${esc(n.title)}</b></div><div class="muted">${esc(n.artist)}</div>${state.theme ? `<div class="muted">Ambiance : ${esc(state.theme.name)}</div>` : ''}</div></div>`
+    : '<p class="muted">Rien en lecture pour l’instant…</p>';
+  document.getElementById('queue').innerHTML = state.queue.length
+    ? state.queue.map(s => row(s, s.by === guestId ? '<span class="tag">toi</span>' : '')).join('')
+    : '<p class="muted">La file est vide — lance la fête !</p>';
+  document.getElementById('closed').hidden = state.requestsOpen;
+  const ph = document.getElementById('phase');
+  ph.hidden = !state.phase;
+  if (state.phase) ph.innerHTML = `<span class="phase-badge">${esc(state.phase.name)}</span>`;
+  document.getElementById('queue').querySelectorAll('.row').forEach((r, i) => r.insertAdjacentHTML('afterbegin', `<span class="num${i ? '' : ' first'}">${i + 1}</span>`));
+}
+
+let timer;
+document.getElementById('q').oninput = e => {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const q = e.target.value.trim();
+    const box = document.getElementById('results');
+    if (q.length < 2) { box.innerHTML = ''; return; }
+    const r = await fetch('/api/search?q=' + encodeURIComponent(q), { headers: { 'x-event': ev } });
+    const list = await r.json();
+    if (!r.ok) { box.innerHTML = `<p class="muted">${esc(list.error)}</p>`; return; }
+    box.innerHTML = list.map(s => row(s, `<button data-id="${esc(s.songId)}">Demander</button>`)).join('') || '<p class="muted">Aucun résultat</p>';
+  }, 350);
+};
+document.getElementById('results').onclick = async e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  b.disabled = true;
+  const r = await fetch('/api/request', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-event': ev }, body: JSON.stringify({ songId: b.dataset.id, guestId, name: document.getElementById('name').value }) });
+  const j = await r.json();
+  if (r.ok) { confetti(); toast('Ajouté à la file 🎉'); b.textContent = 'Ajouté'; b.classList.add('done'); } else { toast(j.error); b.disabled = false; }
+};
+
+const es = new EventSource('/api/events?e=' + encodeURIComponent(ev || ''));
+es.onmessage = e => { state = JSON.parse(e.data); render(); };
+es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
+</script></body></html>

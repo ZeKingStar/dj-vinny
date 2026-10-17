@@ -1,0 +1,17 @@
+{
+  "name": "DJ Vinny : télécommande",
+  "short_name": "Vinny",
+  "description": "Télécommande de la soirée : file d'attente, périodes, boutons DJ et messages de Vinny.",
+  "start_url": "/remote",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#15102E",
+  "theme_color": "#15102E",
+  "lang": "fr-CA",
+  "icons": [
+    { "src": "/vinny-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/vinny-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/vinny.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

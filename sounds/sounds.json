@@ -1,0 +1,54 @@
+{
+  "ding": [
+    "ding.mp3"
+  ],
+  "carillon": [
+    "carillon.mp3"
+  ],
+  "fanfare": [
+    "fanfare_grand.mp3",
+    "fanfare_cors.mp3"
+  ],
+  "riser": [
+    "impact_presentation.mp3"
+  ],
+  "scratch": [
+    "scratch_dj.mp3"
+  ],
+  "cornet": [
+    "cornet_fete.mp3"
+  ],
+  "ovation": [
+    "foule_victoire.mp3"
+  ],
+  "applause": [
+    "applaudissements.mp3"
+  ],
+  "roulement": [
+    "roulement.mp3"
+  ],
+  "klaxon": [
+    "klaxon_dj.mp3"
+  ],
+  "rewind": [
+    "rewind.mp3"
+  ],
+  "beat_hiphop": [
+    "beat_hiphop.mp3"
+  ],
+  "beat_molly": [
+    "beat_molly.mp3"
+  ],
+  "beat_trill": [
+    "beat_trill.mp3"
+  ],
+  "beat_trap": [
+    "beat_trap.mp3"
+  ],
+  "beat_mustard": [
+    "beat_mustard.mp3"
+  ],
+  "beat_astro": [
+    "beat_astro.mp3"
+  ]
+}

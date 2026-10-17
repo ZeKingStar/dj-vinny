@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/vinny.svg?v=2"><link rel="apple-touch-icon" href="/vinny-48.png?v=2"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DJ Vinny : écran de la soirée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<style>
+  html, body { height: 100%; overflow: hidden; cursor: none; }
+  .screen { position: relative; z-index: 1; height: 100vh; padding: 3.5vmin 4vmin; display: grid; grid-template-rows: auto 1fr; gap: 3vmin; }
+  .top { display: flex; align-items: center; gap: 2vmin; }
+  .brand { font: 800 5vmin 'Bricolage Grotesque', sans-serif; letter-spacing: -.02em; }
+  .top .phase-badge { font-size: 2.4vmin; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 4vmin; min-height: 0; }
+  .now { display: flex; flex-direction: column; justify-content: center; gap: 2.4vmin; min-width: 0; }
+  .cover { width: 46vmin; height: 46vmin; border-radius: 4vmin; background: var(--accent) center/cover; position: relative; animation: pulse 1.6s ease-out infinite; box-shadow: 0 2vmin 6vmin rgba(0,0,0,.45); }
+  .cover:empty::after { content: ""; position: absolute; inset: 0; border-radius: 4vmin; background: radial-gradient(circle at center, var(--ink) 0 9%, transparent 10%), repeating-radial-gradient(circle at center, rgba(21,16,46,.28) 0 .4vmin, transparent .4vmin 1.6vmin); }
+  .now-row { display: flex; gap: 4vmin; align-items: center; }
+  .label { font: 800 2.2vmin 'Figtree', sans-serif; letter-spacing: .18em; color: var(--muted); display: flex; align-items: center; gap: 1.4vmin; }
+  .title { font: 800 7vmin/1 'Bricolage Grotesque', sans-serif; letter-spacing: -.02em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .artist { font: 600 3.6vmin 'Figtree', sans-serif; color: var(--muted); }
+  .by { display: inline-block; font: 700 2.6vmin 'Figtree', sans-serif; padding: .6vmin 2vmin; border-radius: 999px; border: .35vmin solid var(--accent); color: var(--accent); margin-top: 1vmin; }
+  .ribbon { display: inline-block; font: 800 3vmin 'Bricolage Grotesque', sans-serif; letter-spacing: .12em; background: var(--accent); color: var(--ink); padding: 1vmin 3vmin; border-radius: 999px; transform: rotate(-2deg); }
+  .eq { height: 4vmin; gap: .7vmin; } .eq i { width: 1vmin; }
+  .eq i { animation: bar .9s ease-in-out infinite alternate; } .eq i:nth-child(2) { animation-duration: .7s; } .eq i:nth-child(3) { animation-duration: 1.1s; } .eq i:nth-child(4) { animation-duration: .8s; }
+  .side { min-width: 0; display: flex; flex-direction: column; gap: 3vmin; min-height: 0; }
+  .qr { background: var(--card); border: .4vmin solid var(--line); border-radius: 3vmin; padding: 2.4vmin; display: flex; gap: 2.4vmin; align-items: center; }
+  .qr img { width: 24vmin; height: 24vmin; border-radius: 1.6vmin; background: #fff; flex: none; }
+  .qr b { font: 800 3.4vmin/1.1 'Bricolage Grotesque', sans-serif; display: block; }
+  .qr span { font: 600 2.2vmin 'Figtree', sans-serif; color: var(--muted); }
+  .qr.closed { display: none; } /* demandes fermées : le code QR disparaît */
+  .next { background: var(--card); border: .4vmin solid var(--line); border-radius: 3vmin; padding: 2.4vmin; flex: 1; min-height: 0; overflow: hidden; }
+  .next h2 { font-size: 2.2vmin; letter-spacing: .18em; margin-bottom: 1vmin; }
+  .next .n { display: flex; align-items: center; gap: 2vmin; padding: 1.2vmin 0; }
+  .next .n + .n { border-top: .3vmin solid var(--line); }
+  .next .num { width: 5vmin; height: 5vmin; font-size: 2.4vmin; }
+  .next .t b { font-size: 2.8vmin; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } .next .t span { font-size: 2.2vmin; color: var(--muted); display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .next .who { font: 700 2vmin 'Figtree', sans-serif; color: var(--accent); }
+  .ticker { position: fixed; left: 50%; bottom: 4vmin; transform: translate(-50%, 20vmin); background: var(--accent); color: var(--ink); font: 800 3.4vmin 'Bricolage Grotesque', sans-serif; padding: 1.6vmin 4vmin; border-radius: 999px; z-index: 5; transition: transform .5s cubic-bezier(.2,1.2,.4,1); white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  .ticker.show { transform: translate(-50%, 0); }
+  .callout { position: fixed; inset: 0; z-index: 8; background: rgba(21,16,46,.94); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 4vmin; text-align: center; }
+  .callout.show { display: flex; animation: pop2 .5s ease-out; }
+  .callout h1 { font-size: 11vmin; margin: 0; }
+  .callout img { width: 46vmin; height: 46vmin; background: #fff; border-radius: 3vmin; animation: pulse 1.6s ease-out infinite; }
+  .callout p { font: 700 4vmin 'Figtree', sans-serif; color: var(--muted); margin: 0; }
+  @keyframes pop2 { from { opacity: 0; transform: scale(.94); } }
+  .float { position: fixed; z-index: 0; border-radius: 50%; opacity: .5; pointer-events: none; animation: bob 7s ease-in-out infinite alternate; }
+  @keyframes bob { to { transform: translate(3vmin, -4vmin) rotate(25deg); } }
+  body.party .float { animation-duration: 2.6s; }
+  html.burst .float { animation-duration: 1.4s; }
+  /* Ambiance : égaliseur factice en bas, faisceaux lumineux, Vinny qui danse au rythme du faux battement (--beat) */
+  :root { --beat: 0; }
+  #eqbars { position: fixed; left: 0; right: 0; bottom: 0; width: 100vw; height: 22vmin; z-index: 0; pointer-events: none; }
+  .beam { position: fixed; top: -4vmin; width: 34vmin; height: 135vmin; z-index: 0; pointer-events: none; transform-origin: 50% 0; opacity: 0; transition: opacity 1.6s;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--c) 60%, transparent), transparent 82%); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); animation: swing 5.5s ease-in-out infinite alternate; }
+  body.party .beam, html.burst .beam { opacity: .30; } html.burst .beam { animation-duration: 2.4s; opacity: .45; }
+  @keyframes swing { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+  .vlogo { width: 7vmin; height: 7vmin; transform: translateY(calc(var(--beat) * -1vmin)) rotate(calc((var(--beat) - .5) * 8deg)) scale(calc(1 + var(--beat) * .08)); transform-origin: 50% 90%; }
+  .cover { transform: scale(calc(1 + var(--beat) * .025)); }
+  .now-row.enter .cover { animation: coverIn .7s cubic-bezier(.2,1.3,.4,1), pulse 1.6s ease-out infinite; }
+  .now-row.enter .title { animation: titleIn .6s ease-out; } .now-row.enter .artist { animation: titleIn .8s ease-out; }
+  @keyframes coverIn { from { transform: scale(.6) rotate(-8deg); opacity: 0; } }
+  @keyframes titleIn { from { transform: translateX(-4vmin); opacity: 0; } }
+  .next .n { animation: titleIn .5s ease-out backwards; } .next .n:nth-child(2) { animation-delay: .06s; } .next .n:nth-child(3) { animation-delay: .12s; } .next .n:nth-child(4) { animation-delay: .18s; } .next .n:nth-child(5) { animation-delay: .24s; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .screen { overflow: auto; height: auto; } html, body { overflow: auto; } }
+</style></head>
+<body><div class="bg-anim"></div>
+<i class="beam" style="left:8%;--c:var(--accent)"></i><i class="beam" style="left:42%;--c:var(--accent2);animation-delay:-2s"></i><i class="beam" style="left:76%;--c:var(--mint);animation-delay:-4s"></i>
+<canvas id="eqbars"></canvas>
+<i class="float" style="width:3vmin;height:3vmin;background:var(--accent);top:12%;left:46%"></i>
+<i class="float" style="width:2vmin;height:5vmin;border-radius:.6vmin;background:var(--accent2);top:70%;left:50%;animation-delay:-2s"></i>
+<i class="float" style="width:2.4vmin;height:2.4vmin;background:var(--mint);top:30%;left:92%;animation-delay:-4s"></i>
+<i class="float" style="width:4vmin;height:4vmin;border:.7vmin solid var(--accent2);top:85%;left:8%;animation-delay:-1s;background:none"></i>
+<i class="float" style="width:2vmin;height:2vmin;background:var(--violet);top:8%;left:70%;animation-delay:-3s"></i>
+
+<div class="screen">
+  <div class="top"><img class="vlogo" src="/vinny.svg" alt=""><span class="brand">DJ Vinny</span><span id="phase"></span><span style="flex:1"></span><span class="muted" id="clock" style="font-size:2.6vmin"></span></div>
+  <div class="grid2">
+    <div class="now" id="now"></div>
+    <div class="side">
+      <div class="qr"><img src="/api/qr.png" alt="QR"><div><b>Demande ta chanson !</b><span>Scanne le code avec ton téléphone</span></div></div>
+      <div class="next"><h2>À SUIVRE</h2><div id="next"></div></div>
+    </div>
+  </div>
+</div>
+<div class="ticker" id="ticker"></div>
+<div class="callout" id="callout"><h1>Une demande spéciale ?</h1><img src="/api/qr.png" alt="QR"><p>Scanne le code et choisis ta chanson</p></div>
+
+<script src="/anim.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let state = null, seen = null, tickTimer, callTimer, shownUid = null;
+function render() {
+  applyTheme(state.theme);
+  document.body.className = state.phase ? state.phase.intensity : '';
+  $('phase').innerHTML = state.phase ? `<span class="phase-badge">${esc(state.phase.name)}</span>` : '';
+  document.querySelector('.qr').classList.toggle('closed', !state.requestsOpen);
+  if (!state.requestsOpen) $('callout').classList.remove('show');
+  const n = state.nowPlaying, isNew = !!n && n.uid !== shownUid;
+  if (isNew) { shownUid = n.uid; songChanged(); }
+  $('now').innerHTML = n
+    ? `<div class="now-row${isNew ? ' enter' : ''}"><div class="cover" style="${n.artwork ? `background-image:url('${esc(n.artwork)}')` : ''}"></div>
+        <div style="min-width:0"><div class="label"><span class="eq"><i></i><i></i><i></i><i></i></span>EN LECTURE</div>
+        <div class="title">${esc(n.title)}</div><div class="artist">${esc(n.artist)}</div>
+        ${n.source === 'guest' ? `<div class="by">${n.byName ? 'demandé par ' + esc(n.byName) : 'demande spéciale'}</div>` : ''}
+        ${n.source === 'line' ? '<div style="margin-top:2vmin"><span class="ribbon">DANSE EN LIGNE</span></div>' : ''}</div></div>`
+    : '<div class="title" style="color:var(--muted)">La musique va commencer…</div>';
+  $('next').innerHTML = state.queue.slice(0, 5).map((s, i) => `<div class="n"><span class="num${i ? '' : ' first'}">${i + 1}</span><div class="t"><b>${esc(s.title)}</b><span>${esc(s.artist)}</span></div>${s.source === 'guest' ? `<span class="who">${esc(s.byName || 'invité')}</span>` : ''}</div>`).join('')
+    || '<p class="muted" style="font-size:2.4vmin">Aucune demande pour le moment : scannez le code !</p>';
+  // nouvelle demande d'invité : bandeau de quelques secondes
+  const uids = new Set(state.queue.map(q => q.uid));
+  if (seen) for (const q of state.queue) if (!seen.has(q.uid) && q.source === 'guest') { ticker(`${q.byName ? esc(q.byName) + ' demande ' : 'Nouvelle demande : '}${esc(q.title)}`); if (!document.body.classList.contains('calm')) confetti(30); }
+  seen = uids;
+}
+function ticker(html) {
+  const t = $('ticker'); t.innerHTML = html; t.classList.add('show');
+  clearTimeout(tickTimer); tickTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
+function showCallout() {
+  if (!state || !state.requestsOpen) return; // pas de rappel du QR quand les demandes sont fermées
+  $('callout').classList.add('show'); confetti(30);
+  clearTimeout(callTimer); callTimer = setTimeout(() => $('callout').classList.remove('show'), 14000);
+}
+setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }); }, 1000);
+document.addEventListener('keydown', e => { if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); });
+const es = new EventSource('/api/events');
+let qrRev = null;
+const syncQr = st => { if (st.qrRev === qrRev) return; qrRev = st.qrRev; document.querySelectorAll('img[src^="/api/qr.png"]').forEach(i => { const u = new URL(i.getAttribute('src'), location.href); u.searchParams.set('v', qrRev); i.src = u.pathname + u.search; }); };
+es.onmessage = e => { state = JSON.parse(e.data); syncQr(state); render(); };
+es.addEventListener('fx', e => { const t = JSON.parse(e.data).type; if (t === 'callout') showCallout(); else onFx(t); });
+</script>
+<script>
+// ---------- Ambiance : faux égaliseur (aucun lien avec le vrai son), faux battement, confettis ----------
+const calmMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const eq = $('eqbars'), g = eq.getContext('2d'), NB = 56, lvl = new Float32Array(NB), tgt = new Float32Array(NB), peak = new Float32Array(NB);
+let beat = 0, nextKick = 0, lastTgt = 0, lastFrame = 0, cols = ['#FFD23F', '#FF4F7B'], lastCols = 0;
+function energy() {
+  if (!state || !state.nowPlaying) return 0.06;
+  if (document.documentElement.classList.contains('burst')) return 1;
+  return document.body.classList.contains('party') ? 0.8 : document.body.classList.contains('calm') ? 0.32 : 0.55;
+}
+function sizeEq() { const r = Math.min(devicePixelRatio || 1, 1.5); eq.width = innerWidth * r; eq.height = eq.clientHeight * r; }
+addEventListener('resize', sizeEq); sizeEq();
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (document.hidden || now - lastFrame < 33) return; // ~30 images/s : léger pour un petit portable
+  lastFrame = now;
+  const e = energy(), bpm = e > 0.7 ? 126 : e > 0.4 ? 104 : 72;
+  if (now > nextKick) { beat = 1; nextKick = now + 60000 / bpm * (0.97 + Math.random() * 0.06); for (let i = 0; i < 14; i++) tgt[i] = Math.min(1, tgt[i] + e * (0.5 + Math.random() * 0.4)); }
+  beat *= 0.86; document.documentElement.style.setProperty('--beat', (beat * (e > 0.1 ? 1 : 0)).toFixed(3));
+  if (now - lastTgt > 110) { lastTgt = now; for (let i = 0; i < NB; i++) tgt[i] = e * (0.12 + Math.random() * 0.88) * (1 - (i / NB) * 0.55); }
+  if (now - lastCols > 2000) { lastCols = now; const cs = getComputedStyle(document.body); cols = [cs.getPropertyValue('--accent2').trim() || '#FF4F7B', cs.getPropertyValue('--accent').trim() || '#FFD23F']; }
+  const W = eq.width, H = eq.height, bw = W / NB; g.clearRect(0, 0, W, H);
+  const gr = g.createLinearGradient(0, H, 0, 0); gr.addColorStop(0, cols[0]); gr.addColorStop(1, cols[1]); g.fillStyle = gr; g.globalAlpha = 0.55;
+  for (let i = 0; i < NB; i++) {
+    lvl[i] += (tgt[i] - lvl[i]) * (tgt[i] > lvl[i] ? 0.5 : 0.16); tgt[i] *= 0.93;
+    peak[i] = Math.max(lvl[i], peak[i] - 0.012);
+    const h = Math.max(H * 0.015, lvl[i] * H * 0.96);
+    g.beginPath(); g.roundRect ? g.roundRect(i * bw + bw * 0.14, H - h, bw * 0.72, h, bw * 0.2) : g.rect(i * bw + bw * 0.14, H - h, bw * 0.72, h); g.fill();
+  }
+  g.globalAlpha = 0.9; g.fillStyle = cols[1];
+  for (let i = 0; i < NB; i++) g.fillRect(i * bw + bw * 0.14, H - peak[i] * H * 0.96 - H * 0.03, bw * 0.72, H * 0.015);
+}
+if (!calmMotion) requestAnimationFrame(frame);
+// confettis : à chaque nouveau titre en soirée dansante, et un petit nuage de temps en temps
+function songChanged() { if (!calmMotion && document.body.classList.contains('party')) setTimeout(() => confetti(26), 600); }
+setInterval(() => { if (!calmMotion && state && state.nowPlaying && document.body.classList.contains('party')) confetti(12); }, 40000);
+</script></body></html>

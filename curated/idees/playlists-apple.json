@@ -1,0 +1,2430 @@
+{
+ "party-quebecois": {
+  "url": "https://music.apple.com/ca/playlist/chanson-party-qu%C3%A9b%C3%A9cois/pl.u-PDb40o6te0me5Nr?l=fr-CA",
+  "nom": "party-quebecois",
+  "annoncees": 0,
+  "tracks": [
+   {
+    "title": "Le frigidaire",
+    "artist": "Tex Lecor"
+   },
+   {
+    "title": "Té Lette",
+    "artist": "Stage Lacroix"
+   },
+   {
+    "title": "Baseball",
+    "artist": "Sara Dufour"
+   },
+   {
+    "title": "Mon chum Rémi",
+    "artist": "Les Cowboys Fringants"
+   },
+   {
+    "title": "Dans nos vieilles maisons",
+    "artist": "La Bottine Souriante"
+   },
+   {
+    "title": "J'aime ta grand-mère",
+    "artist": "Les Trois Accords"
+   },
+   {
+    "title": "Dédé",
+    "artist": "Les Colocs"
+   },
+   {
+    "title": "Le shack à Hector",
+    "artist": "Les Cowboys Fringants"
+   },
+   {
+    "title": "Embarque ma belle",
+    "artist": "Kaïn"
+   },
+   {
+    "title": "Heureux D'un Printemps (feat. Paul Piché)",
+    "artist": "Loco Locass"
+   },
+   {
+    "title": "Mon Joe",
+    "artist": "Paul Piché"
+   },
+   {
+    "title": "Mettre du tape su' ma palette",
+    "artist": "Bob Bissonnette"
+   },
+   {
+    "title": "Tant qu'on aura de l'amour",
+    "artist": "Les Cowboys Fringants"
+   },
+   {
+    "title": "Good Lord",
+    "artist": "Salebarbes"
+   },
+   {
+    "title": "Marcel Galarneau",
+    "artist": "Les Cowboys Fringants"
+   },
+   {
+    "title": "Droit devant",
+    "artist": "Les Cowboys Fringants"
+   },
+   {
+    "title": "La Catherine",
+    "artist": "Les Cowboys Fringants"
+   },
+   {
+    "title": "La rue Principale",
+    "artist": "Les Colocs"
+   },
+   {
+    "title": "Dégénérations / Le reel du fossé",
+    "artist": "Mes Aïeux"
+   },
+   {
+    "title": "Saskatchewan",
+    "artist": "Les Trois Accords"
+   },
+   {
+    "title": "Vivre en ville",
+    "artist": "Les Rats d’Swompe"
+   },
+   {
+    "title": "Remède Miracle",
+    "artist": "Mes Aïeux"
+   },
+   {
+    "title": "Hawaiienne",
+    "artist": "Les Trois Accords"
+   },
+   {
+    "title": "Bobettes Bob",
+    "artist": "Pépé et sa guitare"
+   },
+   {
+    "title": "Copilote (feat. Jay Scøtt)",
+    "artist": "FouKi"
+   },
+   {
+    "title": "Gin à l'eau salée",
+    "artist": "Salebarbes"
+   },
+   {
+    "title": "Le medley du mal de pieds",
+    "artist": "Bodh'aktan"
+   },
+   {
+    "title": "Living In A Haze",
+    "artist": "Milky Chance"
+   },
+   {
+    "title": "La danse d'Hélène (Hélène Mix)",
+    "artist": "Real Joy"
+   },
+   {
+    "title": "C'est le temps des vacances (Pot-pourri): C'est le temps des vacances / Louise / Donne-moi ta bouche / C'est toujours comme ca la premiere fois / Petit Gonzales / Quand t'auras vingt ans / Chip chip / Petite fille / Nous on est dans le vent / Bonjour comment ca va",
+    "artist": "Pierre Lalonde"
+   },
+   {
+    "title": "Ça fait rire les oiseaux",
+    "artist": "La Compagnie Créole"
+   },
+   {
+    "title": "Le bal masqué",
+    "artist": "La Compagnie Créole"
+   },
+   {
+    "title": "Nous on croit au père Noël",
+    "artist": "Alain-François"
+   },
+   {
+    "title": "Allez venez danser",
+    "artist": "Guylaine Tanguay"
+   },
+   {
+    "title": "J'ai besoin d'quelqu'un mauvais",
+    "artist": "Salebarbes"
+   },
+   {
+    "title": "Gagner sa vie",
+    "artist": "Salebarbes"
+   },
+   {
+    "title": "Agadou (2021 Remastered Version)",
+    "artist": "Patrick Zabé"
+   },
+   {
+    "title": "Il m'a montré à Yodler",
+    "artist": "Guylaine Tanguay"
+   },
+   {
+    "title": "Marcher l'plancher (Live)",
+    "artist": "Salebarbes"
+   },
+   {
+    "title": "Medley Cayouche",
+    "artist": "Lendemain de veille"
+   },
+   {
+    "title": "Lache pas la patate",
+    "artist": "Hert LeBlanc"
+   },
+   {
+    "title": "Les hardes cirées",
+    "artist": "Les Gars Du Nord"
+   },
+   {
+    "title": "Les cowboys du Québec",
+    "artist": "Julie Daraîche & Dani Daraîche"
+   },
+   {
+    "title": "Jambalaya",
+    "artist": "Julie Daraîche, Paul Daraîche, Dani Daraîche, Katia Daraîche, Émilie Daraiche & Dan Daraîche"
+   },
+   {
+    "title": "Na Na Hey Hey Kiss Him Goodbye (Live)",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "La bamba",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Samba samba (Faut rigoler / Si tu vas à Rio / Un ti bo / L'incendie à Rio) [Live]",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Rock and roll, rock and roll (Rock Around the Clock / Blue Suede Shoes / Johnny B. Good) [Live]",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Louisiane jamboree (Remix) [Jambalaya / Colinda / Aiko Aiko / L'arbre est dans ses feuilles / Diggy Liggy Lo] {Live}",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Samba Samba: Faut rigoler / Si tu vas à Rio / Un ti bo / L'incendie à Rio",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Na Na Na Hey Kiss Him Goodbye",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Collinda",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Rock and Roll, Rock and Roll: Rock Around The Clock / Blue Suede Shoes / Johnny B. Good",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Jambalaya",
+    "artist": "Édith Butler"
+   },
+   {
+    "title": "Be My Lover (feat. La Bouche) [2023 Mix]",
+    "artist": "Hypaton & David Guetta"
+   },
+   {
+    "title": "Tsé quand ça va ben",
+    "artist": "Québec Redneck Bluegrass Project"
+   },
+   {
+    "title": "Chris Chelios",
+    "artist": "Bob Bissonnette"
+   },
+   {
+    "title": "La bonne franquette",
+    "artist": "Kaïn"
+   },
+   {
+    "title": "C'est la vie",
+    "artist": "Salebarbes"
+   },
+   {
+    "title": "On était soûls",
+    "artist": "Lendemain de veille"
+   }
+  ]
+ },
+ "dance-floor-fillers": {
+  "url": "https://music.apple.com/ca/playlist/dance-floor-fillers/pl.u-aZb0kg5uR30dBXj?l=fr-CA",
+  "nom": "dance-floor-fillers",
+  "annoncees": 0,
+  "tracks": [
+   {
+    "title": "Intoxicated (Edit)",
+    "artist": "Martin Solveig & Good Times Ahead"
+   },
+   {
+    "title": "Million Voices (Extended Mix)",
+    "artist": "Otto Knows"
+   },
+   {
+    "title": "Dancin' Kinda Close",
+    "artist": "Guz & Tough Love"
+   },
+   {
+    "title": "9 PM - Till I Come (Radio Edit)",
+    "artist": "ATB"
+   },
+   {
+    "title": "Levels (Radio Edit)",
+    "artist": "Avicii"
+   },
+   {
+    "title": "Insomnia",
+    "artist": "Faithless"
+   },
+   {
+    "title": "Makeba",
+    "artist": "Jain"
+   },
+   {
+    "title": "Pon De Floor (feat. Vybz Kartel)",
+    "artist": "Major Lazer"
+   },
+   {
+    "title": "Light It Up (Remix) [feat. Nyla & Fuse ODG]",
+    "artist": "Major Lazer"
+   },
+   {
+    "title": "Calabria (feat. Lujavo & Nito-Onna)",
+    "artist": "Dance Fruits Music, DMNDS & Fallen Roses"
+   },
+   {
+    "title": "Finally (feat. Julie McKnight) [Dario D'attis Remix]",
+    "artist": "Kings of Tomorrow"
+   },
+   {
+    "title": "Finder (Radio - Edit)",
+    "artist": "Ninetoes"
+   },
+   {
+    "title": "Language",
+    "artist": "Porter Robinson"
+   },
+   {
+    "title": "Zulu Screams (feat. Maleek Berry & Bibi Bourelly)",
+    "artist": "GoldLink"
+   },
+   {
+    "title": "Love Island",
+    "artist": "Fatboy Slim"
+   },
+   {
+    "title": "Bound 4 Da Reload (Casualty)",
+    "artist": "Oxide & Neutrino"
+   },
+   {
+    "title": "Blackpool Boulevard",
+    "artist": "Anish Kumar & Barry Can't Swim"
+   },
+   {
+    "title": "Asking",
+    "artist": "Sonny Fodera, MK & Clementine Douglas"
+   },
+   {
+    "title": "Carte Blanche (FM Radio Edit)",
+    "artist": "Veracocha"
+   },
+   {
+    "title": "Take Me Away (Vocal Radio Mix)",
+    "artist": "4 Strings"
+   },
+   {
+    "title": "Seven Days and One Week (Radio Edit)",
+    "artist": "B.B.E."
+   },
+   {
+    "title": "Greece 2000 (Radio Edit)",
+    "artist": "Three Drives On a Vinyl"
+   },
+   {
+    "title": "Café Del Mar (Nalin & Kane Remix)",
+    "artist": "Energy 52 & Nalin & Kane"
+   },
+   {
+    "title": "Mind Still (feat. blythe)",
+    "artist": "Sonny Fodera"
+   },
+   {
+    "title": "Out Of Nowhere",
+    "artist": "Bugzy Malone & TeeDee"
+   },
+   {
+    "title": "Unholy (Disclosure Remix)",
+    "artist": "Sam Smith & Kim Petras"
+   },
+   {
+    "title": "Under The Sun (with Alok)",
+    "artist": "Ella Henderson & Switch Disco"
+   },
+   {
+    "title": "Pjanoo (Club Mix)",
+    "artist": "Eric Prydz"
+   },
+   {
+    "title": "Ten Feet Tall (feat. Wrabel)",
+    "artist": "AFROJACK"
+   },
+   {
+    "title": "Crank It (Woah!) [feat. Nadia Rose]",
+    "artist": "Kideko, George Kwali & Sweetie Irie"
+   },
+   {
+    "title": "Both of Us",
+    "artist": "Jayda G"
+   },
+   {
+    "title": "Everybody the 25th Anniversary Directors Cut Remix Radio Edit (Radio Edit)",
+    "artist": "The Boy Wunda"
+   },
+   {
+    "title": "Ryuchis Theme (Radio Edit)",
+    "artist": "The Boy Wunda"
+   },
+   {
+    "title": "Unfinished Sympathy (2022 Trance Rework Radio Edit)",
+    "artist": "The Boy Wunda"
+   },
+   {
+    "title": "Blow Ya Mind (Club Caviar Radio Edit)",
+    "artist": "Lock 'n Load"
+   },
+   {
+    "title": "Fire Wire (Club Mix)",
+    "artist": "Cosmic Gate"
+   },
+   {
+    "title": "Dreaming (Ruff Driverz Ruff Radio Edit)",
+    "artist": "Ruff Driverz"
+   },
+   {
+    "title": "Jamaican (Bam Bam)",
+    "artist": "HUGEL & SOLTO (FR)"
+   },
+   {
+    "title": "She’s Gone, Dance On",
+    "artist": "Disclosure"
+   }
+  ]
+ },
+ "tout-le-monde-les-aime": {
+  "url": "https://music.apple.com/ca/playlist/tout-le-monde-les-aime/pl.9512e02d8df94ac5ac6ea89ca2b34b8e?l=fr-CA",
+  "nom": "Tout le monde les aime",
+  "annoncees": 98,
+  "tracks": [
+   {
+    "title": "Lush Life",
+    "artist": "Zara Larsson"
+   },
+   {
+    "title": "Unwritten",
+    "artist": "Natasha Bedingfield"
+   },
+   {
+    "title": "Glad You Came",
+    "artist": "The Wanted"
+   },
+   {
+    "title": "Leave (Get Out)",
+    "artist": "JoJo"
+   },
+   {
+    "title": "Temperature",
+    "artist": "Sean Paul"
+   },
+   {
+    "title": "Don't",
+    "artist": "Ed Sheeran"
+   },
+   {
+    "title": "Shut Up and Dance",
+    "artist": "WALK THE MOON"
+   },
+   {
+    "title": "We Are Young (feat. Janelle Monáe)",
+    "artist": "Fun."
+   },
+   {
+    "title": "Habits (Stay High)",
+    "artist": "Tove Lo"
+   },
+   {
+    "title": "Before He Cheats",
+    "artist": "Carrie Underwood"
+   },
+   {
+    "title": "Down (feat. Lil Wayne)",
+    "artist": "Jay Sean"
+   },
+   {
+    "title": "Low (feat. T-Pain)",
+    "artist": "Flo Rida"
+   },
+   {
+    "title": "A Thousand Miles",
+    "artist": "Vanessa Carlton"
+   },
+   {
+    "title": "Lose Control (feat. Ciara & Fat Man Scoop)",
+    "artist": "Missy Elliott featuring Ciara & Fat Man Scoop"
+   },
+   {
+    "title": "Pony",
+    "artist": "Ginuwine"
+   },
+   {
+    "title": "Everybody Wants to Rule the World",
+    "artist": "Tears for Fears"
+   },
+   {
+    "title": "Hungry Like the Wolf",
+    "artist": "Duran Duran"
+   },
+   {
+    "title": "Eye of the Tiger",
+    "artist": "Survivor"
+   },
+   {
+    "title": "Livin' la Vida Loca",
+    "artist": "Ricky Martin"
+   },
+   {
+    "title": "No Scrubs",
+    "artist": "TLC"
+   },
+   {
+    "title": "Congratulations (feat. Quavo)",
+    "artist": "Post Malone"
+   },
+   {
+    "title": "Waka Waka (Esto es Africa) [feat. Freshlyground]",
+    "artist": "Shakira"
+   },
+   {
+    "title": "Clarity (feat. Foxes)",
+    "artist": "Zedd"
+   },
+   {
+    "title": "I Wanna Be Yours",
+    "artist": "Arctic Monkeys"
+   },
+   {
+    "title": "Girlfriend",
+    "artist": "Avril Lavigne"
+   },
+   {
+    "title": "Till the World Ends",
+    "artist": "Britney Spears"
+   },
+   {
+    "title": "The Climb",
+    "artist": "Miley Cyrus"
+   },
+   {
+    "title": "Makes Me Wonder",
+    "artist": "Maroon 5"
+   },
+   {
+    "title": "She Will Be Loved",
+    "artist": "Maroon 5"
+   },
+   {
+    "title": "One Dance (feat. Wizkid & Kyla)",
+    "artist": "Drake"
+   },
+   {
+    "title": "Best I Ever Had",
+    "artist": "Drake"
+   },
+   {
+    "title": "One, Two Step (feat. Missy Elliott)",
+    "artist": "Ciara"
+   },
+   {
+    "title": "Billionaire (feat. Bruno Mars)",
+    "artist": "Travie McCoy"
+   },
+   {
+    "title": "Airplanes (feat. Hayley Williams)",
+    "artist": "B.o.B"
+   },
+   {
+    "title": "Locked Out of Heaven",
+    "artist": "Bruno Mars"
+   },
+   {
+    "title": "Imma Be",
+    "artist": "Black Eyed Peas"
+   },
+   {
+    "title": "Poker Face",
+    "artist": "Lady Gaga"
+   },
+   {
+    "title": "Telephone (feat. Beyoncé)",
+    "artist": "Lady Gaga"
+   },
+   {
+    "title": "Do I Wanna Know?",
+    "artist": "Arctic Monkeys"
+   },
+   {
+    "title": "Raise Your Glass",
+    "artist": "P!nk"
+   },
+   {
+    "title": "Rocketeer (feat. Ryan Tedder)",
+    "artist": "Far East Movement & Ryan Tedder"
+   },
+   {
+    "title": "In My Head",
+    "artist": "Jason Derulo"
+   },
+   {
+    "title": "Billie Jean",
+    "artist": "Michael Jackson"
+   },
+   {
+    "title": "Glamorous (feat. Ludacris)",
+    "artist": "Fergie"
+   },
+   {
+    "title": "Somebody to Love (Remix) [feat. Usher]",
+    "artist": "Justin Bieber"
+   },
+   {
+    "title": "HUMBLE.",
+    "artist": "Kendrick Lamar"
+   },
+   {
+    "title": "Empire State of Mind (feat. Alicia Keys)",
+    "artist": "JAŸ-Z"
+   },
+   {
+    "title": "Promiscuous (feat. Timbaland)",
+    "artist": "Nelly Furtado"
+   },
+   {
+    "title": "22",
+    "artist": "Taylor Swift"
+   },
+   {
+    "title": "Pon de Replay",
+    "artist": "Rihanna"
+   },
+   {
+    "title": "Black Beatles (feat. Gucci Mane)",
+    "artist": "Rae Sremmurd"
+   },
+   {
+    "title": "Since U Been Gone",
+    "artist": "Kelly Clarkson"
+   },
+   {
+    "title": "I Write Sins Not Tragedies",
+    "artist": "Panic! At the Disco"
+   },
+   {
+    "title": "Midnight Sun",
+    "artist": "Zara Larsson"
+   },
+   {
+    "title": "Island In the Sun",
+    "artist": "Weezer"
+   },
+   {
+    "title": "Umbrella (feat. JAŸ-Z)",
+    "artist": "Rihanna"
+   },
+   {
+    "title": "Bring Me to Life",
+    "artist": "Evanescence"
+   },
+   {
+    "title": "Party In the U.S.A.",
+    "artist": "Miley Cyrus"
+   },
+   {
+    "title": "California Love (feat. Roger Troutman & Dr. Dre)",
+    "artist": "2Pac"
+   },
+   {
+    "title": "This Is What You Came For",
+    "artist": "Calvin Harris & Rihanna"
+   },
+   {
+    "title": "Beat It",
+    "artist": "Michael Jackson"
+   },
+   {
+    "title": "Happy (From \"Despicable Me 2\")",
+    "artist": "Pharrell Williams"
+   },
+   {
+    "title": "Thrift Shop (feat. Wanz)",
+    "artist": "Macklemore & Ryan Lewis"
+   },
+   {
+    "title": "Crazy in Love (feat. JAŸ-Z)",
+    "artist": "Beyoncé"
+   },
+   {
+    "title": "All the Small Things",
+    "artist": "blink-182"
+   },
+   {
+    "title": "Sunflower (Spider-Man: Into the Spider-Verse)",
+    "artist": "Post Malone & Swae Lee"
+   },
+   {
+    "title": "Obsessed",
+    "artist": "Mariah Carey"
+   },
+   {
+    "title": "Milkshake",
+    "artist": "Kelis"
+   },
+   {
+    "title": "Royals",
+    "artist": "Lorde"
+   },
+   {
+    "title": "Miss Independent",
+    "artist": "Ne-Yo"
+   },
+   {
+    "title": "Hips Don't Lie (feat. Wyclef Jean)",
+    "artist": "Shakira"
+   },
+   {
+    "title": "Party Rock Anthem (feat. Lauren Bennett & GoonRock)",
+    "artist": "LMFAO"
+   },
+   {
+    "title": "Livin' On a Prayer",
+    "artist": "Bon Jovi"
+   },
+   {
+    "title": "Single Ladies (Put a Ring on It)",
+    "artist": "Beyoncé"
+   },
+   {
+    "title": "Toxic",
+    "artist": "Britney Spears"
+   },
+   {
+    "title": "Shape of You",
+    "artist": "Ed Sheeran"
+   },
+   {
+    "title": "Latch",
+    "artist": "Disclosure & Sam Smith"
+   },
+   {
+    "title": "Dance The Night",
+    "artist": "Dua Lipa"
+   },
+   {
+    "title": "Chandelier",
+    "artist": "Sia"
+   },
+   {
+    "title": "Complicated",
+    "artist": "Avril Lavigne"
+   },
+   {
+    "title": "Closer",
+    "artist": "Ne-Yo"
+   },
+   {
+    "title": "Pour Some Sugar On Me",
+    "artist": "Def Leppard"
+   },
+   {
+    "title": "SexyBack (feat. Timbaland)",
+    "artist": "Justin Timberlake"
+   },
+   {
+    "title": "Get Lucky",
+    "artist": "Daft Punk, Pharrell Williams & Nile Rodgers"
+   },
+   {
+    "title": "DJ Got Us Fallin' in Love (feat. Pitbull)",
+    "artist": "USHER"
+   },
+   {
+    "title": "Give Me Everything (feat. Ne-Yo, Afrojack & Nayer)",
+    "artist": "Pitbull"
+   },
+   {
+    "title": "In da Club",
+    "artist": "50 Cent"
+   },
+   {
+    "title": "Sugar, We're Goin Down",
+    "artist": "Fall Out Boy"
+   },
+   {
+    "title": "What Do You Mean?",
+    "artist": "Justin Bieber"
+   },
+   {
+    "title": "Return of the Mack",
+    "artist": "Mark Morrison"
+   },
+   {
+    "title": "Sweet Child O' Mine",
+    "artist": "Guns N' Roses"
+   },
+   {
+    "title": "Bye Bye Bye",
+    "artist": "*NSYNC"
+   },
+   {
+    "title": "Despacito (feat. Justin Bieber) [Remix]",
+    "artist": "Luis Fonsi & Daddy Yankee"
+   },
+   {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "artist": "USHER"
+   },
+   {
+    "title": "Viva La Vida",
+    "artist": "Coldplay"
+   },
+   {
+    "title": "bad guy",
+    "artist": "Billie Eilish"
+   },
+   {
+    "title": "Tongue Tied",
+    "artist": "GROUPLOVE"
+   },
+   {
+    "title": "Lost",
+    "artist": "Frank Ocean"
+   }
+  ]
+ },
+ "dance-party-80s": {
+  "url": "https://music.apple.com/ca/playlist/dance-party-des-ann%C3%A9es-80-les-indispensables/pl.82ef96d165e54b71b8f98ba8f01902ff?l=fr-CA",
+  "nom": "Dance party des années 80 : les indispensables",
+  "annoncees": 100,
+  "tracks": [
+   {
+    "title": "Never Gonna Give You Up (2022 Remaster)",
+    "artist": "Rick Astley"
+   },
+   {
+    "title": "Just Can't Get Enough",
+    "artist": "Depeche Mode"
+   },
+   {
+    "title": "I Wanna Dance with Somebody (Who Loves Me)",
+    "artist": "Whitney Houston"
+   },
+   {
+    "title": "Holiday",
+    "artist": "Madonna"
+   },
+   {
+    "title": "Don't You Want Me",
+    "artist": "The Human League"
+   },
+   {
+    "title": "Obsession",
+    "artist": "Animotion"
+   },
+   {
+    "title": "Why Can't I Be You?",
+    "artist": "The Cure"
+   },
+   {
+    "title": "Rio",
+    "artist": "Duran Duran"
+   },
+   {
+    "title": "Easy Lover",
+    "artist": "Philip Bailey & Phil Collins"
+   },
+   {
+    "title": "Higher Love (Remastered)",
+    "artist": "Steve Winwood"
+   },
+   {
+    "title": "Conga",
+    "artist": "Gloria Estefan & Miami Sound Machine"
+   },
+   {
+    "title": "The Glamorous Life (Club Edit)",
+    "artist": "Sheila E."
+   },
+   {
+    "title": "Girls Just Want to Have Fun",
+    "artist": "Cyndi Lauper"
+   },
+   {
+    "title": "Monkey (7\" Edit) [2010 Remastered Version]",
+    "artist": "George Michael"
+   },
+   {
+    "title": "You Dropped A Bomb On Me",
+    "artist": "The Gap Band"
+   },
+   {
+    "title": "Kiss",
+    "artist": "Prince & The Revolution"
+   },
+   {
+    "title": "Naughty Girls (Need Love Too)",
+    "artist": "Samantha Fox"
+   },
+   {
+    "title": "Two of Hearts",
+    "artist": "Stacey Q"
+   },
+   {
+    "title": "Nasty",
+    "artist": "Janet Jackson"
+   },
+   {
+    "title": "I Want Her",
+    "artist": "Keith Sweat"
+   },
+   {
+    "title": "Candy",
+    "artist": "Cameo"
+   },
+   {
+    "title": "It Takes Two",
+    "artist": "Rob Base & DJ EZ Rock"
+   },
+   {
+    "title": "Perfect Way",
+    "artist": "Scritti Politti"
+   },
+   {
+    "title": "Wake Me Up Before You Go-Go",
+    "artist": "Wham!"
+   },
+   {
+    "title": "Buffalo Stance",
+    "artist": "Neneh Cherry"
+   },
+   {
+    "title": "Only In My Dreams",
+    "artist": "Debbie Gibson"
+   },
+   {
+    "title": "Party All the Time",
+    "artist": "Eddie Murphy"
+   },
+   {
+    "title": "This Time I Know It's for Real (7\" Mix)",
+    "artist": "Donna Summer"
+   },
+   {
+    "title": "Lovergirl",
+    "artist": "Teena Marie"
+   },
+   {
+    "title": "Fresh",
+    "artist": "Kool & The Gang"
+   },
+   {
+    "title": "Oh Sheila",
+    "artist": "Ready for the World"
+   },
+   {
+    "title": "Master Blaster (Jammin')",
+    "artist": "Stevie Wonder"
+   },
+   {
+    "title": "Somebody's Watching Me (Single Version)",
+    "artist": "Rockwell"
+   },
+   {
+    "title": "Call Me",
+    "artist": "Blondie"
+   },
+   {
+    "title": "Rhythm Of The Night (From \"The Last Dragon\" Soundtrack)",
+    "artist": "DeBarge"
+   },
+   {
+    "title": "Modern Love",
+    "artist": "David Bowie"
+   },
+   {
+    "title": "It's Raining Men",
+    "artist": "The Weather Girls"
+   },
+   {
+    "title": "Walk Like an Egyptian",
+    "artist": "The Bangles"
+   },
+   {
+    "title": "Let's Groove",
+    "artist": "Earth, Wind & Fire"
+   },
+   {
+    "title": "Let the Music Play",
+    "artist": "Shannon"
+   },
+   {
+    "title": "I'm Coming Out",
+    "artist": "Diana Ross"
+   },
+   {
+    "title": "Physical (Remastered 2021)",
+    "artist": "Olivia Newton-John"
+   },
+   {
+    "title": "Delirious (2019 Remaster)",
+    "artist": "Prince"
+   },
+   {
+    "title": "Beat It",
+    "artist": "Michael Jackson"
+   },
+   {
+    "title": "Another One Bites The Dust",
+    "artist": "Queen"
+   },
+   {
+    "title": "Venus",
+    "artist": "Bananarama"
+   },
+   {
+    "title": "Faith",
+    "artist": "George Michael"
+   },
+   {
+    "title": "All Around the World",
+    "artist": "Lisa Stansfield"
+   },
+   {
+    "title": "If You Leave",
+    "artist": "Orchestral Manoeuvres In the Dark"
+   },
+   {
+    "title": "What You Need",
+    "artist": "INXS"
+   },
+   {
+    "title": "Maneater",
+    "artist": "Daryl Hall & John Oates"
+   },
+   {
+    "title": "Separate Ways (Worlds Apart)",
+    "artist": "Journey"
+   },
+   {
+    "title": "Caribbean Queen (No More Love On the Run)",
+    "artist": "Billy Ocean"
+   },
+   {
+    "title": "Let's Dance (Single Version)",
+    "artist": "David Bowie"
+   },
+   {
+    "title": "What Have I Done to Deserve This? (with Dusty Springfield)",
+    "artist": "Pet Shop Boys"
+   },
+   {
+    "title": "I'm So Excited (1984 Mix)",
+    "artist": "The Pointer Sisters"
+   },
+   {
+    "title": "Take On Me (2015 Remastered Version)",
+    "artist": "a-ha"
+   },
+   {
+    "title": "She Works Hard For the Money",
+    "artist": "Donna Summer"
+   },
+   {
+    "title": "You've Got It (The Right Stuff)",
+    "artist": "New Kids On the Block"
+   },
+   {
+    "title": "You Keep Me Hangin On",
+    "artist": "Kim Wilde"
+   },
+   {
+    "title": "The Metro",
+    "artist": "Berlin"
+   },
+   {
+    "title": "Der Kommissar",
+    "artist": "Falco"
+   },
+   {
+    "title": "Pull Up to the Bumper",
+    "artist": "Grace Jones"
+   },
+   {
+    "title": "Pump Up the Volume (UK 12\" Mix)",
+    "artist": "M/A/R/R/S"
+   },
+   {
+    "title": "Dancing with Myself (Bbc in Concert: Live at Paris Theatre, 1 January 1981)",
+    "artist": "Generation X"
+   },
+   {
+    "title": "Hazy Shade of Winter",
+    "artist": "The Bangles"
+   },
+   {
+    "title": "Jump",
+    "artist": "Van Halen"
+   },
+   {
+    "title": "Jungle Love",
+    "artist": "The Time"
+   },
+   {
+    "title": "The Power of Love",
+    "artist": "Huey Lewis and the News"
+   },
+   {
+    "title": "Karma Chameleon",
+    "artist": "Culture Club"
+   },
+   {
+    "title": "You Might Think",
+    "artist": "The Cars"
+   },
+   {
+    "title": "Come Go With Me",
+    "artist": "Exposé"
+   },
+   {
+    "title": "Super Freak",
+    "artist": "Rick James"
+   },
+   {
+    "title": "She Bop",
+    "artist": "Cyndi Lauper"
+   },
+   {
+    "title": "Dancing in Heaven (Orbital Be-Bop)",
+    "artist": "Q-Feel"
+   },
+   {
+    "title": "I Feel for You",
+    "artist": "Chaka Khan"
+   },
+   {
+    "title": "I Can't Wait",
+    "artist": "Nu Shooz"
+   },
+   {
+    "title": "Whip It",
+    "artist": "DEVO"
+   },
+   {
+    "title": "Rockit",
+    "artist": "Herbie Hancock"
+   },
+   {
+    "title": "Express Yourself",
+    "artist": "Madonna"
+   },
+   {
+    "title": "Rumors",
+    "artist": "Timex Social Club"
+   },
+   {
+    "title": "It's Tricky",
+    "artist": "Run-DMC"
+   },
+   {
+    "title": "Steppin' Out",
+    "artist": "Joe Jackson"
+   },
+   {
+    "title": "What's on Your Mind (Pure Energy)",
+    "artist": "Information Society"
+   },
+   {
+    "title": "Love Shack",
+    "artist": "The B-52's"
+   },
+   {
+    "title": "I Love Rock 'N Roll",
+    "artist": "Joan Jett & The Blackhearts"
+   },
+   {
+    "title": "Livin' On a Prayer",
+    "artist": "Bon Jovi"
+   },
+   {
+    "title": "(I Just) Died in Your Arms",
+    "artist": "Cutting Crew"
+   },
+   {
+    "title": "Kiss (feat. Tom Jones)",
+    "artist": "The Art of Noise"
+   },
+   {
+    "title": "Oh Yeah",
+    "artist": "Yello"
+   },
+   {
+    "title": "Boom Boom",
+    "artist": "Paul Lekakis"
+   },
+   {
+    "title": "I Don't Want Your Love (Shep Pettibone 7'' Mix)",
+    "artist": "Duran Duran"
+   },
+   {
+    "title": "Wild, Wild West",
+    "artist": "The Escape Club"
+   },
+   {
+    "title": "Ain't Nothin' Goin' On But the Rent (Extended Club Mix) [Bonus Track]",
+    "artist": "Gwen Guthrie"
+   },
+   {
+    "title": "Tell It to My Heart",
+    "artist": "Taylor Dayne"
+   },
+   {
+    "title": "The Safety Dance (Video Version)",
+    "artist": "Men Without Hats"
+   },
+   {
+    "title": "Dare to Be Stupid",
+    "artist": "\"Weird Al\" Yankovic"
+   },
+   {
+    "title": "Bang the Drum All Day",
+    "artist": "Todd Rundgren"
+   },
+   {
+    "title": "Got My Mind Set on You (2004 Remaster)",
+    "artist": "George Harrison"
+   },
+   {
+    "title": "Cold Hearted",
+    "artist": "Paula Abdul"
+   }
+  ]
+ },
+ "clubs-90s": {
+  "url": "https://music.apple.com/ca/playlist/succ%C3%A8s-des-clubs-des-ann%C3%A9es-90-les-indispensables/pl.310497207ff84c569a0a8c5a96fe2ba5?l=fr-CA",
+  "nom": "Succès des clubs des années 90 : les indispensables",
+  "annoncees": 100,
+  "tracks": [
+   {
+    "title": "Around the World",
+    "artist": "Daft Punk"
+   },
+   {
+    "title": "Block Rockin' Beats (Single Version)",
+    "artist": "The Chemical Brothers"
+   },
+   {
+    "title": "Everybody Everybody",
+    "artist": "Black Box"
+   },
+   {
+    "title": "Gonna Make You Sweat (Everybody Dance Now) [feat. Freedom Williams]",
+    "artist": "C+C Music Factory"
+   },
+   {
+    "title": "All That She Wants (2015 Remastered Version)",
+    "artist": "Ace of Base"
+   },
+   {
+    "title": "The Rockafeller Skank",
+    "artist": "Fatboy Slim"
+   },
+   {
+    "title": "Back to Life (However Do You Want Me) [feat. Caron Wheeler]",
+    "artist": "Soul II Soul"
+   },
+   {
+    "title": "Missing (Todd Terry Remix)",
+    "artist": "Everything But the Girl"
+   },
+   {
+    "title": "Pump Up the Jam (Edit)",
+    "artist": "Technotronic"
+   },
+   {
+    "title": "The Power (7\" Version)",
+    "artist": "Snap!"
+   },
+   {
+    "title": "Show Me Love",
+    "artist": "Robin S."
+   },
+   {
+    "title": "Music Sounds Better with You",
+    "artist": "Stardust"
+   },
+   {
+    "title": "Free",
+    "artist": "Ultra Naté"
+   },
+   {
+    "title": "Go (Radio Edit)",
+    "artist": "Moby"
+   },
+   {
+    "title": "Jump 'n Shout",
+    "artist": "Basement Jaxx"
+   },
+   {
+    "title": "Better Off Alone",
+    "artist": "Alice Deejay"
+   },
+   {
+    "title": "Feeling for You",
+    "artist": "Cassius"
+   },
+   {
+    "title": "Can I Kick It?",
+    "artist": "A Tribe Called Quest"
+   },
+   {
+    "title": "Hypnotize (2007 Remaster)",
+    "artist": "The Notorious B.I.G."
+   },
+   {
+    "title": "Shimmy Shimmy Ya",
+    "artist": "Ol' Dirty Bastard"
+   },
+   {
+    "title": "Cantaloop (Flip Fantasia)",
+    "artist": "Us3"
+   },
+   {
+    "title": "The Rain (Supa Dupa Fly)",
+    "artist": "Missy Elliott"
+   },
+   {
+    "title": "Poison",
+    "artist": "Bell Biv DeVoe"
+   },
+   {
+    "title": "Now That We Found Love (feat. Aaron Hall)",
+    "artist": "Heavy D & The Boyz"
+   },
+   {
+    "title": "If",
+    "artist": "Janet Jackson"
+   },
+   {
+    "title": "Believe",
+    "artist": "Cher"
+   },
+   {
+    "title": "Professional Widow (Armand's Star Trunk Funkin' Mix)",
+    "artist": "Tori Amos"
+   },
+   {
+    "title": "Marta's Song",
+    "artist": "Deep Forest"
+   },
+   {
+    "title": "Sadeness (Part I)",
+    "artist": "Enigma"
+   },
+   {
+    "title": "You Make Me Feel (Mighty Real)",
+    "artist": "Byron Stingily"
+   },
+   {
+    "title": "Vogue",
+    "artist": "Madonna"
+   },
+   {
+    "title": "The Rhythm of the Night",
+    "artist": "Corona"
+   },
+   {
+    "title": "Finally (7\" Choice Mix)",
+    "artist": "CeCe Peniston"
+   },
+   {
+    "title": "For An Angel (PvD's E-Werk Club Mix)",
+    "artist": "Paul van Dyk"
+   },
+   {
+    "title": "Kernkraft 400 (Sport Chant Stadium Remix)",
+    "artist": "Zombie Nation"
+   },
+   {
+    "title": "I'll Be Your Friend (Original Def Mix)",
+    "artist": "Robert Owens"
+   },
+   {
+    "title": "Beau Mot Plage (Freeform Reform Parts I & II)",
+    "artist": "Isolée"
+   },
+   {
+    "title": "My My My (Original Club Mix)",
+    "artist": "Armand Van Helden"
+   },
+   {
+    "title": "The Humpty Dance",
+    "artist": "Digital Underground"
+   },
+   {
+    "title": "Supermodel (You Better Work) [7” Mix]",
+    "artist": "RuPaul"
+   },
+   {
+    "title": "Dub Be Good To Me",
+    "artist": "Beats International"
+   },
+   {
+    "title": "What Is Love (7\" Mix)",
+    "artist": "Haddaway"
+   },
+   {
+    "title": "Space Jam",
+    "artist": "Quad City DJ's"
+   },
+   {
+    "title": "Things That Make You Go Hmmmm.... (feat. Freedom Williams)",
+    "artist": "C+C Music Factory"
+   },
+   {
+    "title": "Virtual Insanity",
+    "artist": "Jamiroquai"
+   },
+   {
+    "title": "Fantasy (feat. Ol' Dirty Bastard)",
+    "artist": "Mariah Carey"
+   },
+   {
+    "title": "Connected",
+    "artist": "Stereo MC's"
+   },
+   {
+    "title": "Saltwater (feat. Moya Brennan) [Mixed]",
+    "artist": "Chicane"
+   },
+   {
+    "title": "Get Ready",
+    "artist": "2 Unlimited"
+   },
+   {
+    "title": "Ebeneezer Goode (Beat Edit)",
+    "artist": "The Shamen"
+   },
+   {
+    "title": "Killer (Radio Edit)",
+    "artist": "Adamski"
+   },
+   {
+    "title": "Red Alert",
+    "artist": "Basement Jaxx"
+   },
+   {
+    "title": "Energy Flash",
+    "artist": "Joey Beltram"
+   },
+   {
+    "title": "Higher State of Consciousness (Tweekin Acid Funk Mix)",
+    "artist": "Winx"
+   },
+   {
+    "title": "Dominator (Extended Mix)",
+    "artist": "Human Resource"
+   },
+   {
+    "title": "Don't Let the Feeling Go (feat. John Reid) [MK Radio Edit]",
+    "artist": "Nightcrawlers"
+   },
+   {
+    "title": "Plastic Dreams",
+    "artist": "Jaydee"
+   },
+   {
+    "title": "Music Is the Answer (Dancin' and Prancin') [feat. Celeda]",
+    "artist": "Danny Tenaglia"
+   },
+   {
+    "title": "Deep Inside",
+    "artist": "Hardrive"
+   },
+   {
+    "title": "The Ha Dance (the official Chip Chop Boriqua Version)",
+    "artist": "Masters At Work"
+   },
+   {
+    "title": "3AM Eternal (Live at the S.S.L.)",
+    "artist": "The KLF"
+   },
+   {
+    "title": "Muzik (The Tribal Wild Pitch Mix)",
+    "artist": "DJ Pierre"
+   },
+   {
+    "title": "The Bomb! (These Sound Fall Into My Mind) [Radio Edit]",
+    "artist": "The Bucketheads"
+   },
+   {
+    "title": "Burning (Vibe Mix)",
+    "artist": "MK"
+   },
+   {
+    "title": "Army of Me",
+    "artist": "Björk"
+   },
+   {
+    "title": "Born Slippy (Nuxx / Remastered)",
+    "artist": "Underworld"
+   },
+   {
+    "title": "Sandstorm",
+    "artist": "Darude"
+   },
+   {
+    "title": "Moving On Up",
+    "artist": "M People"
+   },
+   {
+    "title": "We Like To Party! (The Vengabus)",
+    "artist": "Vengaboys"
+   },
+   {
+    "title": "Ride On Time",
+    "artist": "Black Box"
+   },
+   {
+    "title": "What Is Love",
+    "artist": "Deee-Lite"
+   },
+   {
+    "title": "Sweet Dreams",
+    "artist": "La Bouche"
+   },
+   {
+    "title": "Unbelievable",
+    "artist": "EMF"
+   },
+   {
+    "title": "Everybody's Free (To Feel Good)",
+    "artist": "Rozalla"
+   },
+   {
+    "title": "Tom's Diner (7\" A)",
+    "artist": "Suzanne Vega & DNA"
+   },
+   {
+    "title": "Good Life",
+    "artist": "Inner City"
+   },
+   {
+    "title": "Blue Skies (with Tori Amos)",
+    "artist": "BT"
+   },
+   {
+    "title": "9 PM - Till I Come (Radio Edit)",
+    "artist": "ATB"
+   },
+   {
+    "title": "Children (Original Version)",
+    "artist": "Robert Miles"
+   },
+   {
+    "title": "Silence (feat. Sarah McLachlan) [Tiësto's In Search Of Sunrise Radio Edit]",
+    "artist": "Delerium"
+   },
+   {
+    "title": "It's Not Right But It's Okay (Thunderpuss Mix)",
+    "artist": "Whitney Houston"
+   },
+   {
+    "title": "Get a Life",
+    "artist": "Soul II Soul"
+   },
+   {
+    "title": "The Sign (2015 Remastered Version)",
+    "artist": "Ace of Base"
+   },
+   {
+    "title": "Hey Boy Hey Girl",
+    "artist": "The Chemical Brothers"
+   },
+   {
+    "title": "The Future of the Future (2015 Remaster)",
+    "artist": "Everything But the Girl"
+   },
+   {
+    "title": "Ray of Light",
+    "artist": "Madonna"
+   },
+   {
+    "title": "God Is a DJ",
+    "artist": "Faithless"
+   },
+   {
+    "title": "Movin' Too Fast",
+    "artist": "Artful Dodger & Romina Johnson"
+   },
+   {
+    "title": "Playing With Knives (Quadrant Mix)",
+    "artist": "Bizarre Inc"
+   },
+   {
+    "title": "Here Comes the Hotstepper (Heartical Mix)",
+    "artist": "Ini Kamoze"
+   },
+   {
+    "title": "Rhythm Is a Dancer",
+    "artist": "Snap!"
+   },
+   {
+    "title": "Jaguar",
+    "artist": "The Astec Mystic"
+   },
+   {
+    "title": "Gangster Trippin'",
+    "artist": "Fatboy Slim"
+   },
+   {
+    "title": "100% Pure Love",
+    "artist": "Crystal Waters"
+   },
+   {
+    "title": "Only Love Can Break Your Heart",
+    "artist": "Saint Etienne"
+   },
+   {
+    "title": "Chime (Live)",
+    "artist": "Orbital"
+   },
+   {
+    "title": "Swamp Thing",
+    "artist": "The Grid"
+   },
+   {
+    "title": "Sweet Surrender (DJ Tiësto Remix)",
+    "artist": "Sarah McLachlan"
+   },
+   {
+    "title": "Run Away",
+    "artist": "Real McCoy"
+   },
+   {
+    "title": "Play with the Voice (feat. Csilla) [MAW In Your Face Mix] [Remastered]",
+    "artist": "Joe T. Vannelli"
+   }
+  ]
+ },
+ "party-2000s": {
+  "url": "https://music.apple.com/ca/playlist/party-des-ann%C3%A9es-2000-les-indispensables/pl.9c6636d6f4474a92b706c414fb6411ed?l=fr-CA",
+  "nom": "Party des années 2000 : les indispensables",
+  "annoncees": 100,
+  "tracks": [
+   {
+    "title": "Toxic",
+    "artist": "Britney Spears"
+   },
+   {
+    "title": "1 Thing",
+    "artist": "Amerie"
+   },
+   {
+    "title": "Around the World (La La La La La) [Radio Version]",
+    "artist": "A Touch of Class"
+   },
+   {
+    "title": "Never Leave You (Uh Ooh, Uh Oooh)",
+    "artist": "Lumidee"
+   },
+   {
+    "title": "Get Ur Freak On",
+    "artist": "Missy Elliott"
+   },
+   {
+    "title": "Lip Gloss",
+    "artist": "Lil Mama"
+   },
+   {
+    "title": "Beautiful (feat. Pharrell Williams & Uncle Charlie Wilson)",
+    "artist": "Snoop Dogg"
+   },
+   {
+    "title": "See You Again (Rock Mafia Remix)",
+    "artist": "Miley Cyrus"
+   },
+   {
+    "title": "With Love",
+    "artist": "Hilary Duff"
+   },
+   {
+    "title": "Glamorous (feat. Ludacris)",
+    "artist": "Fergie"
+   },
+   {
+    "title": "Freak Like Me",
+    "artist": "Sugababes"
+   },
+   {
+    "title": "Crazy in Love (feat. JAŸ-Z)",
+    "artist": "Beyoncé"
+   },
+   {
+    "title": "Whenever, Wherever",
+    "artist": "Shakira"
+   },
+   {
+    "title": "Doesn't Really Matter",
+    "artist": "Janet Jackson"
+   },
+   {
+    "title": "Me & U",
+    "artist": "Cassie"
+   },
+   {
+    "title": "Bad Romance",
+    "artist": "Lady Gaga"
+   },
+   {
+    "title": "Family Affair",
+    "artist": "Mary J. Blige"
+   },
+   {
+    "title": "Beggin'",
+    "artist": "Madcon"
+   },
+   {
+    "title": "Hey Ya! (Radio Mix/Club Mix)",
+    "artist": "OutKast"
+   },
+   {
+    "title": "Lady Marmalade",
+    "artist": "Christina Aguilera, Lil' Kim, Mýa & P!nk"
+   },
+   {
+    "title": "Love Don't Cost a Thing",
+    "artist": "Jennifer Lopez"
+   },
+   {
+    "title": "Stars Are Blind",
+    "artist": "Paris Hilton"
+   },
+   {
+    "title": "Hot In Herre",
+    "artist": "Nelly"
+   },
+   {
+    "title": "Umbrella (feat. JAŸ-Z)",
+    "artist": "Rihanna"
+   },
+   {
+    "title": "Promiscuous (feat. Timbaland)",
+    "artist": "Nelly Furtado"
+   },
+   {
+    "title": "Yeah! (feat. Lil Jon & Ludacris)",
+    "artist": "USHER"
+   },
+   {
+    "title": "Potential Breakup Song",
+    "artist": "Aly & AJ"
+   },
+   {
+    "title": "Do It to It (feat. Sean Paul)",
+    "artist": "Cherish"
+   },
+   {
+    "title": "Music",
+    "artist": "Madonna"
+   },
+   {
+    "title": "All For You",
+    "artist": "Janet Jackson"
+   },
+   {
+    "title": "Get Busy",
+    "artist": "Sean Paul"
+   },
+   {
+    "title": "Gasolina",
+    "artist": "Daddy Yankee"
+   },
+   {
+    "title": "In da Club",
+    "artist": "50 Cent"
+   },
+   {
+    "title": "One More Time",
+    "artist": "Daft Punk"
+   },
+   {
+    "title": "Can't Get You Out of My Head",
+    "artist": "Kylie Minogue"
+   },
+   {
+    "title": "It Wasn't Me (feat. Ricardo Ducent)",
+    "artist": "Shaggy"
+   },
+   {
+    "title": "Boys",
+    "artist": "Britney Spears"
+   },
+   {
+    "title": "Who Let the Dogs Out",
+    "artist": "Baha Men"
+   },
+   {
+    "title": "Hot n Cold",
+    "artist": "Katy Perry"
+   },
+   {
+    "title": "Party In the U.S.A.",
+    "artist": "Miley Cyrus"
+   },
+   {
+    "title": "SexyBack (feat. Timbaland)",
+    "artist": "Justin Timberlake"
+   },
+   {
+    "title": "This Love",
+    "artist": "Maroon 5"
+   },
+   {
+    "title": "Drop It Like It's Hot (feat. Pharrell Williams)",
+    "artist": "Snoop Dogg"
+   },
+   {
+    "title": "Milkshake",
+    "artist": "Kelis"
+   },
+   {
+    "title": "Paparazzi",
+    "artist": "Lady Gaga"
+   },
+   {
+    "title": "Live Your Life (feat. Rihanna)",
+    "artist": "T.I."
+   },
+   {
+    "title": "Get the Party Started",
+    "artist": "P!nk"
+   },
+   {
+    "title": "Hips Don't Lie (feat. Wyclef Jean)",
+    "artist": "Shakira"
+   },
+   {
+    "title": "Romeo",
+    "artist": "Basement Jaxx"
+   },
+   {
+    "title": "Crazy",
+    "artist": "Gnarls Barkley"
+   },
+   {
+    "title": "Get Low (feat. Ying Yang Twins)",
+    "artist": "Lil Jon & The East Side Boyz"
+   },
+   {
+    "title": "Survivor",
+    "artist": "Destiny's Child"
+   },
+   {
+    "title": "Lollipop (feat. Static Major)",
+    "artist": "Lil Wayne"
+   },
+   {
+    "title": "Low (feat. T-Pain)",
+    "artist": "Flo Rida"
+   },
+   {
+    "title": "Thong Song",
+    "artist": "Sisqó"
+   },
+   {
+    "title": "Ride Wit Me (feat. City Spud)",
+    "artist": "Nelly"
+   },
+   {
+    "title": "Absolutely Not (Radio Edit)",
+    "artist": "Deborah Cox"
+   },
+   {
+    "title": "D.A.N.C.E",
+    "artist": "Justice"
+   },
+   {
+    "title": "Robot Rock",
+    "artist": "Daft Punk"
+   },
+   {
+    "title": "Feel Good Inc. (feat. David Jolicoeur, Kelvin Mercer & Vincent Mason)",
+    "artist": "Gorillaz & De La Soul"
+   },
+   {
+    "title": "Just Dance (feat. Colby O'Donis)",
+    "artist": "Lady Gaga"
+   },
+   {
+    "title": "It's Gonna Be Me",
+    "artist": "*NSYNC"
+   },
+   {
+    "title": "Not Gonna Get Us",
+    "artist": "t.A.T.u."
+   },
+   {
+    "title": "Girlfriend",
+    "artist": "Avril Lavigne"
+   },
+   {
+    "title": "SOS",
+    "artist": "Rihanna"
+   },
+   {
+    "title": "Who's That Girl?",
+    "artist": "Robyn"
+   },
+   {
+    "title": "My Neck, My Back (Lick It)",
+    "artist": "Khia"
+   },
+   {
+    "title": "Paper Planes",
+    "artist": "M.I.A."
+   },
+   {
+    "title": "I Turn To You (Hex Hector Radio Mix)",
+    "artist": "Melanie C"
+   },
+   {
+    "title": "Goodies (feat. Petey Pablo)",
+    "artist": "Ciara"
+   },
+   {
+    "title": "Hotel Room Service",
+    "artist": "Pitbull"
+   },
+   {
+    "title": "Ooh La La",
+    "artist": "Goldfrapp"
+   },
+   {
+    "title": "Gimme More",
+    "artist": "Britney Spears"
+   },
+   {
+    "title": "This Is Me",
+    "artist": "Dream"
+   },
+   {
+    "title": "Where the Party At",
+    "artist": "Jagged Edge"
+   },
+   {
+    "title": "Where’s Your Head At",
+    "artist": "Basement Jaxx"
+   },
+   {
+    "title": "U + Ur Hand",
+    "artist": "P!nk"
+   },
+   {
+    "title": "Come on over Baby (All I Want Is You) [Radio Version]",
+    "artist": "Christina Aguilera"
+   },
+   {
+    "title": "In My Pocket",
+    "artist": "Mandy Moore"
+   },
+   {
+    "title": "We Are Your Friends (Justice Vs. Simian - Edit)",
+    "artist": "Justice & Simian"
+   },
+   {
+    "title": "Young Folks",
+    "artist": "Peter Bjorn and John"
+   },
+   {
+    "title": "Burnin' Up",
+    "artist": "Jonas Brothers"
+   },
+   {
+    "title": "I Gotta Feeling",
+    "artist": "Black Eyed Peas"
+   },
+   {
+    "title": "I Bet You Look Good on the Dancefloor",
+    "artist": "Arctic Monkeys"
+   },
+   {
+    "title": "Shut Up and Let Me Go",
+    "artist": "The Ting Tings"
+   },
+   {
+    "title": "Lose Control (feat. Ciara & Fat Man Scoop)",
+    "artist": "Missy Elliott featuring Ciara & Fat Man Scoop"
+   },
+   {
+    "title": "Start the Commotion",
+    "artist": "The Wiseguys"
+   },
+   {
+    "title": "Damaged",
+    "artist": "Danity Kane"
+   },
+   {
+    "title": "Temperature",
+    "artist": "Sean Paul"
+   },
+   {
+    "title": "Pon de Replay",
+    "artist": "Rihanna"
+   },
+   {
+    "title": "Call on Me (Radio Mix)",
+    "artist": "Eric Prydz"
+   },
+   {
+    "title": "Come into My World (Radio Edit)",
+    "artist": "Kylie Minogue"
+   },
+   {
+    "title": "E-Pro",
+    "artist": "Beck"
+   },
+   {
+    "title": "Chewing Gum",
+    "artist": "Annie"
+   },
+   {
+    "title": "Better Off Alone",
+    "artist": "Alice Deejay"
+   },
+   {
+    "title": "Don't Cha",
+    "artist": "The Pussycat Dolls & Busta Rhymes"
+   },
+   {
+    "title": "I'm a Slave 4 U",
+    "artist": "Britney Spears"
+   },
+   {
+    "title": "Smooth Criminal (2026 Remastered)",
+    "artist": "Alien Ant Farm"
+   },
+   {
+    "title": "Snakes On a Plane (Bring It)",
+    "artist": "Cobra Starship"
+   },
+   {
+    "title": "Gotta Get Thru This (D'n'D Radio Edit)",
+    "artist": "Daniel Bedingfield"
+   }
+  ]
+ },
+ "dance-party-2026": {
+  "url": "https://music.apple.com/ca/playlist/dance-party-2026-music-for-your-party-workout-car-remix/pl.e9820ff1ec1c41c0af30e6c364f790ad?l=fr-CA",
+  "nom": "Dance Party 2026, Music for your Party, Workout & Car Remix",
+  "annoncees": 47,
+  "tracks": [
+   {
+    "title": "Freestyler (Rock The Microphone)",
+    "artist": "Lost Frequencies & Bomfunk MC's"
+   },
+   {
+    "title": "Danza Kuduro (feat. Lucenzo & Don Omar) [Remix]",
+    "artist": "W&W, AXMO & Andre Schnura"
+   },
+   {
+    "title": "EXPLODE (High Like Amsterdam) [feat. Toni Mogens] [Festival Edit]",
+    "artist": "Aquagen"
+   },
+   {
+    "title": "LET'S GET FKD UP",
+    "artist": "Alok, Mondello'G, Ceres & Tribbs"
+   },
+   {
+    "title": "Like a Prayer (Techno Mix)",
+    "artist": "Rocco, Perfect Pitch & Fabiasco"
+   },
+   {
+    "title": "Waterfalls (feat. Sam Harper & Bobby Harvey)",
+    "artist": "James Hype"
+   },
+   {
+    "title": "Infinity",
+    "artist": "Niels van Gogh"
+   },
+   {
+    "title": "Around The World (feat. René Miller)",
+    "artist": "Niklas Dee"
+   },
+   {
+    "title": "Wild Times",
+    "artist": "Freischwimmer & Renee"
+   },
+   {
+    "title": "Boyz In Paris",
+    "artist": "Marnik, Naeleck & VINAI"
+   },
+   {
+    "title": "Like It's Hollywood",
+    "artist": "Ampris"
+   },
+   {
+    "title": "No Broke Boys",
+    "artist": "Disco Lines & Tinashe"
+   },
+   {
+    "title": "Shake It Off",
+    "artist": "Perfect Pitch, Rocco & IOMMI"
+   },
+   {
+    "title": "Forever Young",
+    "artist": "David Guetta, Alphaville & Ava Max"
+   },
+   {
+    "title": "Silence (Dream Version)",
+    "artist": "Roman Messer, Rocco & Cari"
+   },
+   {
+    "title": "Everybody (On The Floor)",
+    "artist": "ItaloBrothers, Rocco & French Sisters"
+   },
+   {
+    "title": "YEAH",
+    "artist": "Dimitri Vegas & Like Mike, W&W & Marnik"
+   },
+   {
+    "title": "Sweet Dreams",
+    "artist": "Perfect Pitch & Rocco"
+   },
+   {
+    "title": "Cry Me a River",
+    "artist": "Steve Aoki, Dimitri Vegas & Like Mike, Timbaland & W&W"
+   },
+   {
+    "title": "Get Up And Dance",
+    "artist": "Ampris"
+   },
+   {
+    "title": "Without Me",
+    "artist": "Mark Bale, Rocco & Dave Darell"
+   },
+   {
+    "title": "World Gone Wild (feat. Sam Martin)",
+    "artist": "Robin Schulz & CYRIL"
+   },
+   {
+    "title": "monster",
+    "artist": "MINLEE"
+   },
+   {
+    "title": "Geiles Leben",
+    "artist": "HBz, Stevio & 2 Engel & Charlie"
+   },
+   {
+    "title": "i like the way you kiss me",
+    "artist": "Artemas"
+   },
+   {
+    "title": "Domino Day",
+    "artist": "Perfect Pitch, Rocco & MEELA"
+   },
+   {
+    "title": "Thank You (Not So Bad)",
+    "artist": "Dimitri Vegas & Like Mike, Tiësto & Dido"
+   },
+   {
+    "title": "I Got Love (feat. Nate Dogg)",
+    "artist": "CYRIL & Kelland"
+   },
+   {
+    "title": "When It Feels Right",
+    "artist": "Ampris"
+   },
+   {
+    "title": "Overdrive (feat. Norma Jean Martine)",
+    "artist": "Ofenbach"
+   },
+   {
+    "title": "All Together Now (Strong Together)",
+    "artist": "Perfect Pitch & Rocco"
+   },
+   {
+    "title": "Sigma Boy (feat. Мария Янковская) [Remix]",
+    "artist": "LAVINIA, Ely Oaks & Betsy"
+   },
+   {
+    "title": "Changed The Way You Kiss Me",
+    "artist": "Mark Bale, Aly, Rocco & Ninkid"
+   },
+   {
+    "title": "Ironic",
+    "artist": "Freischwimmer & Renee"
+   },
+   {
+    "title": "Die Eine",
+    "artist": "LIZOT, HBz & lityway"
+   },
+   {
+    "title": "Kisses (feat. bbyclose)",
+    "artist": "BL3SS & CamrinWatsin"
+   },
+   {
+    "title": "Whatever (Tiësto Remix)",
+    "artist": "Kygo & Ava Max"
+   },
+   {
+    "title": "Drop Dead Beautiful",
+    "artist": "Freischwimmer & Martis"
+   },
+   {
+    "title": "Monster",
+    "artist": "Don Diablo & felix jaehn"
+   },
+   {
+    "title": "Another World (feat. Mirella)",
+    "artist": "CJ Stone & Rocco"
+   },
+   {
+    "title": "Mockingbird",
+    "artist": "Tiësto, Gabry Ponte & Dimitri Vegas & Like Mike"
+   },
+   {
+    "title": "Take Me to the Rave",
+    "artist": "Rocco, Pulsedriver & Ninkid"
+   },
+   {
+    "title": "The Sound of Silence (CYRIL Remix)",
+    "artist": "Disturbed"
+   },
+   {
+    "title": "Cobra",
+    "artist": "Mashmex"
+   },
+   {
+    "title": "One in a Million",
+    "artist": "Bebe Rexha & David Guetta"
+   },
+   {
+    "title": "I'm Good (Blue)",
+    "artist": "David Guetta & Bebe Rexha"
+   },
+   {
+    "title": "Moi Lolita",
+    "artist": "Lolita Jolie, Perfect Pitch & Basslovers United"
+   }
+  ]
+ },
+ "nu-jazz": {
+  "url": "https://music.apple.com/ca/playlist/nu-jazz-les-indispensables/pl.c43d6e30c49f4ab3a5265b154e243361?l=fr-CA",
+  "nom": "Nu jazz : les indispensables",
+  "annoncees": 49,
+  "tracks": [
+   {
+    "title": "The Audience",
+    "artist": "Herbert"
+   },
+   {
+    "title": "Soul Sauce (Fila Brazilia Remix)",
+    "artist": "Cal Tjader & Fila Brazillia"
+   },
+   {
+    "title": "Channel 1 Suite",
+    "artist": "The Cinematic Orchestra"
+   },
+   {
+    "title": "Stoney Street",
+    "artist": "Amon Tobin"
+   },
+   {
+    "title": "Get a Move On!",
+    "artist": "Mr. Scruff"
+   },
+   {
+    "title": "Think Twice",
+    "artist": "The Detroit Experiment"
+   },
+   {
+    "title": "Nocturne (Automator Remix)",
+    "artist": "Medeski, Martin & Wood"
+   },
+   {
+    "title": "Another Day (feat. Jill Scott)",
+    "artist": "4hero"
+   },
+   {
+    "title": "Cooper's World",
+    "artist": "Squarepusher"
+   },
+   {
+    "title": "Moose The Mooche (Quantic Remix)",
+    "artist": "Miles Davis"
+   },
+   {
+    "title": "Our Time",
+    "artist": "Kieran Hebden & Steve Reid"
+   },
+   {
+    "title": "Rensenada",
+    "artist": "Ricardo Villalobos, Max Loderbauer & Achil"
+   },
+   {
+    "title": "Felicidade (feat. Cibelle) [Buscemi Mix]",
+    "artist": "Suba featuring Cibelle"
+   },
+   {
+    "title": "Rico Suave Bossa Nova",
+    "artist": "Jay Dee & J Dilla"
+   },
+   {
+    "title": "Speak Low (Bent Remix)",
+    "artist": "Billie Holiday"
+   },
+   {
+    "title": "Post Requisite",
+    "artist": "Flying Lotus"
+   },
+   {
+    "title": "Skog (Chilluminati Remix)",
+    "artist": "Bugge Wesseltoft"
+   },
+   {
+    "title": "In Your Eyes (feat. Charlotte Day Wilson)",
+    "artist": "BADBADNOTGOOD"
+   },
+   {
+    "title": "Donaueschingen (Peter Kruder's Donaudampfschifffahrtsgesellschaftskapitänskajütenremix)",
+    "artist": "Truby Trio"
+   },
+   {
+    "title": "So Far",
+    "artist": "Skalpel"
+   },
+   {
+    "title": "Paranoid Android",
+    "artist": "Brad Mehldau"
+   },
+   {
+    "title": "Wait 'Til You See Him (De-Phazz Remix)",
+    "artist": "Ella Fitzgerald"
+   },
+   {
+    "title": "Transatlantic",
+    "artist": "Quantic"
+   },
+   {
+    "title": "L.O.V.E. and You & I",
+    "artist": "Jazzanova"
+   },
+   {
+    "title": "Who Needs Forever? (Thievery Corporation Remix)",
+    "artist": "Astrud Gilberto"
+   },
+   {
+    "title": "Black Sands",
+    "artist": "Bonobo"
+   },
+   {
+    "title": "Arroyo",
+    "artist": "Erik Truffaz"
+   },
+   {
+    "title": "I Fulcrum",
+    "artist": "Squarepusher"
+   },
+   {
+    "title": "Naima's Love Song (DJ Spinna Remix)",
+    "artist": "Betty Carter & DJ Spinna"
+   },
+   {
+    "title": "Channel 1 Suite (Hefner Mix)",
+    "artist": "The Cinematic Orchestra"
+   },
+   {
+    "title": "Kryptonite Smokes the Red Line",
+    "artist": "Isotope 217"
+   },
+   {
+    "title": "Save Me (Coldcut Remix)",
+    "artist": "Nina Simone"
+   },
+   {
+    "title": "Furuberget",
+    "artist": "Bugge Wesseltoft"
+   },
+   {
+    "title": "Lover Man (King Britt's Speakeasy Mix)",
+    "artist": "Dizzy Gillespie & Sarah Vaughan"
+   },
+   {
+    "title": "Day (Herbert's Garden Mix)",
+    "artist": "Jaga Jazzist"
+   },
+   {
+    "title": "It's All Happening!",
+    "artist": "Carlos Niño & Friends"
+   },
+   {
+    "title": "Flamenco Sketches (Nicola Conte New Rhumba Version)",
+    "artist": "The Dining Rooms"
+   },
+   {
+    "title": "Rebirth of Cool",
+    "artist": "DJ Cam Quartet"
+   },
+   {
+    "title": "Moving Cities (The Cinematic Orchestra Remix Extended Version)",
+    "artist": "Faze Action"
+   },
+   {
+    "title": "Sweet Silence",
+    "artist": "Flanger"
+   },
+   {
+    "title": "Midnight Mischief",
+    "artist": "Jordan Rakei"
+   },
+   {
+    "title": "130-09 (feat. Tim Motzer)",
+    "artist": "Burnt Friedman & Jaki Liebezeit"
+   },
+   {
+    "title": "Tobiko",
+    "artist": "Food & Christian Fennesz"
+   },
+   {
+    "title": "Vilderness (The Cinematic Orchestra Remix)",
+    "artist": "Nils Petter Molvær"
+   },
+   {
+    "title": "Bim Bom (Psapp Remix)",
+    "artist": "Astrud Gilberto"
+   },
+   {
+    "title": "Calle F",
+    "artist": "Mala"
+   },
+   {
+    "title": "Friend Zone",
+    "artist": "Thundercat"
+   },
+   {
+    "title": "Flying Officer",
+    "artist": "Skalpel"
+   },
+   {
+    "title": "Mutant",
+    "artist": "Tied & Tickled Trio"
+   }
+  ]
+ }
+}
