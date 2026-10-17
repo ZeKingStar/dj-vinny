@@ -45,11 +45,23 @@
   #seekBar { cursor: pointer; height: 14px; margin-top: 12px; position: relative; } #seekBar::before { content: ""; position: absolute; inset: -10px 0; } /* zone de clic plus grande */
   .phbox { border: 2px solid var(--line); border-radius: 18px; padding: 12px; margin-top: 10px; } .phbox.active { border-color: var(--accent); background: var(--chip); }
   .phbox input[type=text] { margin-top: 4px; } .phbox .inline select { flex: 1; min-width: 140px; }
+  .tabs { display: flex; gap: 8px; margin: 4px 0 14px; flex-wrap: wrap; } .tabs button { flex: 1; min-width: 130px; }
+  .tabs button:not(.on), .modes button:not(.on) { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
+  .modes { display: flex; gap: 6px; } .modes button { min-height: 46px; font-size: 16px; }
+  .evcard { border: 2px solid var(--line); border-radius: 18px; padding: 14px; margin-top: 12px; } .evcard.act { border-color: var(--accent); background: var(--chip); }
+  .evcard h3 { margin: 0; font-size: 20px; } .evcard .inline { margin-top: 8px; } .evlinks { margin-top: 10px; border-top: 2px dashed var(--line); padding-top: 10px; }
+  .evform { border: 2px solid var(--accent); border-radius: 18px; padding: 14px; margin-top: 12px; } .evform label { font-weight: 700; display: block; margin-top: 10px; }
+  .evform input[type=text], .evform input[type=date], .evform input[type=time], .evform select, .evform textarea { width: 100%; margin-top: 4px; }
+  .evform textarea { min-height: 70px; border-radius: 16px; border: 2px solid var(--line); background: var(--ink); color: var(--text); font: 600 16px Figtree, system-ui, sans-serif; padding: 10px 14px; }
+  .evsec { margin: 18px 0 0; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .wg { border-bottom: 2px solid var(--line); padding: 8px 0; } .wg:last-child { border-bottom: 0; }
 </style></head>
 <body><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="phaseBadge"></span><button class="ghost" id="openSettings">⚙ Réglages</button><button class="ghost" id="logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" title="Passe en mode Souper (calme)">🍽️ Souper</button><button id="modeParty" title="Passe en mode Soirée (dansant)">🪩 Soirée</button></span><button class="ghost" id="openSettings">⚙ Réglages</button><button class="ghost" id="logout">Déconnexion</button></div>
 
+  <div class="tabs" id="tabs"><button data-tab="soiree" class="on">🎧 Soirée</button><button data-tab="souhaits">💌 Souhaits<span id="wishBadge"></span></button><button data-tab="evenements">📅 Événements</button></div>
+  <div id="tab-soiree">
   <nav id="nav" aria-label="Sections du dashboard"></nav>
 
   <div class="card" id="player">
@@ -150,19 +162,49 @@
           <button id="camSkip" hidden>Suivant maintenant</button>
         </div>
       </div>
-      <div class="card"><h2>Souhaits d'avant la soirée</h2>
-        <p class="muted" id="wishNote"></p>
-        <div id="wishList" style="max-height:220px;overflow:auto"></div>
-        <div style="text-align:center;margin-top:10px"><img src="/api/qr.png?to=souhaits" alt="QR des souhaits" style="width:150px;border-radius:12px;background:#fff"><br>
-          <a href="/api/qr.png?to=souhaits" target="_blank" class="muted">Ouvrir le QR des souhaits en grand</a></div>
-        <div class="inline"><input type="text" id="wishLink" readonly><button class="ghost" id="wishCopy">Copier le lien</button></div>
-        <p class="muted" id="wishLinkNote"></p>
-        <div class="inline"><button class="ghost" id="wishClear">Vider les souhaits</button></div>
-      </div>
       <div class="card" style="text-align:center"><h2>QR invités</h2>
         <img src="/api/qr.png" alt="QR" style="width:200px;border-radius:12px;background:#fff"><br>
         <a href="/api/qr.png" target="_blank" class="muted">Ouvrir en grand</a><br><button class="ghost" id="qrRotate" style="margin-top:8px">Nouveau code de soirée</button><p class="muted">Le QR contient un code secret : seuls les invités qui l'ont scanné peuvent chercher et demander. « Nouveau code » rend les anciens QR inutilisables.</p><a href="/ecran.html" target="_blank" style="display:inline-block;margin-top:8px;font-weight:700">Ouvrir l’écran de la soirée (second écran, touche F = plein écran)</a>
       </div>
+    </div>
+  </div>
+  </div><!-- /tab-soiree -->
+
+  <div id="tab-souhaits" hidden>
+    <div class="card"><h2>Souhaits des invités <span id="wishCount" class="muted"></span></h2>
+      <div class="inline"><select id="wishEv" aria-label="Événement"></select><button class="ghost" id="wishClear">Vider cette liste</button></div>
+      <p class="muted" id="wishNote"></p>
+      <div id="wishList"></div>
+    </div>
+    <div class="card" style="text-align:center"><h2>Lien et QR des souhaits</h2>
+      <img id="wishQr" src="/api/qr.png?to=souhaits" alt="QR des souhaits" style="width:170px;border-radius:12px;background:#fff"><br>
+      <div class="inline"><input type="text" id="wishLink" readonly><button class="ghost" id="wishCopy">Copier le lien</button></div>
+      <p class="muted" id="wishLinkNote"></p>
+    </div>
+  </div>
+
+  <div id="tab-evenements" hidden>
+    <div class="card"><h2>Événements</h2>
+      <p class="muted">Un événement a sa date, ses heures, son lieu, son propre code et QR, ses souhaits et son programme de périodes. Il s'active tout seul à l'heure prévue (case « ouverture automatique »). Tu peux aussi le démarrer ou le terminer à la main. Les invités qui scannent avant l'heure voient « à venir » et peuvent envoyer leurs souhaits.</p>
+      <div class="inline"><button id="evNew">＋ Nouvel événement</button></div>
+      <div class="evform" id="evForm" hidden>
+        <h2 id="evFormTitle" style="margin:0 0 4px;font-size:20px">Nouvel événement</h2>
+        <label for="evf_name">Nom</label><input type="text" id="evf_name" maxlength="60" placeholder="Ex. : Party de Noël de la famille">
+        <div class="inline" style="flex-wrap:wrap">
+          <div style="flex:1;min-width:150px"><label for="evf_date">Date</label><input type="date" id="evf_date"></div>
+          <div style="flex:1;min-width:110px"><label for="evf_start">Début</label><input type="time" id="evf_start"></div>
+          <div style="flex:1;min-width:110px"><label for="evf_end">Fin</label><input type="time" id="evf_end"></div>
+        </div>
+        <label for="evf_place">Lieu (optionnel)</label><input type="text" id="evf_place" maxlength="80">
+        <label for="evf_welcome">Message d'accueil pour les invités (optionnel)</label><textarea id="evf_welcome" maxlength="300" placeholder="Ex. : Bienvenue ! Demande tes tounes préférées, Vinny s'en occupe."></textarea>
+        <label for="evf_thanks">Message de remerciement (affiché après l'événement)</label><textarea id="evf_thanks" maxlength="300"></textarea>
+        <label for="evf_before">Ouvrir les demandes des invités</label>
+        <select id="evf_before"><option value="0">À l'heure de début</option><option value="15">15 minutes avant</option><option value="30">30 minutes avant</option><option value="60">1 heure avant</option><option value="120">2 heures avant</option></select>
+        <label class="sw"><input type="checkbox" id="evf_auto"> Ouverture automatique : l'événement s'active tout seul à l'heure prévue</label>
+        <div id="evProgramBox"><label for="evf_program">Programme (périodes Souper / Soirée…)</label><select id="evf_program"></select></div>
+        <div class="inline" style="justify-content:flex-end"><button class="ghost" id="evCancel">Annuler</button><button id="evSave">Enregistrer</button></div>
+      </div>
+      <div id="evList"></div>
     </div>
   </div>
 </div>
@@ -202,6 +244,7 @@ function render() {
   applyTheme(state.theme);
   document.body.className = state.phase ? state.phase.intensity : '';
   $('phaseBadge').innerHTML = state.phase ? `<span class="phase-badge">${esc(state.phase.name)}</span>` : '';
+  renderTop();
   const n = state.nowPlaying;
   $('player').classList.toggle('playing', !!n && music && music.isPlaying);
   $('title').textContent = n ? n.title : '—'; $('artist').textContent = n ? n.artist : '';
@@ -803,16 +846,6 @@ async function loadMemory() {
     + (worst.length ? '<p class="muted"><b>Vident la piste</b></p>' + worst.slice(0, 5).map(row).join('') : '');
   $('memNote').hidden = list.length > 0;
 }
-async function loadWishes() {
-  const w = await api('/api/wishes', 'GET');
-  $('wishNote').textContent = w.total ? `${w.total} souhaits reçus. Cliquez sur « Chercher » pour le trouver dans la file.` : 'Aucun souhait pour le moment.';
-  $('wishList').innerHTML = w.groups.map(g => `<div class="row"><div class="t"><b>${esc(g.text)}</b><span class="muted">${g.names.map(esc).join(', ')}</span></div><span class="tag">×${g.count}</span><button class="mini" data-wish="${esc(g.text)}">Chercher</button></div>`).join('');
-}
-$('wishList').onclick = e => {
-  const b = e.target.closest('button[data-wish]'); if (!b) return;
-  $('addq').value = b.dataset.wish; $('addq').dispatchEvent(new Event('input')); $('addq').scrollIntoView({ behavior: 'smooth', block: 'center' });
-};
-$('wishClear').onclick = async () => { if (confirm('Vider tous les souhaits ?')) { await api('/api/wishes/clear'); loadWishes(); } };
 loadMemory().catch(console.error); loadWishes().catch(console.error); setInterval(() => loadWishes().catch(() => {}), 30000);
 
 // ---------- Liste commentée et danse en ligne ----------
@@ -825,7 +858,7 @@ const entryRow = e => '<div class="row" style="opacity:' + (e.off ? .4 : 1) + '"
   + '<span class="tag">' + STATUS[e.status] + '</span><button class="mini" data-off="' + esc(e.key) + '" title="' + (e.off ? 'Valider ce titre' : 'Retirer ce titre') + '">' + (e.off ? '+' : '✕') + '</button></div>';
 function renderApStatus() {
   const a = state.activeList, ph = state.phase;
-  $('apStatus').textContent = (ph ? 'Période « ' + ph.name + ' » : ' : 'Aucune période lancée : ') + 'Vinny pige dans « ' + (a ? a.name : '?') + ' » (' + (a ? a.count : 0) + ' titres)' + (a && !a.count ? ' : liste vide, la liste 40+ · Dance est utilisée à la place.' : '.');
+  $('apStatus').textContent = (ph ? 'Période « ' + ph.name + ' » : ' : 'Aucune période lancée : ') + 'Vinny pige dans « ' + (a ? a.name : '?') + ' » (' + (a ? a.count : 0) + ' titres)' + (a && !a.count ? ' : liste vide, la liste 40+ · Dance est utilisée à la place.' : '.') + (state.prepare ? ' Préparation des listes sur Spotify en cours…' : '');
   if (document.activeElement !== $('autoCount')) $('autoCount').value = state.autoCount;
   const sig = JSON.stringify((state.lists || []).map(l => [l.id, l.name, l.count]));
   if (sig !== apListSig) { apListSig = sig; fillApSelect(); }
@@ -890,11 +923,150 @@ $('impGo').onclick = async () => {
 $('lineNow').onclick = async () => { await api('/api/linedance'); toast('Danse en ligne ajoutée en tête de file'); };
 loadCurated().catch(console.error);
 
+// ---------- Souper / Soirée en un clic, onglets, souhaits, événements ----------
+let prevPrep = false;
+function renderTop() {
+  $('eventBadge').innerHTML = state.event ? '<span class="phase-badge" title="Événement actif">📅 ' + esc(state.event.name) + '</span>' : '';
+  const cur = state.phase && state.phase.intensity;
+  $('modeCalm').classList.toggle('on', cur === 'calm'); $('modeParty').classList.toggle('on', cur === 'party');
+  if (prevPrep && !state.prepare) loadCurated().catch(() => {}); // les listes viennent d'être préparées : on les relit
+  prevPrep = !!state.prepare;
+}
+const modeGo = kind => async () => {
+  if (state.phase && state.phase.intensity === kind) return toast(kind === 'calm' ? 'Déjà en mode Souper' : 'Déjà en mode Soirée');
+  let p = (state.phases || []).find(x => x.intensity === kind);
+  if (!p) p = await api('/api/phases/ensure', 'POST', { intensity: kind }); // la période par défaut est créée si elle manque
+  await launchPhase(p.id);
+};
+$('modeCalm').onclick = modeGo('calm'); $('modeParty').onclick = modeGo('party');
+
+const TABS = ['soiree', 'souhaits', 'evenements'];
+function showTab(t) {
+  if (!TABS.includes(t)) t = 'soiree';
+  TABS.forEach(k => { $('tab-' + k).hidden = k !== t; });
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  try { localStorage.djTab = t; } catch {}
+  if (t === 'souhaits') { loadWishes().catch(() => {}); loadLinks(); }
+  if (t === 'evenements') loadEvents().catch(() => {});
+}
+$('tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); };
+
+// Souhaits
+let wishSel = null;
+const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : m < 1440 ? 'il y a ' + Math.round(m / 60) + ' h' : 'il y a ' + Math.round(m / 1440) + ' j'; };
+const wishEvId = () => (wishSel && wishSel !== 'all' && wishSel !== 'none' ? wishSel : '');
+function fillWishEv() {
+  const evs = (evData && evData.events) || [];
+  const opts = evs.map(e => ({ v: e.id, t: e.name + ' · ' + e.date })).concat([{ v: 'none', t: 'Sans événement' }, { v: 'all', t: 'Tous les événements' }]);
+  if (wishSel === null || !opts.some(o => o.v === wishSel)) wishSel = (evData && evData.activeId) || (evs.find(e => e.status !== 'ended') || {}).id || 'none';
+  $('wishEv').innerHTML = opts.map(o => '<option value="' + esc(o.v) + '"' + (o.v === wishSel ? ' selected' : '') + '>' + esc(o.t) + '</option>').join('');
+}
+async function loadWishes() {
+  if (!evData) await loadEvents();
+  const w = await api('/api/wishes' + (wishSel ? '?ev=' + encodeURIComponent(wishSel) : ''), 'GET');
+  const n = w.total, g = w.groups.length, s = x => (x > 1 ? 's' : '');
+  $('wishCount').textContent = n ? '(' + n + ')' : ''; $('wishBadge').textContent = n ? ' (' + n + ')' : '';
+  $('wishNote').textContent = n ? n + ' souhait' + s(n) + ' reçu' + s(n) + ', ' + g + ' chanson' + s(g) + ' différente' + s(g) + '. « Chercher » la trouve sur Spotify ; « Traité » la retire de la liste.' : 'Aucun souhait pour le moment.';
+  if (document.activeElement && $('wishList').contains(document.activeElement)) return;
+  $('wishList').innerHTML = w.groups.map(x => '<div class="wg" data-ids="' + esc(x.ids.join(',')) + '" data-text="' + esc(x.text) + '"><div class="row"><div class="t"><b>' + esc(x.text) + '</b><span class="muted">'
+    + (x.names.length ? esc(x.names.join(', ')) + ' · ' : '') + ago(x.last) + '</span></div><span class="tag">×' + x.count + '</span></div>'
+    + '<div class="inline"><button class="mini" data-wa="search">🔎 Chercher</button><button class="mini" data-wa="done">✓ Traité</button></div><div class="wres"></div></div>').join('');
+}
+$('wishList').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const g = b.closest('.wg');
+  if (b.dataset.wa === 'done') { await api('/api/wishes/done', 'POST', { ids: g.dataset.ids.split(',') }); return loadWishes(); }
+  if (b.dataset.wa === 'search') {
+    const box = g.querySelector('.wres'); box.innerHTML = '<p class="muted">Recherche…</p>';
+    try {
+      const r = await fetch('/api/search?q=' + encodeURIComponent(g.dataset.text)), list = await r.json();
+      box.innerHTML = r.ok && list.length ? list.map(s => '<div class="row"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span class="muted">' + esc(s.artist) + '</span></div>'
+        + '<button class="mini" data-wq="' + esc(s.songId) + '" title="Ajouter à la file d’attente">＋ File</button><button class="mini" data-wq="' + esc(s.songId) + '" data-top="1" title="Mettre en premier">⏫</button></div>').join('')
+        : '<p class="muted">' + esc(r.ok ? 'Aucun résultat sur Spotify pour ce texte.' : list.error || 'Erreur') + '</p>';
+    } catch { box.innerHTML = '<p class="muted">Recherche impossible (Spotify est-il connecté ?)</p>'; }
+    return;
+  }
+  if (b.dataset.wq) { await api('/api/queue/add', 'POST', { songId: b.dataset.wq, top: !!b.dataset.top }); toast(b.dataset.top ? 'Ajouté en premier' : 'Ajouté à la file'); }
+};
+$('wishClear').onclick = async () => { if (confirm('Vider la liste de souhaits affichée ?')) { await api('/api/wishes/clear', 'POST', { ev: wishSel || undefined }); loadWishes(); } };
+$('wishEv').onchange = () => { wishSel = $('wishEv').value; loadWishes(); loadLinks(); };
+
+// Événements
+let evData = null, evEditing = null;
+const fmtEv = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return e.date; } };
+const STAT = { upcoming: 'À venir', live: 'En cours', ended: 'Terminé' };
+async function loadEvents() { evData = await api('/api/evts', 'GET'); renderEvents(); fillWishEv(); }
+function evCard(e) {
+  const act = evData.activeId === e.id, s = x => (x > 1 ? 's' : '');
+  const btns = [];
+  if (e.status !== 'ended' && !act) btns.push(['activate', 'Activer']);
+  if (e.status === 'ended') btns.push(['start', 'Rouvrir']); else if (!(act && e.status === 'live')) btns.push(['start', '▶ Démarrer maintenant']);
+  if (e.status === 'live' || (act && e.status !== 'ended')) btns.push(['end', '■ Terminer']);
+  btns.push(['links', 'Liens et QR'], ['edit', 'Modifier'], ['dup', 'Dupliquer'], ['del', 'Supprimer']);
+  return '<div class="evcard' + (act ? ' act' : '') + '" data-id="' + esc(e.id) + '"><div class="inline" style="justify-content:space-between;margin-top:0"><h3>' + esc(e.name) + '</h3><span><span class="tag">' + STAT[e.status] + '</span>' + (act ? ' <span class="tag">actif</span>' : '') + '</span></div>'
+    + '<div class="muted">' + esc(fmtEv(e)) + ' · ' + esc(e.start) + ' → ' + esc(e.end) + (e.place ? ' · ' + esc(e.place) : '') + '</div>'
+    + '<div class="muted">' + e.wishCount + ' souhait' + s(e.wishCount) + ' · ' + e.phaseCount + ' période' + s(e.phaseCount) + ' · demandes ouvertes ' + (e.openBeforeMin ? e.openBeforeMin + ' min avant le début' : 'au début') + (e.auto === false ? ' · ouverture manuelle' : '') + '</div>'
+    + (e.welcome ? '<div class="muted">« ' + esc(e.welcome) + ' »</div>' : '')
+    + '<div class="inline">' + btns.map(b => '<button class="mini" style="padding:0 14px" data-ea="' + b[0] + '">' + b[1] + '</button>').join('') + '</div><div class="evlinks" hidden></div></div>';
+}
+function renderEvents() {
+  const ev = evData.events, up = ev.filter(e => e.status !== 'ended'), past = ev.filter(e => e.status === 'ended').reverse();
+  $('evList').innerHTML = (up.length ? '<h3 class="evsec">À venir et en cours</h3>' + up.map(evCard).join('') : '<p class="muted">Aucun événement à venir. Crée-en un avec « Nouvel événement ».</p>')
+    + (past.length ? '<h3 class="evsec">Terminés</h3>' + past.map(evCard).join('') : '');
+}
+const evF = id => $('evf_' + id);
+function openEvForm(e) {
+  evEditing = e ? e.id : null; $('evForm').hidden = false; $('evFormTitle').textContent = e ? 'Modifier l’événement' : 'Nouvel événement';
+  evF('name').value = e ? e.name : ''; evF('date').value = e ? e.date : ''; evF('start').value = e ? e.start : '19:00'; evF('end').value = e ? e.end : '01:00';
+  evF('place').value = e ? e.place : ''; evF('welcome').value = e ? e.welcome : ''; evF('thanks').value = e ? e.thanks : 'Merci d’être venus, la gang ! À la prochaine !';
+  evF('before').value = String(e ? e.openBeforeMin : 30); evF('auto').checked = e ? e.auto !== false : true;
+  $('evProgramBox').hidden = !!e;
+  evF('program').innerHTML = '<option value="current">Copier les périodes actuelles</option><option value="default">Souper + Soirée par défaut</option>'
+    + ((evData && evData.events) || []).map(x => '<option value="copy:' + esc(x.id) + '">Copier le programme de « ' + esc(x.name) + ' »</option>').join('');
+  $('evForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); evF('name').focus();
+}
+$('evNew').onclick = () => openEvForm(null);
+$('evCancel').onclick = () => { $('evForm').hidden = true; evEditing = null; };
+$('evSave').onclick = async () => {
+  const body = { name: evF('name').value, date: evF('date').value, start: evF('start').value, end: evF('end').value, place: evF('place').value, welcome: evF('welcome').value, thanks: evF('thanks').value, openBeforeMin: Number(evF('before').value), auto: evF('auto').checked };
+  if (!body.name.trim() || !body.date || !body.start || !body.end) return toast('Nom, date, début et fin sont requis');
+  if (evEditing) await api('/api/evts/' + evEditing, 'PUT', body);
+  else { const p = evF('program').value; if (p === 'default') body.program = 'default'; else if (p.startsWith('copy:')) body.copyFrom = p.slice(5); await api('/api/evts', 'POST', body); }
+  $('evForm').hidden = true; evEditing = null; toast('Événement enregistré'); loadEvents();
+};
+async function toggleLinks(card, e, force) {
+  const box = card.querySelector('.evlinks');
+  if (!box.hidden && !force) { box.hidden = true; return; }
+  const l = await api('/api/links?ev=' + encodeURIComponent(e.id), 'GET'), v = Date.now(), im = (q, t) => '<div style="text-align:center"><img src="/api/qr.png?' + q + '&v=' + v + '" alt="' + t + '" style="width:150px;border-radius:12px;background:#fff"><div class="muted">' + t + '</div></div>';
+  box.innerHTML = '<div class="inline" style="flex-wrap:wrap;justify-content:center">' + im('ev=' + encodeURIComponent(e.id), 'QR de la soirée') + im('to=souhaits&ev=' + encodeURIComponent(e.id), 'QR des souhaits') + '</div>'
+    + '<div class="inline"><input type="text" readonly value="' + esc(l.guests) + '"><button class="ghost" data-copy="' + esc(l.guests) + '">Copier le lien de la soirée</button></div>'
+    + '<div class="inline"><input type="text" readonly value="' + esc(l.wishes) + '"><button class="ghost" data-copy="' + esc(l.wishes) + '">Copier le lien des souhaits</button></div>'
+    + '<div class="inline"><button class="mini" style="padding:0 14px" data-ea="rotate">Nouveau code…</button></div>'
+    + (l.public ? '' : '<p class="muted">Adresse locale seulement : définis l’adresse publique (⚙ Réglages) pour partager hors du Wi-Fi.</p>');
+  box.hidden = false;
+}
+$('evList').onclick = async ev => {
+  const c = ev.target.closest('button[data-copy]');
+  if (c) { try { await navigator.clipboard.writeText(c.dataset.copy); toast('Lien copié'); } catch { toast('Copie impossible : sélectionne le lien'); } return; }
+  const b = ev.target.closest('button[data-ea]'); if (!b) return;
+  const card = b.closest('.evcard'), id = card.dataset.id, e = evData.events.find(x => x.id === id), a = b.dataset.ea;
+  if (a === 'activate') { await api('/api/evts/' + id + '/activate'); toast('Événement activé : ses périodes et son code sont en place'); }
+  else if (a === 'start') { if (!confirm('Démarrer « ' + e.name + ' » maintenant ?')) return; await api('/api/evts/' + id + '/start'); toast('Événement démarré'); }
+  else if (a === 'end') { if (!confirm('Terminer « ' + e.name + ' » ? Les demandes des invités se ferment.')) return; await api('/api/evts/' + id + '/end'); toast('Événement terminé'); }
+  else if (a === 'edit') return openEvForm(e);
+  else if (a === 'dup') { const d = prompt('Date du nouvel événement (AAAA-MM-JJ) :', e.date); if (!d) return; await api('/api/evts/' + id + '/duplicate', 'POST', { date: d.trim() }); toast('Événement dupliqué'); }
+  else if (a === 'del') { if (!confirm('Supprimer « ' + e.name + ' » et ses souhaits ?')) return; await api('/api/evts/' + id, 'DELETE'); toast('Événement supprimé'); }
+  else if (a === 'links') return toggleLinks(card, e);
+  else if (a === 'rotate') { if (!confirm('Nouveau code : les QR et liens déjà partagés pour cet événement cesseront de fonctionner. Continuer ?')) return; await api('/api/event/rotate', 'POST', { ev: id }); toast('Nouveau code créé'); return toggleLinks(card, e, true); }
+  await loadEvents();
+};
+try { showTab(localStorage.djTab || 'soiree'); } catch { showTab('soiree'); }
+
 // ---------- Temps réel ----------
 const es = new EventSource('/api/events?role=dash');
 async function loadLinks() {
   try {
-    const l = await api('/api/links', 'GET'); $('wishLink').value = l.wishes; $('wishLink').dataset.guests = l.guests;
+    const l = await api('/api/links' + (wishEvId() ? '?ev=' + encodeURIComponent(wishEvId()) : ''), 'GET'); $('wishQr').src = '/api/qr.png?to=souhaits' + (wishEvId() ? '&ev=' + encodeURIComponent(wishEvId()) : '') + '&v=' + Date.now(); $('wishLink').value = l.wishes; $('wishLink').dataset.guests = l.guests;
     $('wishLinkNote').textContent = l.public ? 'Lien à envoyer avant la soirée. Il contient le code de la soirée : ne change pas le code après l’avoir partagé.'
       : 'Cette adresse ne fonctionne que sur ton réseau local. Pour partager avant la soirée, définis l’adresse publique (⚙ Réglages) une fois l’app sur le VPS.';
   } catch {}

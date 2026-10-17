@@ -12,6 +12,7 @@
   </div>
   <div class="card">
     <p class="muted" style="margin-top:0">Dis-nous les 3 chansons qui te font toujours danser. On s'en sert pour préparer la musique.</p>
+    <div id="evinfo" hidden></div>
     <form id="f">
       <label for="name" class="muted" style="font-weight:700">Ton prénom (optionnel)</label>
       <input type="text" id="name" maxlength="20" style="margin:6px 0 14px" autocomplete="given-name">
@@ -33,6 +34,16 @@ let ev = '';
 try { const u = new URL(location.href), e = u.searchParams.get('e'); if (e) { localStorage.djEvent = e; history.replaceState(null, '', u.pathname); } ev = localStorage.djEvent || ''; } catch {}
 let guestId = localStorage.guestId;
 if (!guestId) guestId = localStorage.guestId = 'g' + Math.random().toString(36).slice(2, 12);
+(async () => {
+  try {
+    const r = await fetch('/api/state?e=' + encodeURIComponent(ev), { headers: { 'x-event': ev } }), j = await r.json(), e = j && j.event;
+    if (!e) return;
+    const day = new Date(e.date + 'T12:00:00').toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+    const box = document.getElementById('evinfo'); box.hidden = false;
+    box.innerHTML = '<h2 style="margin:0 0 4px">' + esc(e.name) + '</h2><div class="muted" style="margin-bottom:12px">' + esc(day) + ' · ' + esc(e.start) + (e.place ? ' · ' + esc(e.place) : '') + '</div>';
+    if (e.status === 'ended') { document.getElementById('f').hidden = true; box.innerHTML += '<p style="font-weight:700">' + esc(e.thanks || 'Merci d’être venus !') + '</p>'; }
+  } catch {}
+})();
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
   const texts = ['w1', 'w2', 'w3'].map(id => document.getElementById(id).value.trim()).filter(t => t.length >= 3);

@@ -12,8 +12,9 @@
     <h1>DJ<br>Vinny</h1>
     <p style="margin:8px 0 0;font-weight:700">Trouve ta toune</p>
   </div>
+  <div class="card" id="evbox" hidden></div>
   <div class="card" id="np"></div>
-  <div class="card">
+  <div class="card" id="search">
     <label for="name" class="muted" style="font-weight:700">Ton prénom (annoncé avec ta demande)</label>
     <input type="text" id="name" maxlength="20" placeholder="Optionnel" style="margin:6px 0 14px">
     <label for="q" class="muted" style="font-weight:700">Quelle toune ?</label>
@@ -21,7 +22,7 @@
     <p class="muted" id="closed" hidden>Les demandes sont fermées pour le moment.</p>
     <div id="results"></div>
   </div>
-  <div class="card"><h2>À suivre</h2><div id="queue"></div></div>
+  <div class="card" id="qcard"><h2>À suivre</h2><div id="queue"></div></div>
 </div>
 <script src="/anim.js"></script>
 <script>
@@ -39,6 +40,7 @@ const row = (s, extra = '') => `<div class="row slide-in"><img src="${esc(s.artw
 
 function render() {
   applyTheme(state.theme);
+  if (state.event) gate(state.event.status, state.event);
   document.body.className = state.phase ? state.phase.intensity : '';
   const n = state.nowPlaying;
   document.getElementById('np').className = 'card' + (n ? ' playing' : '');
@@ -76,7 +78,34 @@ document.getElementById('results').onclick = async e => {
   if (r.ok) { confetti(); toast('Ajouté à la file 🎉'); b.textContent = 'Ajouté'; b.classList.add('done'); } else { toast(j.error); b.disabled = false; }
 };
 
-const es = new EventSource('/api/events?e=' + encodeURIComponent(ev || ''));
-es.onmessage = e => { state = JSON.parse(e.data); render(); };
-es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
+// Événement : à venir / terminé = on montre l'accueil ou le merci à la place de la recherche
+const fmtDay = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + e.start; } catch { return e.date; } };
+function gate(status, e) {
+  const box = document.getElementById('evbox'), hide = status !== 'live';
+  ['np', 'search', 'qcard'].forEach(id => { document.getElementById(id).hidden = hide; });
+  box.hidden = false;
+  box.innerHTML = '<h2 style="margin:0 0 4px">' + esc(e.name) + '</h2><div class="muted">' + esc(fmtDay(e)) + (e.place ? ' · ' + esc(e.place) : '') + '</div>'
+    + (e.welcome && status !== 'ended' ? '<p style="margin:10px 0 0">' + esc(e.welcome) + '</p>' : '')
+    + (status === 'upcoming' ? '<p class="muted" style="margin-top:12px">La soirée n’a pas encore commencé. Reviens à l’heure prévue pour demander tes tounes !</p><p><a href="/souhaits.html"><button>Dis-nous tes chansons d’avance</button></a></p>'
+      : status === 'ended' ? '<p style="margin-top:12px;font-weight:700">' + esc(e.thanks || 'Merci d’être venus !') + '</p>' : '');
+}
+let es = null;
+function connect() {
+  if (es) return;
+  es = new EventSource('/api/events?e=' + encodeURIComponent(ev || ''));
+  es.onmessage = e => { state = JSON.parse(e.data); render(); };
+  es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
+}
+async function boot() {
+  let j = null, code = 0;
+  try { const r = await fetch('/api/state?e=' + encodeURIComponent(ev), { headers: { 'x-event': ev } }); code = r.status; j = await r.json(); } catch {}
+  if (code === 403) {
+    ['np', 'search', 'qcard'].forEach(id => { document.getElementById(id).hidden = true; });
+    const box = document.getElementById('evbox'); box.hidden = false; box.innerHTML = '<p class="muted" style="margin:0">Code de la soirée absent ou périmé : scanne à nouveau le QR.</p>'; return;
+  }
+  if (j && j.guestMode) { gate(j.guestMode === 'live' ? 'upcoming' : j.guestMode, j.event); setTimeout(boot, j.guestMode === 'live' ? 15000 : 60000); return; }
+  if (j && j.event && j.event.status !== 'live') { gate(j.event.status, j.event); if (j.event.status === 'upcoming') setTimeout(boot, 30000); }
+  connect();
+}
+boot();
 </script></body></html>

@@ -57,7 +57,7 @@ const defaults = () => ({
   queue: [], nowPlaying: null, history: [], pool: [], poolName: '',
   themes: [], activeThemeId: null, requestsOpen: true, lists: [], autoCount: 10,
   phases: [], activePhaseId: null, autoPhases: false, announce: true, ttsVoice: '', autoFx: true,
-  linePool: [], lineEvery: 0, lastLineAt: 0, curated: {}, curatedOff: [], curatedOn: [], dinnerPool: [], trims: {}, gains: {}, endCut: 0, fade: 0, transSound: '', ratings: {}, wishes: [], calloutEvery: 10, songsSinceRequest: 0, lastCalloutAt: 0, learn: true, artistHeat: {}, eventToken: '', qrRev: 0, nowStartedAt: 0, periodReq: {},
+  linePool: [], lineEvery: 0, lastLineAt: 0, curated: {}, curatedOff: [], curatedOn: [], dinnerPool: [], trims: {}, gains: {}, endCut: 0, fade: 0, transSound: '', ratings: {}, wishes: [], calloutEvery: 10, songsSinceRequest: 0, lastCalloutAt: 0, learn: true, artistHeat: {}, eventToken: '', qrRev: 0, nowStartedAt: 0, periodReq: {}, events: [], activeEventId: null,
 });
 let state = defaults();
 try { state = { ...defaults(), ...JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) }; } catch {}
@@ -81,6 +81,44 @@ function save() {
 // Code de la soirée : inclus dans le QR, exigé pour chercher / demander / souhaiter. Se change d'un clic (dashboard) et survit aux redémarrages.
 if (!state.eventToken) { state.eventToken = crypto.randomBytes(9).toString('base64url'); save(); }
 
+// ---------- Événements (soirées datées) ----------
+// Un événement = nom, date, heures, lieu, messages, code propre et programme (périodes). Un seul est « actif » : ses périodes sont les périodes
+// en direct et son code est le code de la soirée. Sans événement, l'app fonctionne comme avant (code unique).
+const prep = { running: false }; // préparation automatique des listes (recherche Spotify)
+const PH_DEFAULTS = {
+  calm: { name: 'Souper', start: '19:00', color: '#FFD23F', requestsOpen: false, listId: 'builtin:souper', jingle: 'Bonsoir tout le monde ! DJ Vinny vous souhaite un excellent souper.' },
+  party: { name: 'Soirée', start: '22:00', color: '#FF4F7B', requestsOpen: true, listId: 'builtin:dance', jingle: '[excited] Mesdames et messieurs, la piste de danse est ouverte ! Allez, la gang, tout le monde sur la piste !' },
+};
+const newPhase = kind => ({ id: crypto.randomUUID(), intensity: kind, ...PH_DEFAULTS[kind] });
+if (!state.phases.length) { state.phases = [newPhase('calm'), newPhase('party')]; save(); } // toujours de quoi passer de Souper à Soirée, sans horaire à créer
+const clonePhases = a => (a || []).map(p => ({ ...p }));
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/, TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+function evTimes(ev) {
+  const start = new Date(ev.date + 'T' + ev.start + ':00').getTime();
+  let end = new Date(ev.date + 'T' + ev.end + ':00').getTime();
+  if (!(end > start)) end += 24 * 3600e3; // finit après minuit
+  return { start, end };
+}
+// upcoming | live | ended. « Démarrer maintenant » (startedAt) et « Terminer » (endedAt) passent avant l'horloge.
+function eventStatus(ev, now = Date.now()) {
+  if (ev.endedAt) return 'ended';
+  const { start, end } = evTimes(ev);
+  if (ev.startedAt) return now < end + 6 * 3600e3 ? 'live' : 'ended';
+  if (now >= end) return 'ended';
+  return now >= start - (ev.openBeforeMin || 0) * 60e3 ? 'live' : 'upcoming';
+}
+const activeEvent = () => state.events.find(e => e.id === state.activeEventId) || null;
+const eventByToken = t => state.events.find(e => safeEq(String(t || ''), e.token)) || null;
+const tokenFor = req => { const e = state.events.find(x => x.id === req.query.ev); return e ? e.token : state.eventToken; };
+const publicEvent = e => ({ id: e.id, name: e.name, date: e.date, start: e.start, end: e.end, place: e.place || '', welcome: e.welcome || '', thanks: e.thanks || '', status: eventStatus(e) });
+// Demandes et recherches des invités : seulement pendant que l'événement actif est en cours (sans événement actif : comme avant)
+const needLive = () => {
+  const e = activeEvent(); if (!e) return;
+  const s = eventStatus(e);
+  if (s !== 'live') throw Object.assign(new Error(s === 'ended' ? 'La soirée est terminée. Merci !' : 'La soirée n’a pas encore commencé'), { code: 403 });
+};
+
+
 // ---------- Journal de soirée : data/soirees/AAAA-MM-JJ.jsonl (une ligne par événement), pour analyser et s'améliorer ----------
 // Rien de personnel : ni adresse IP, ni nom d'invité, ni image. Une « soirée » = la journée, coupée à 6 h du matin.
 const LOG_DIR = path.join(DATA_DIR, 'soirees');
@@ -89,7 +127,7 @@ function logEvent(type, data = {}) {
   try {
     fs.mkdirSync(LOG_DIR, { recursive: true });
     const ph = state.phases.find(p => p.id === state.activePhaseId);
-    fs.appendFileSync(path.join(LOG_DIR, logDay() + '.jsonl'), JSON.stringify({ t: new Date().toISOString(), type, phase: ph ? ph.name : null, ...data }) + '\n');
+    fs.appendFileSync(path.join(LOG_DIR, logDay() + '.jsonl'), JSON.stringify({ t: new Date().toISOString(), type, phase: ph ? ph.name : null, ...(activeEvent() ? { event: activeEvent().name } : {}), ...data }) + '\n');
   } catch (e) { console.error('journal :', e.message); }
 }
 
@@ -105,6 +143,7 @@ const publicState = () => ({
   phase: state.phases.find(p => p.id === state.activePhaseId) || null,
   pool: { name: state.poolName, count: state.pool.length },
   line: { count: state.linePool.length, every: state.lineEvery }, dinner: { count: state.dinnerPool.length },
+  event: (() => { const e = activeEvent(); return e ? publicEvent(e) : null; })(), prepare: prep.running,
   qrRev: state.qrRev, trims: state.trims, gains: state.gains, endCut: state.endCut, fade: state.fade, transSound: state.transSound, calloutEvery: state.calloutEvery, learn: state.learn,
 });
 function fx(type) { // animation ponctuelle poussée sur tous les écrans (invités + dashboard)
@@ -162,6 +201,7 @@ function enqueue(song) { // après les demandes, avant les titres auto
 }
 function commit() {
   fillAuto();
+  const ae = activeEvent(); if (ae) ae.phases = clonePhases(state.phases); // le programme de l'événement actif suit les périodes en direct
   save();
   const msg = `data: ${JSON.stringify(publicState())}\n\n`;
   for (const res of clients) res.write(msg);
@@ -278,12 +318,19 @@ app.get('/host', (req, res) =>
   isHost(req) ? res.sendFile(path.join(__dirname, 'views', 'host.html')) : res.redirect('/login.html'));
 
 // Public
-const eventOk = req => safeEq(req.get('x-event') || '', state.eventToken);
+// code « actif » : celui de la soirée en cours (ou le code unique sans événement). Le code d'un autre événement n'ouvre que sa fiche et ses souhaits.
+const isActiveToken = t => { const e = eventByToken(t); return safeEq(String(t || ''), state.eventToken) && (!e || e.id === state.activeEventId); };
+const eventOk = req => isActiveToken(req.get('x-event') || '');
 const loopback = req => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.ip);
 // État et flux temps réel : l'hôte, ce PC (écran animé), ou un invité avec le code de la soirée (en-tête ou ?e=)
-const viewerOk = req => isHost(req) || loopback(req) || eventOk(req) || safeEq(String(req.query.e || ''), state.eventToken);
+const viewerOk = req => isHost(req) || loopback(req) || eventOk(req) || isActiveToken(req.query.e);
 const needEvent = req => { if (!eventOk(req)) throw Object.assign(new Error('Code de la soirée invalide : scanne à nouveau le QR'), { code: 403 }); };
-app.get('/api/state', (req, res) => viewerOk(req) ? res.json(publicState()) : res.status(403).json({ error: 'Code de la soirée invalide' }));
+app.get('/api/state', (req, res) => {
+  if (viewerOk(req)) return res.json(publicState());
+  const ev = eventByToken(req.get('x-event') || req.query.e || '');
+  if (ev) return res.json({ guestMode: eventStatus(ev), event: publicEvent(ev) });
+  res.status(403).json({ error: 'Code de la soirée invalide' });
+});
 const sseByIp = new Map();
 const dashClients = new Set(); // dashboards hôte ouverts : seuls à recevoir les commandes de la télécommande
 app.get('/api/events', (req, res) => {
@@ -300,13 +347,13 @@ app.get('/api/qr.png', requireHost, wrap(async (req, res) => { // le QR contient
   res.set('Cache-Control', 'no-store');
   const base = (PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
   const url = req.query.to === 'remote' ? base + '/remote' // la télécommande n'a pas de code : elle demande le mot de passe hôte
-    : base + (req.query.to === 'souhaits' ? '/souhaits.html' : '/') + '?e=' + state.eventToken;
+    : base + (req.query.to === 'souhaits' ? '/souhaits.html' : '/') + '?e=' + tokenFor(req);
   res.type('png').send(await QRCode.toBuffer(url, { width: 600, margin: 2 }));
 }));
 const searchCache = new Map();
 app.get('/api/search', wrap(async (req, res) => {
   if (!isHost(req)) { // les invités : code de la soirée + demandes ouvertes ; l'hôte (dashboard, télécommande) passe
-    needEvent(req);
+    needEvent(req); needLive();
     if (!state.requestsOpen) throw Object.assign(new Error('Les demandes sont fermées'), { code: 403 });
   }
   if (limited('s:all', 150, 60e3)) throw Object.assign(new Error('Beaucoup de monde : réessaie dans un instant'), { code: 429 }); // protège le quota Spotify de l'hôte
@@ -321,7 +368,7 @@ app.get('/api/search', wrap(async (req, res) => {
 }));
 app.get('/api/config', (req, res) => res.json({ provider: SPOTIFY ? 'spotify' : 'apple', spotifyClientId: SPOTIFY_CLIENT_ID || '', storefront: STOREFRONT }));
 app.post('/api/request', wrap(async (req, res) => {
-  needEvent(req);
+  needEvent(req); needLive();
   // tentatives (réussies ou non) : protège le quota Spotify de l'hôte
   if (limited('ra:all', 100, 60e3) || limited('ra:' + req.ip, 200, 10 * 60e3)) throw Object.assign(new Error('Beaucoup de monde : réessaie dans un instant'), { code: 429 });
   const { songId, guestId } = req.body || {};
@@ -425,7 +472,7 @@ function rebuildPools() {
 }
 rebuildPools();
 app.get('/api/curated', requireHost, (req, res) => res.json(curatedView()));
-app.post('/api/curated/resolve', requireHost, wrap(async (req, res) => {
+async function resolveCurated() {
   for (const e of curatedFile().entries) {
     const key = entryKey(e), prev = state.curated[key];
     if (prev && prev.status !== 'missing' && !(prev.status === 'ok' && isBad(prev.title, prev.artist, '', e.cover ? 'cover' : e.remix ? 'remix' : null))) continue;
@@ -434,7 +481,29 @@ app.post('/api/curated/resolve', requireHost, wrap(async (req, res) => {
     state.curated[key] = m.c ? { ...fromSpotify(m.c), status: m.status } : { status: 'missing' };
     await new Promise(ok => setTimeout(ok, 120));
   }
-  rebuildPools(); commit(); res.json(curatedView());
+  rebuildPools();
+}
+function validateSafe(g) { // active les titres « proposé » trouvés sûrement (statut ok), d'un groupe ou de tous
+  let n = 0;
+  for (const e of curatedView().entries) if (e.propose && e.status === 'ok' && (!g || e.group === g) && !state.curatedOn.includes(e.key)) { state.curatedOn.push(e.key); n++; }
+  rebuildPools(); return n;
+}
+// Les listes ne doivent pas arriver vides : dès que Spotify est connecté, on cherche les titres pas encore cherchés, puis on active les titres
+// sûrs d'une liste seulement si elle est maigre (une liste déjà garnie n'est pas touchée : tes choix sont respectés).
+const THIN = { dance: s => s.pool.length < 20, souper: s => s.dinnerPool.length < 20, ligne: s => s.linePool.length < 8 };
+async function autoPrepare() {
+  if (prep.running || !SPOTIFY) return;
+  const pending = curatedView().entries.some(e => e.status === 'pending');
+  if (!pending && !Object.values(THIN).some(f => f(state))) return;
+  prep.running = true; commit();
+  try {
+    if (pending) await resolveCurated();
+    for (const g of Object.keys(THIN)) if (THIN[g](state)) validateSafe(g);
+  } catch (e) { console.error('préparation des listes :', e.message); }
+  finally { prep.running = false; commit(); }
+}
+app.post('/api/curated/resolve', requireHost, wrap(async (req, res) => {
+  await resolveCurated(); commit(); res.json(curatedView());
 }));
 app.post('/api/curated/toggle', requireHost, (req, res) => {
   const k = String(req.body.key || '');
@@ -511,26 +580,43 @@ app.get('/api/ratings', requireHost, (req, res) =>
 
 // ---------- Souhaits d'avant la soirée (page publique /souhaits.html, texte libre : fonctionne sans Spotify) ----------
 app.post('/api/wish', wrap(async (req, res) => {
-  needEvent(req);
+  const ev = eventByToken(req.get('x-event') || ''); // le code de n'importe quel événement non terminé suffit : on souhaite avant la soirée
+  if (ev) { if (eventStatus(ev) === 'ended') throw Object.assign(new Error('Cet événement est terminé. Merci !'), { code: 403 }); }
+  else needEvent(req);
   const text = String(req.body.text || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   const name = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   const by = String(req.body.guestId || '');
   if (text.length < 3 || !ID_RE.test(by)) throw Object.assign(new Error('Souhait invalide'), { code: 400 });
   if (limited('w:' + req.ip, 30, 10 * 60e3)) throw Object.assign(new Error('Doucement !'), { code: 429 });
-  if (state.wishes.filter(w => w.by === by).length >= 3) throw Object.assign(new Error('3 chansons maximum par personne'), { code: 429 });
-  if (state.wishes.length >= 400) throw Object.assign(new Error('Liste de souhaits pleine'), { code: 429 });
-  state.wishes.push({ id: crypto.randomUUID(), text, name, by, at: Date.now() });
+  const evId = ev ? ev.id : (state.activeEventId || null), mine = state.wishes.filter(w => (w.ev || null) === evId);
+  if (mine.filter(w => w.by === by).length >= 3) throw Object.assign(new Error('3 chansons maximum par personne'), { code: 429 });
+  if (mine.length >= 400) throw Object.assign(new Error('Liste de souhaits pleine'), { code: 429 });
+  state.wishes.push({ id: crypto.randomUUID(), text, name, by, at: Date.now(), ev: evId });
   save(); res.json({ ok: true });
 }));
+// ?ev=ID (un événement) | all | none (sans événement) ; par défaut : l'événement actif
+const wishScope = q => {
+  const v = String((q && q.ev) || '');
+  if (v === 'all') return () => true;
+  const target = v === 'none' ? null : (v || state.activeEventId || null);
+  return w => (w.ev || null) === target;
+};
 app.get('/api/wishes', requireHost, (req, res) => {
-  const groups = new Map();
-  for (const w of state.wishes) {
-    const k = norm(w.text), g = groups.get(k) || { text: w.text, count: 0, names: [] };
-    g.count++; if (w.name && !g.names.includes(w.name)) g.names.push(w.name); groups.set(k, g);
+  const scope = wishScope(req.query), groups = new Map(); let total = 0;
+  for (const w of state.wishes.filter(scope)) {
+    total++;
+    const k = norm(w.text), g = groups.get(k) || { text: w.text, count: 0, names: [], ids: [], first: w.at, last: w.at };
+    g.count++; g.ids.push(w.id); g.first = Math.min(g.first, w.at); g.last = Math.max(g.last, w.at);
+    if (w.name && !g.names.includes(w.name)) g.names.push(w.name);
+    groups.set(k, g);
   }
-  res.json({ total: state.wishes.length, groups: [...groups.values()].sort((a, b) => b.count - a.count) });
+  res.json({ total, groups: [...groups.values()].sort((a, b) => b.count - a.count || b.last - a.last) });
 });
-app.post('/api/wishes/clear', requireHost, (req, res) => { state.wishes = []; save(); res.json({ ok: true }); });
+app.post('/api/wishes/done', requireHost, (req, res) => { // souhait traité : retire ses entrées
+  const ids = new Set((Array.isArray(req.body && req.body.ids) ? req.body.ids : []).map(String));
+  state.wishes = state.wishes.filter(w => !ids.has(w.id)); save(); res.json({ ok: true });
+});
+app.post('/api/wishes/clear', requireHost, (req, res) => { const scope = wishScope(req.body); state.wishes = state.wishes.filter(w => !scope(w)); save(); res.json({ ok: true }); });
 app.post('/api/linedance', requireHost, (req, res) => {
   const t = pickLine();
   if (!t) return res.status(400).json({ error: 'Aucune danse en ligne : utilisez d’abord la liste commentée' });
@@ -540,6 +626,7 @@ app.post('/api/linedance', requireHost, (req, res) => {
 app.post('/api/spotify/token', requireHost, (req, res) => {
   if (typeof req.body.token !== 'string' || req.body.token.length > 600) return res.status(400).json({ error: 'Token invalide' });
   spotifyToken = req.body.token; res.json({ ok: true });
+  autoPrepare().catch(() => {});
 });
 app.get('/api/dev-token', requireHost, wrap(async (req, res) => res.json({ token: devToken(), storefront: STOREFRONT })));
 app.post('/api/next', requireHost, (req, res) => {
@@ -619,7 +706,8 @@ app.post('/api/app-settings', requireHost, (req, res) => {
 });
 app.get('/api/links', requireHost, (req, res) => { // liens à partager (contiennent le code de la soirée)
   const b = (PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
-  res.json({ guests: `${b}/?e=${state.eventToken}`, wishes: `${b}/souhaits.html?e=${state.eventToken}`, remote: `${b}/remote`, public: !!PUBLIC_URL && !/^https?:\/\/(10\.|192\.168\.|127\.|localhost)/.test(PUBLIC_URL) });
+  const t = tokenFor(req);
+  res.json({ guests: `${b}/?e=${t}`, wishes: `${b}/souhaits.html?e=${t}`, remote: `${b}/remote`, public: !!PUBLIC_URL && !/^https?:\/\/(10\.|192\.168\.|127\.|localhost)/.test(PUBLIC_URL) });
 });
 app.get('/remote', (req, res) =>
   isHost(req) ? res.sendFile(path.join(__dirname, 'views', 'remote.html')) : res.redirect('/login.html?next=/remote'));
@@ -651,8 +739,10 @@ app.post('/api/remote', requireHost, (req, res) => {
   res.json({ ok: true });
 });
 app.post('/api/event/rotate', requireHost, (req, res) => { // nouveau code : les anciens QR cessent de fonctionner
-  state.eventToken = crypto.randomBytes(9).toString('base64url'); state.qrRev++;
-  commit(); res.json({ ok: true });
+  const target = state.events.find(e => e.id === (req.body && req.body.ev)), t = crypto.randomBytes(9).toString('base64url');
+  if (target) { target.token = t; if (target.id === state.activeEventId) state.eventToken = t; }
+  else { state.eventToken = t; const ae = activeEvent(); if (ae) ae.token = t; }
+  state.qrRev++; commit(); res.json({ ok: true });
 });
 app.post('/api/fx', requireHost, (req, res) => {
   if (!['confetti', 'party', 'callout'].includes(req.body.type)) return res.status(400).json({ error: 'Type inconnu' });
@@ -694,6 +784,12 @@ app.post('/api/phases', requireHost, (req, res) => {
   state.phases.push(p); state.phases.sort((a, c) => a.start.localeCompare(c.start));
   commit(); res.json({ ok: true, id: p.id });
 });
+app.post('/api/phases/ensure', requireHost, (req, res) => { // Souper / Soirée en un clic : crée la période par défaut si elle manque
+  const kind = req.body && req.body.intensity === 'calm' ? 'calm' : 'party';
+  let p = state.phases.find(x => x.intensity === kind);
+  if (!p) { p = newPhase(kind); state.phases.push(p); state.phases.sort((a, c) => a.start.localeCompare(c.start)); commit(); }
+  res.json({ id: p.id });
+});
 app.put('/api/phases/:id', requireHost, (req, res) => {
   const p = state.phases.find(x => x.id === req.params.id);
   if (!p) return res.status(404).json({ error: 'Période introuvable' });
@@ -714,6 +810,86 @@ app.post('/api/phases/:id/activate', requireHost, (req, res) => {
   if (state.autoFx && p.intensity === 'party') fx('party');
   res.json({ ok: true, jingle: p.jingle || '', intensity: p.intensity, color: p.color, listId: p.listId });
 });
+
+// ---------- API des événements (hôte) ----------
+const evFields = (b, ev) => {
+  if (typeof b.name === 'string' && b.name.trim()) ev.name = b.name.trim().slice(0, 60);
+  if (DATE_RE.test(b.date || '')) ev.date = b.date;
+  if (TIME_RE.test(b.start || '')) ev.start = b.start;
+  if (TIME_RE.test(b.end || '')) ev.end = b.end;
+  if (typeof b.place === 'string') ev.place = b.place.trim().slice(0, 80);
+  if (typeof b.welcome === 'string') ev.welcome = b.welcome.trim().slice(0, 300);
+  if (typeof b.thanks === 'string') ev.thanks = b.thanks.trim().slice(0, 300);
+  if (Number.isInteger(b.openBeforeMin) && b.openBeforeMin >= 0 && b.openBeforeMin <= 360) ev.openBeforeMin = b.openBeforeMin;
+  if (typeof b.auto === 'boolean') ev.auto = b.auto;
+};
+const freshIds = a => clonePhases(a).map(p => ({ ...p, id: crypto.randomUUID() }));
+function activateEvent(ev) {
+  const prev = activeEvent();
+  if (prev && prev.id !== ev.id) prev.phases = clonePhases(state.phases); // le programme de l'événement quitté est gardé tel quel
+  state.activeEventId = ev.id; state.eventToken = ev.token; state.qrRev++;
+  if (ev.phases && ev.phases.length) state.phases = clonePhases(ev.phases); else ev.phases = clonePhases(state.phases);
+  if (!state.phases.some(p => p.id === state.activePhaseId)) state.activePhaseId = null;
+  state.periodReq = {}; ev.closed = false;
+  // demandes : fermées avant l'heure ; pendant l'événement, selon la période en cours (ouvertes s'il n'y en a pas encore)
+  state.requestsOpen = eventStatus(ev) === 'live' ? (state.phases.find(p => p.id === state.activePhaseId) || { requestsOpen: true }).requestsOpen : false;
+  logEvent('event', { action: 'activate' });
+}
+const evById = (req, res) => { const ev = state.events.find(e => e.id === req.params.id); if (!ev) res.status(404).json({ error: 'Événement introuvable' }); return ev; };
+app.get('/api/evts', requireHost, (req, res) => {
+  const now = Date.now();
+  res.json({ now, activeId: state.activeEventId, events: state.events.map(e => ({ ...e, phases: undefined, phaseCount: (e.phases || []).length, status: eventStatus(e, now), wishCount: state.wishes.filter(w => w.ev === e.id).length }))
+    .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)) });
+});
+app.post('/api/evts', requireHost, (req, res) => {
+  const b = req.body || {};
+  if (!b.name || !DATE_RE.test(b.date || '') || !TIME_RE.test(b.start || '') || !TIME_RE.test(b.end || '')) return res.status(400).json({ error: 'Nom, date, heure de début et heure de fin requis' });
+  if (state.events.length >= 100) return res.status(400).json({ error: 'Trop d’événements : supprime les anciens' });
+  const src = b.copyFrom && state.events.find(e => e.id === b.copyFrom);
+  const phases = b.program === 'default' ? [newPhase('calm'), newPhase('party')] : freshIds(src ? (src.id === state.activeEventId ? state.phases : src.phases) : state.phases);
+  const ev = { id: crypto.randomUUID(), name: '', date: '', start: '', end: '', place: '', welcome: '', thanks: 'Merci d’être venus, la gang ! À la prochaine !', openBeforeMin: 30, auto: true,
+    token: !state.events.length && !state.activeEventId ? state.eventToken : crypto.randomBytes(9).toString('base64url'), phases, createdAt: Date.now() };
+  evFields(b, ev);
+  state.events.push(ev); commit(); res.json({ ok: true, id: ev.id });
+});
+app.put('/api/evts/:id', requireHost, (req, res) => {
+  const ev = evById(req, res); if (!ev) return;
+  evFields(req.body || {}, ev); commit(); res.json({ ok: true });
+});
+app.delete('/api/evts/:id', requireHost, (req, res) => {
+  const ev = evById(req, res); if (!ev) return;
+  state.events = state.events.filter(e => e.id !== ev.id); state.wishes = state.wishes.filter(w => w.ev !== ev.id);
+  if (state.activeEventId === ev.id) state.activeEventId = null; // le code reste valable comme code unique, comme avant les événements
+  commit(); res.json({ ok: true });
+});
+app.post('/api/evts/:id/activate', requireHost, (req, res) => { const ev = evById(req, res); if (!ev) return; activateEvent(ev); commit(); res.json({ ok: true }); });
+app.post('/api/evts/:id/start', requireHost, (req, res) => { const ev = evById(req, res); if (!ev) return; ev.startedAt = Date.now(); delete ev.endedAt; activateEvent(ev); commit(); res.json({ ok: true }); });
+app.post('/api/evts/:id/end', requireHost, (req, res) => {
+  const ev = evById(req, res); if (!ev) return;
+  ev.endedAt = Date.now(); ev.closed = true; if (ev.id === state.activeEventId) state.requestsOpen = false;
+  commit(); res.json({ ok: true });
+});
+app.post('/api/evts/:id/duplicate', requireHost, (req, res) => {
+  const src = evById(req, res); if (!src) return;
+  const b = req.body || {};
+  if (!DATE_RE.test(b.date || '')) return res.status(400).json({ error: 'Date requise (AAAA-MM-JJ)' });
+  const ev = { ...JSON.parse(JSON.stringify(src)), id: crypto.randomUUID(), token: crypto.randomBytes(9).toString('base64url'), date: b.date, createdAt: Date.now(),
+    name: (typeof b.name === 'string' && b.name.trim() ? b.name.trim() : src.name).slice(0, 60), phases: freshIds(src.id === state.activeEventId ? state.phases : src.phases) };
+  delete ev.startedAt; delete ev.endedAt; delete ev.closed;
+  state.events.push(ev); commit(); res.json({ ok: true, id: ev.id });
+});
+// Toutes les 30 s : ferme les demandes à la fin de l'événement actif ; ouvre (active) un événement dont l'heure est venue
+function eventTick() {
+  const now = Date.now(), ae = activeEvent(); let changed = false;
+  if (ae && eventStatus(ae, now) === 'ended' && !ae.closed) { ae.closed = true; state.requestsOpen = false; changed = true; }
+  if (!ae || eventStatus(ae, now) === 'ended') {
+    const next = state.events.find(e => e.auto !== false && e.id !== state.activeEventId && eventStatus(e, now) === 'live');
+    if (next) { activateEvent(next); changed = true; }
+  }
+  if (changed) commit();
+}
+setInterval(eventTick, 30000).unref();
+eventTick();
 
 // ---------- Voix & jingles (ElevenLabs via OpenRouter) ----------
 const TTS_DIR = path.join(DATA_DIR, 'tts');

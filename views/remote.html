@@ -27,6 +27,8 @@
   textarea:focus { border-color: var(--accent); outline: none; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; } .chips button { min-height: 40px; font-size: 14px; padding: 0 14px; }
   .toastr { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--chip); border: 2px solid var(--line); padding: 10px 18px; border-radius: 999px; font-weight: 700; z-index: 30; max-width: 92vw; }
+  .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; } .modes button { min-height: 62px; font-size: 18px; }
+  .modes button:not(.cur) { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
 </style></head>
 <body><div class="bg-anim"></div>
 <div class="wrap">
@@ -42,7 +44,7 @@
     <p class="muted" id="startNote"></p>
   </div>
 
-  <div class="card"><h2>Période</h2><div class="ph" id="phases"></div></div>
+  <div class="card"><h2>Période</h2><div class="modes"><button id="mCalm">🍽️ Souper</button><button id="mParty">🪩 Soirée</button></div><div class="ph" id="phases"></div></div>
 
   <div class="card"><h2>File d’attente <span class="muted" id="qn"></span></h2>
     <ul class="q" id="queue" style="padding:0;margin:0"></ul>
@@ -89,6 +91,7 @@ function render() {
   $('np').innerHTML = n ? '<b>' + esc(n.title) + '</b><span>' + esc(n.artist) + '</span>' : '<span>Rien en lecture</span>';
   $('phases').innerHTML = state.phases.map(p => '<button class="ghost' + (state.phase && state.phase.id === p.id ? ' cur' : '') + '" data-ph="' + esc(p.id) + '">' + (p.intensity === 'party' ? '🪩 ' : '🍽️ ') + esc(p.start + ' ' + p.name) + '</button>').join('') || '<span class="muted">Aucune période.</span>';
   $('qn').textContent = '(' + state.queue.length + ')';
+  const cur = state.phase && state.phase.intensity; $('mCalm').classList.toggle('cur', cur === 'calm'); $('mParty').classList.toggle('cur', cur === 'party');
   const tag = s => ({ guest: 'invité', line: 'danse en ligne', auto: 'auto' }[s.source] || 'hôte');
   $('queue').innerHTML = state.queue.map(s => '<li class="row" data-uid="' + esc(s.uid) + '"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span>' + esc(s.artist) + '<em class="tag">' + tag(s) + '</em></span></div>'
     + '<div class="btns"><button class="mini" data-act="top">⏫</button><button class="mini" data-act="up">▲</button><button class="mini" data-act="down">▼</button><button class="mini" data-act="del">✕</button></div></li>').join('') || '<p class="muted">File vide.</p>';
@@ -101,6 +104,8 @@ $('queue').onclick = async e => {
   api('/api/queue/reorder', 'POST', { uids: ids }).catch(() => {});
 };
 $('phases').onclick = e => { const b = e.target.closest('button[data-ph]'); if (b && confirm('Lancer « ' + b.textContent.trim() + ' » ?')) cmd({ cmd: 'phase', id: b.dataset.ph }, 'Période lancée'); };
+const modeBtn = kind => () => { const p = (state.phases || []).find(x => x.intensity === kind); if (!p) return say('Crée d’abord une période de ce type dans le dashboard'); if (state.phase && state.phase.id === p.id) return say('Déjà en mode ' + (kind === 'calm' ? 'Souper' : 'Soirée')); cmd({ cmd: 'phase', id: p.id }, kind === 'calm' ? 'Mode Souper' : 'Mode Soirée'); };
+$('mCalm').onclick = modeBtn('calm'); $('mParty').onclick = modeBtn('party');
 $('bStart').onclick = () => cmd({ cmd: 'start' }, 'Démarrage de la soirée…');
 const gainBtn = step => () => { const n = state && state.nowPlaying; if (!n) return say('Rien en lecture'); api('/api/gain', 'POST', { songId: n.songId, step }).then(r => { buzz(); say('Volume de ce titre : ' + (r.gain > 0 ? '+' : '') + String(r.gain).replace('.', ',') + ' dB'); }).catch(() => {}); };
 $('bQuiet').onclick = gainBtn(-1); $('bLoud').onclick = gainBtn(1);
