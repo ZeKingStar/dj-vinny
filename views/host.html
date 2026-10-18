@@ -290,18 +290,26 @@ const JINGLES = {
     const p = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'square' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.4 }, volume: -16 }).toDestination();
     p.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '4n', t + 1.6); p.triggerAttackRelease(['C4', 'F4', 'A4', 'C5'], '4n', t + 2.4); return [nz, f, k, p]; } },
 };
+// Baisse temporaire de la musique (annonce, jingle). Plusieurs baisses peuvent se chevaucher, et un fondu peut tourner en même temps :
+// le volume « voulu » est gardé dans duckSaved et remis une seule fois, à la fin de la dernière baisse (sinon la musique restait coincée très bas).
+let duckN = 0, duckSaved = 1;
+function duckStart(level) {
+  if (!music) return false;
+  if (duckN === 0) { if (!music.isPlaying) return false; duckSaved = music.volume; }
+  duckN++; music.volume = Math.min(duckSaved, level); return true;
+}
+function duckEnd() { if (--duckN <= 0) { duckN = 0; if (music) music.volume = duckSaved; } }
+const setVol = v => { if (duckN > 0) duckSaved = v; else music.volume = v; }; // volume voulu : appliqué après la baisse en cours s'il y en a une
 async function playSynth(name) {
   const j = JINGLES[name]; if (!j || typeof Tone === 'undefined') return;
   await Tone.start();
-  const vol = music ? music.volume : 1, duck = music && music.isPlaying;
+  const duck = duckStart(0.25); // baisse la musique pendant le jingle
   busyN++;
   try {
-    if (duck) music.volume = Math.min(vol, 0.25); // baisse la musique pendant le jingle
     const nodes = j.run(Tone.now() + 0.05);
     await new Promise(done => setTimeout(done, j.ms));
-    if (duck) music.volume = vol;
     nodes.forEach(n => n.dispose());
-  } finally { busyN--; }
+  } finally { busyN--; if (duck) duckEnd(); }
 }
 // Sons enregistrés (dossier sounds/, voir sounds.json) ; la synthèse Tone.js ne sert plus que de secours
 let SOUNDS = {};
@@ -309,13 +317,12 @@ fetch('/sounds/sounds.json').then(r => (r.ok ? r.json() : {})).then(j => { SOUND
 async function playJingle(name) {
   const files = SOUNDS[name];
   if (!files || !files.length) return playSynth(name);
-  const vol = music ? music.volume : 1, duck = music && music.isPlaying;
+  const duck = duckStart(0.25); // baisse la musique pendant le son
   busyN++;
   try {
-    if (duck) music.volume = Math.min(vol, 0.25); // baisse la musique pendant le son
     const a = new Audio('/sounds/' + files[Math.floor(Math.random() * files.length)]);
     await new Promise(done => { a.onended = done; a.onerror = done; a.play().catch(done); setTimeout(done, 15000); });
-  } finally { busyN--; if (duck) music.volume = vol; }
+  } finally { busyN--; if (duck) duckEnd(); }
 }
 $('jingles').onclick = e => { const b = e.target.closest('button[data-j]'); if (b) playJingle(b.dataset.j); };
 
@@ -324,13 +331,12 @@ const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ko) => setTimeou
 let busyN = 0, busyUntil = 0; // sons de l'app en cours (annonce, jingle) : le garde-fou de silence ne doit pas les confondre avec un arrêt
 const audioEl = new Audio();
 async function playUrl(url) {
-  const vol = music ? music.volume : 1, duck = music && music.isPlaying;
+  const duck = duckStart(0.2); // baisse la musique pendant l'annonce
   busyN++;
   try {
-    if (duck) music.volume = Math.min(vol, 0.2); // baisse la musique pendant l'annonce
     audioEl.src = url;
     await new Promise(done => { audioEl.onended = done; audioEl.onerror = done; audioEl.play().catch(done); setTimeout(done, 30000); });
-  } finally { busyN--; if (duck) music.volume = vol; }
+  } finally { busyN--; if (duck) duckEnd(); }
 }
 async function speak(text) {
   if (!text || !state || !state.tts) return;
@@ -367,8 +373,8 @@ $('announce').onchange = e => api('/api/settings', 'POST', { announce: e.target.
 // Fondu de volume (le lecteur Spotify ne joue qu'un titre à la fois : pas de chevauchement, mais un fondu sortant puis entrant)
 function fadeTo(target, sec) {
   return new Promise(done => {
-    const from = music.volume, t0 = Date.now(), tm = setInterval(() => {
-      const k = Math.min(1, (Date.now() - t0) / (sec * 1000)); music.volume = from + (target - from) * k;
+    const from = duckN > 0 ? duckSaved : music.volume, t0 = Date.now(), tm = setInterval(() => {
+      const k = Math.min(1, (Date.now() - t0) / (sec * 1000)); setVol(from + (target - from) * k);
       if (k >= 1) { clearInterval(tm); done(); }
     }, 100);
   });
@@ -389,14 +395,13 @@ function applyTrackGain() { // réglage « Trop fort / Trop faible » appliqué 
   const n = state && state.nowPlaying; if (!music || !n || music.baseVol === undefined) return;
   const b = trackBase(n.songId), old = music.baseVol;
   if (Math.abs(b - old) < 0.001) return;
-  music.baseVol = b; if (Math.abs(music.volume - old) < 0.03) music.volume = b; // pas pendant un fondu ou une annonce
+  music.baseVol = b; if (Math.abs((duckN > 0 ? duckSaved : music.volume) - old) < 0.03) setVol(b); // pas pendant un fondu ou une annonce
 }
 async function startTrack(n) {
   music.baseVol = trackBase(n.songId);
   music.startAt = Date.now(); music.sawPlaying = false; music.userPaused = false; // suivi du démarrage pour le garde-fou
-  if (music.resetVolume) music.resetVolume();
   const fade = state.fade || 0;
-  if (fade > 0) music.volume = 0; // le titre démarre à zéro puis monte
+  setVol(fade > 0 ? 0 : music.baseVol); // le titre démarre à zéro puis monte (ou directement au volume de base)
   await music.setQueue({ song: n.songId }); await music.play();
   if (fade > 0) fadeTo(music.baseVol, fade);
   const t = state.trims[n.songId]; // début mémorisé : on saute l'intro silencieuse
