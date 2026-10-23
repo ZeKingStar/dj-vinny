@@ -85,12 +85,16 @@ if (!state.eventToken) { state.eventToken = crypto.randomBytes(9).toString('base
 // Un événement = nom, date, heures, lieu, messages, code propre et programme (périodes). Un seul est « actif » : ses périodes sont les périodes
 // en direct et son code est le code de la soirée. Sans événement, l'app fonctionne comme avant (code unique).
 const prep = { running: false }; // préparation automatique des listes (recherche Spotify)
+const OLD_FLOOR_JINGLE = '[excited] Mesdames et messieurs, la piste de danse est ouverte ! Allez, la gang, tout le monde sur la piste !';
+const FLOOR_JINGLE = 'Mesdames et messieurs, la piste de danse est officiellement ouverte ! Vos demandes spéciales, c’est le code QR sur l’écran. Pis si une toune vide la piste, pas de panique : on passe à une autre, vite vite ! Allez, la gang, on danse !';
 const PH_DEFAULTS = {
   calm: { name: 'Souper', start: '19:00', color: '#FFD23F', requestsOpen: false, listId: 'builtin:souper', jingle: 'Bonsoir tout le monde ! DJ Vinny vous souhaite un excellent souper.' },
-  party: { name: 'Soirée', start: '22:00', color: '#FF4F7B', requestsOpen: true, listId: 'builtin:dance', jingle: '[excited] Mesdames et messieurs, la piste de danse est ouverte ! Allez, la gang, tout le monde sur la piste !' },
+  party: { name: 'Soirée', start: '22:00', color: '#FF4F7B', requestsOpen: true, listId: 'builtin:dance', openAt: 0, openFade: 10, jingle: FLOOR_JINGLE },
 };
 const newPhase = kind => ({ id: crypto.randomUUID(), intensity: kind, ...PH_DEFAULTS[kind] });
 if (!state.phases.length) { state.phases = [newPhase('calm'), newPhase('party')]; save(); } // toujours de quoi passer de Souper à Soirée, sans horaire à créer
+// ancienne phrase par défaut de la Soirée : remplacée par l'annonce complète (piste ouverte, demandes, on change vite si ça vide la piste)
+for (const p of [...state.phases, ...state.events.flatMap(e => e.phases || [])]) if (p.jingle === OLD_FLOOR_JINGLE) p.jingle = FLOOR_JINGLE;
 const clonePhases = a => (a || []).map(p => ({ ...p }));
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/, TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 function evTimes(ev) {
@@ -483,24 +487,43 @@ async function resolveCurated() {
   }
   rebuildPools();
 }
-function validateSafe(g) { // active les titres « proposé » trouvés sûrement (statut ok), d'un groupe ou de tous
+// titre « proposé » trouvé sûrement (statut ok), ni activé ni retiré par l'hôte (un titre retiré avec ✕ est noté dans curatedOff et reste retiré)
+const safeToValidate = (e, g) => e.propose && e.status === 'ok' && (!g || e.group === g) && !state.curatedOn.includes(e.key) && !state.curatedOff.includes(e.key);
+function validateSafe(g) { // active les titres sûrs d'un groupe ou de tous
   let n = 0;
-  for (const e of curatedView().entries) if (e.propose && e.status === 'ok' && (!g || e.group === g) && !state.curatedOn.includes(e.key)) { state.curatedOn.push(e.key); n++; }
+  for (const e of curatedView().entries) if (safeToValidate(e, g)) { state.curatedOn.push(e.key); n++; }
   rebuildPools(); return n;
 }
-// Les listes ne doivent pas arriver vides : dès que Spotify est connecté, on cherche les titres pas encore cherchés, puis on active les titres
-// sûrs d'une liste seulement si elle est maigre (une liste déjà garnie n'est pas touchée : tes choix sont respectés).
-const THIN = { dance: s => s.pool.length < 20, souper: s => s.dinnerPool.length < 20, ligne: s => s.linePool.length < 8 };
+// Rien à valider à la main : dès que Spotify est connecté, on cherche les titres pas encore cherchés, puis on active tous les titres sûrs.
+// Les titres incertains (?) attendent l'hôte, et ceux qu'il a retirés ne reviennent pas.
 async function autoPrepare() {
   if (prep.running || !SPOTIFY) return;
-  const pending = curatedView().entries.some(e => e.status === 'pending');
-  if (!pending && !Object.values(THIN).some(f => f(state))) return;
+  const v = curatedView(), pending = v.entries.some(e => e.status === 'pending');
+  if (!pending && !v.entries.some(e => safeToValidate(e))) return;
   prep.running = true; commit();
   try {
     if (pending) await resolveCurated();
-    for (const g of Object.keys(THIN)) if (THIN[g](state)) validateSafe(g);
+    const n = validateSafe();
+    if (n) console.log('Titres sûrs activés automatiquement :', n);
   } catch (e) { console.error('préparation des listes :', e.message); }
   finally { prep.running = false; commit(); }
+}
+// Chanson d'ouverture par défaut de la Soirée : Levels (Avicii), version radio de préférence. Cherchée sur Spotify une seule fois par période
+// dansante sans chanson choisie (openDefaulted : si l'hôte la retire ensuite, on ne la remet pas).
+const DEFAULT_OPENER = [{ title: 'Levels Radio Edit', artist: 'Avicii', q: 'Levels Radio Edit Avicii' }, { title: 'Levels', artist: 'Avicii', q: 'Levels Avicii' }];
+const needsOpener = () => [...state.phases, ...state.events.flatMap(e => e.phases || [])].filter(p => p.intensity === 'party' && !p.open && !p.openDefaulted);
+async function ensureDefaultOpener() {
+  if (!SPOTIFY || !spotifyToken || !needsOpener().length) return;
+  let found = null;
+  for (const e of DEFAULT_OPENER) {
+    const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${STOREFRONT.toUpperCase()}&q=${encodeURIComponent(e.q)}`);
+    const m = pickMatch(e, (r.tracks && r.tracks.items) || []);
+    if (m.status === 'ok') { found = fromSpotify(m.c); break; }
+  }
+  if (!found) return console.warn('Chanson d’ouverture par défaut introuvable sur Spotify (Levels, Avicii)');
+  for (const p of needsOpener()) { p.open = found; p.openDefaulted = true; if (p.openAt == null) p.openAt = 0; if (!p.openFade) p.openFade = 10; }
+  console.log('Chanson d’ouverture par défaut :', found.title, '—', found.artist);
+  commit();
 }
 app.post('/api/curated/resolve', requireHost, wrap(async (req, res) => {
   await resolveCurated(); commit(); res.json(curatedView());
@@ -508,14 +531,16 @@ app.post('/api/curated/resolve', requireHost, wrap(async (req, res) => {
 app.post('/api/curated/toggle', requireHost, (req, res) => {
   const k = String(req.body.key || '');
   const e = curatedFile().entries.find(x => entryKey(x) === k), flip = (a) => (a.includes(k) ? a.filter(x => x !== k) : [...a, k]);
-  if (e && e.propose) state.curatedOn = flip(state.curatedOn); else state.curatedOff = flip(state.curatedOff);
+  if (e && e.propose) { // « proposé » : retiré -> noté dans curatedOff pour que la validation automatique ne le remette pas
+    const on = !state.curatedOn.includes(k);
+    state.curatedOn = on ? [...state.curatedOn, k] : state.curatedOn.filter(x => x !== k);
+    state.curatedOff = on ? state.curatedOff.filter(x => x !== k) : [...new Set([...state.curatedOff, k])];
+  } else state.curatedOff = flip(state.curatedOff);
   rebuildPools(); commit(); res.json(curatedView());
 });
 app.post('/api/curated/validate', requireHost, (req, res) => { // valide d'un coup les titres « proposé » dont la recherche Spotify est sûre (statut ok)
-  const g = ['dance', 'ligne', 'souper'].includes(req.body.group) ? req.body.group : null;
-  let n = 0;
-  for (const e of curatedView().entries) if (e.propose && e.status === 'ok' && (!g || e.group === g) && !state.curatedOn.includes(e.key)) { state.curatedOn.push(e.key); n++; }
-  rebuildPools(); commit(); res.json({ validated: n, ...curatedView() });
+  const n = validateSafe(['dance', 'ligne', 'souper'].includes(req.body.group) ? req.body.group : null);
+  commit(); res.json({ validated: n, ...curatedView() });
 });
 app.post('/api/curated/use', requireHost, (req, res) => { // conservé pour compatibilité : les réserves se recalculent déjà seules
   rebuildPools(); state.lastLineAt = Date.now(); commit();
@@ -626,11 +651,12 @@ app.post('/api/linedance', requireHost, (req, res) => {
 app.post('/api/spotify/token', requireHost, (req, res) => {
   if (typeof req.body.token !== 'string' || req.body.token.length > 600) return res.status(400).json({ error: 'Token invalide' });
   spotifyToken = req.body.token; res.json({ ok: true });
+  ensureDefaultOpener().catch(e => console.error('chanson d’ouverture :', e.message));
   autoPrepare().catch(() => {});
 });
 app.get('/api/dev-token', requireHost, wrap(async (req, res) => res.json({ token: devToken(), storefront: STOREFRONT })));
 app.post('/api/next', requireHost, (req, res) => {
-  advanceWhy = ['skip', 'camera', 'start'].includes(req.body && req.body.why) ? req.body.why : 'end';
+  advanceWhy = ['skip', 'camera', 'start', 'phase'].includes(req.body && req.body.why) ? req.body.why : 'end';
   const nowPlaying = advance(), callout = calloutPending; calloutPending = false;
   res.json({ nowPlaying, callout });
 });
@@ -732,6 +758,7 @@ app.post('/api/remote', requireHost, (req, res) => {
     if (text.length < 2) return res.status(400).json({ error: 'Message vide' });
     msg = { cmd: 'say', text };
   } else if (b.cmd === 'jingle' && REMOTE_JINGLES.includes(b.name)) msg = { cmd: 'jingle', name: b.name };
+  else if (b.cmd === 'moment' && ['open', 'close'].includes(b.src)) msg = { cmd: 'moment', src: b.src }; // mot d'ouverture / dernière toune de Vinny
   else if (b.cmd === 'phase' && state.phases.some(p => p.id === b.id)) msg = { cmd: 'phase', id: b.id };
   else return res.status(400).json({ error: 'Commande inconnue' });
   if (!dashClients.size) return res.status(409).json({ error: 'Le dashboard n’est pas ouvert sur l’ordinateur' });
@@ -774,6 +801,11 @@ function phaseFields(b, p) {
   if (typeof b.jingle === 'string') p.jingle = b.jingle.slice(0, 300);
   if (/^#[0-9a-f]{6}$/i.test(b.color || '')) p.color = b.color;
   if (typeof b.listId === 'string' && validList(b.listId)) p.listId = b.listId;
+  // chanson d'ouverture (période dansante) : un vrai titre, lancé à openAt secondes et monté en fondu sur openFade secondes
+  if (b.open === null) { delete p.open; p.openDefaulted = true; } // retirée par l'hôte : Levels ne revient pas toute seule
+  else if (b.open && SONG_ID_RE.test(String(b.open.songId))) p.openDefaulted = true, p.open = { songId: String(b.open.songId), title: String(b.open.title || '').slice(0, 200), artist: String(b.open.artist || '').slice(0, 200), artwork: String(b.open.artwork || '').slice(0, 300) };
+  if (typeof b.openAt === 'number' && b.openAt >= 0 && b.openAt <= 900) p.openAt = Math.round(b.openAt * 10) / 10;
+  if (typeof b.openFade === 'number' && b.openFade >= 2 && b.openFade <= 30) p.openFade = b.openFade;
 }
 app.post('/api/phases', requireHost, (req, res) => {
   const b = req.body || {};
@@ -802,13 +834,27 @@ app.delete('/api/phases/:id', requireHost, (req, res) => {
   if (state.activePhaseId === req.params.id) state.activePhaseId = null;
   commit(); res.json({ ok: true });
 });
-app.post('/api/phases/:id/activate', requireHost, (req, res) => {
+app.post('/api/phases/:id/activate', requireHost, async (req, res) => {
   const p = state.phases.find(x => x.id === req.params.id);
   if (!p) return res.status(404).json({ error: 'Période introuvable' });
+  if (p.intensity === 'party' && !p.open) await ensureDefaultOpener().catch(() => {}); // Levels pas encore trouvée : dernier essai avant d'ouvrir la piste
   state.activePhaseId = p.id; state.requestsOpen = p.requestsOpen; state.periodReq = {}; logEvent('phase', { name: p.name, intensity: p.intensity }); // nouvelle période : les compteurs par IP repartent à zéro
+  // ouverture de la piste (période dansante, musique déjà en cours) : le dashboard enchaîne aussitôt en fondu sur la chanson choisie,
+  // ou, sans chanson choisie, sur le premier titre de la liste dance (on ne reste jamais sur la toune du souper)
+  let opener = !!(req.body && req.body.opener && p.intensity === 'party');
+  if (opener) {
+    if (p.open) {
+      state.queue = state.queue.filter(s => s.songId !== p.open.songId || s.source !== 'auto');
+      state.queue.unshift({ uid: crypto.randomUUID(), ...p.open, by: 'host', source: 'host', opener: { at: p.openAt || 0, fade: p.openFade || 10 } });
+    } else {
+      fillAuto(); // la file auto passe tout de suite à la liste de la période
+      if (state.queue[0]) state.queue[0].opener = { at: (state.trims[state.queue[0].songId] || {}).start || 0, fade: p.openFade || 10 };
+      else opener = false;
+    }
+  }
   commit();
   if (state.autoFx && p.intensity === 'party') fx('party');
-  res.json({ ok: true, jingle: p.jingle || '', intensity: p.intensity, color: p.color, listId: p.listId });
+  res.json({ ok: true, jingle: p.jingle || '', intensity: p.intensity, color: p.color, listId: p.listId, opener });
 });
 
 // ---------- API des événements (hôte) ----------
@@ -875,13 +921,21 @@ app.post('/api/evts/:id/duplicate', requireHost, (req, res) => {
   if (!DATE_RE.test(b.date || '')) return res.status(400).json({ error: 'Date requise (AAAA-MM-JJ)' });
   const ev = { ...JSON.parse(JSON.stringify(src)), id: crypto.randomUUID(), token: crypto.randomBytes(9).toString('base64url'), date: b.date, createdAt: Date.now(),
     name: (typeof b.name === 'string' && b.name.trim() ? b.name.trim() : src.name).slice(0, 60), phases: freshIds(src.id === state.activeEventId ? state.phases : src.phases) };
-  delete ev.startedAt; delete ev.endedAt; delete ev.closed;
+  delete ev.startedAt; delete ev.endedAt; delete ev.closed; delete ev.liveAt;
   state.events.push(ev); commit(); res.json({ ok: true, id: ev.id });
 });
 // Toutes les 30 s : ferme les demandes à la fin de l'événement actif ; ouvre (active) un événement dont l'heure est venue
 function eventTick() {
   const now = Date.now(), ae = activeEvent(); let changed = false;
   if (ae && eventStatus(ae, now) === 'ended' && !ae.closed) { ae.closed = true; state.requestsOpen = false; changed = true; }
+  // début réel de l'événement actif (heure d'ouverture atteinte ou « Démarrer maintenant ») : le programme repart à sa première période,
+  // pour que les essais faits avant (ex. Soirée lancée en test) ne restent pas actifs, et les demandes suivent cette période
+  if (ae && eventStatus(ae, now) === 'live' && !ae.liveAt) {
+    ae.liveAt = now; const first = state.phases[0];
+    if (first) state.activePhaseId = first.id;
+    state.requestsOpen = (first || { requestsOpen: true }).requestsOpen; state.periodReq = {}; changed = true;
+    logEvent('event', { action: 'live', phase: first ? first.name : null });
+  }
   if (!ae || eventStatus(ae, now) === 'ended') {
     const next = state.events.find(e => e.auto !== false && e.id !== state.activeEventId && eventStatus(e, now) === 'live');
     if (next) { activateEvent(next); changed = true; }
@@ -944,20 +998,24 @@ app.post('/api/announce', requireHost, wrap(async (req, res) => {
   const c = cfg[phase && phase.intensity === 'calm' ? 'calm' : 'party'];
   const title = cleanTitle(req.body.title), artist = cleanTitle(req.body.artist);
   const isCallout = req.body.source === 'callout', moment = ['open', 'close'].includes(req.body.source) ? req.body.source : null;
-  if (!title && !isCallout && !moment) throw Object.assign(new Error('Titre manquant'), { code: 400 });
+  const phaseLine = req.body.source === 'phase' ? (phase && phase.jingle) || '' : null; // phrase de la période active (ex. ouverture de la piste)
+  if (phaseLine === '') throw Object.assign(new Error('Aucune phrase pour la période active'), { code: 400 });
+  if (!title && !isCallout && !moment && !phaseLine) throw Object.assign(new Error('Titre manquant'), { code: 400 });
   const name = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   // prénom -> « demande spéciale de X » ; demande sans prénom -> « en demande spéciale » ; autre titre -> annonce simple
-  const tpls = moment && c[moment] ? c[moment] : isCallout ? (c.callout || ['Une demande spéciale ? Scannez le code QR.']) : req.body.source === 'line' && c.line ? c.line : name ? c.named : req.body.source === 'guest' ? c.anon : c.plain;
+  const tpls = phaseLine ? [phaseLine] : moment && c[moment] ? c[moment] : isCallout ? (c.callout || ['Une demande spéciale ? Scannez le code QR.']) : req.body.source === 'line' && c.line ? c.line : name ? c.named : req.body.source === 'guest' ? c.anon : c.plain;
   const text = fill(pick(tpls), { title, artist, name });
   console.log('Annonce :', text);
   const { file } = await synth(text, { model: cfg.model, voice: c.voice || cfg.voice, voiceSettings: c.voiceSettings || null });
 
-  const key = sha([file, c.tempo, c.reverb, c.ratio, c.presence, c.lufs]);
+  const key = sha(['v2', file, c.tempo, c.reverb, c.ratio, c.presence, c.lufs]);
   const out = path.join(TTS_DIR, key + '.mp3');
   if (!fs.existsSync(out)) {
+    // voix naturelle : pas de filtre « radio » ; vitesse, reverb et présence seulement si announce.json les demande (1 / 0 / 0 = voix brute).
+    // Restent un coupe-bas (grondement des haut-parleurs), une compression douce et le volume normalisé pour passer par-dessus la musique.
     const decays = REVERB.map(d => (d * c.reverb).toFixed(3)).join('|');
-    const af = [`atempo=${c.tempo}`, 'highpass=f=160', 'lowpass=f=8000', `equalizer=f=3500:t=q:w=1.1:g=${c.presence}`, 'equalizer=f=200:t=q:w=1:g=2',
-      `acompressor=threshold=-24dB:ratio=${c.ratio}:attack=3:release=60:makeup=6`, `aecho=0.85:0.9:19|37|53|79|109|151:${decays}`, `loudnorm=I=${c.lufs}:TP=-1.5`].join(',');
+    const af = [c.tempo && c.tempo !== 1 && `atempo=${c.tempo}`, 'highpass=f=90', c.presence > 0 && `equalizer=f=3500:t=q:w=1.1:g=${c.presence}`,
+      `acompressor=threshold=-20dB:ratio=${c.ratio || 2}:attack=8:release=120:makeup=2`, c.reverb > 0 && `aecho=0.85:0.9:19|37|53|79|109|151:${decays}`, `loudnorm=I=${c.lufs}:TP=-1.5`].filter(Boolean).join(',');
     try {
       await new Promise((ok, ko) => require('child_process').execFile('ffmpeg',
         ['-hide_banner', '-loglevel', 'error', '-y', '-i', file, '-af', af, '-ar', '44100', '-b:a', '160k', out], { maxBuffer: 1e7, timeout: 15000 }, e => (e ? ko(e) : ok())));

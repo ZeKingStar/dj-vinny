@@ -28,6 +28,11 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; } .chips button { min-height: 40px; font-size: 14px; padding: 0 14px; }
   .toastr { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--chip); border: 2px solid var(--line); padding: 10px 18px; border-radius: 999px; font-weight: 700; z-index: 30; max-width: 92vw; }
   .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; } .modes button { min-height: 62px; font-size: 18px; }
+  .np { display: flex; gap: 10px; align-items: center; } .np img { width: 48px; height: 48px; border-radius: 10px; flex: none; } .np div { min-width: 0; }
+  .ctl.rate { grid-template-columns: 1.3fr 1fr .8fr .8fr; gap: 8px; margin-top: 8px; } .ctl.rate button { min-height: 46px; font-size: 14px; padding: 0 6px; }
+  .sw { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-top: 10px; } .sw input { width: 26px; height: 26px; }
+  #find { width: 100%; height: 50px; border-radius: 16px; border: 2px solid var(--line); background: var(--ink); color: var(--text); font: 600 17px 'Figtree', sans-serif; padding: 0 14px; }
+  #found .row { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; padding: 8px 0; } #found img { width: 44px; height: 44px; } #found .t b { white-space: normal; font-size: 15px; } #found button { min-height: 44px; font-size: 14px; padding: 0 12px; }
   .modes button:not(.cur) { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
 </style></head>
 <body><div class="bg-anim"></div>
@@ -36,7 +41,8 @@
     <div class="brand"><img src="/vinny.svg" alt=""><b class="n">DJ Vinny · télécommande</b><span class="dot" id="dot" title="Dashboard de l’ordinateur"></span></div>
     <div class="np" id="np"></div>
     <div class="ctl"><button class="ghost" id="bPause">⏯ Pause / Lecture</button><button id="bNext">⏭ Suivant</button>
-      <button class="ghost" id="bQuiet">🔉 Trop fort</button><button class="ghost" id="bLoud">🔊 Trop faible</button></div>
+</div>
+    <div class="ctl rate"><button class="ghost" id="bUp">👍 Ça danse</button><button class="ghost" id="bDown">👎 Vide</button><button class="ghost" id="bQuiet" aria-label="Ce titre est trop fort">🔉 −</button><button class="ghost" id="bLoud" aria-label="Ce titre est trop faible">🔊 +</button></div>
   </div>
 
   <div class="card" id="startCard" hidden><h2>Soirée</h2>
@@ -44,10 +50,17 @@
     <p class="muted" id="startNote"></p>
   </div>
 
-  <div class="card"><h2>Période</h2><div class="modes"><button id="mCalm">🍽️ Souper</button><button id="mParty">🪩 Soirée</button></div><div class="ph" id="phases"></div></div>
+  <div class="card"><h2>Période</h2><div class="modes"><button id="mCalm">🍽️ Souper</button><button id="mParty">🪩 Soirée</button></div><div class="ph" id="phases"></div>
+    <label class="sw"><input type="checkbox" id="reqOpen"> Demandes des invités ouvertes</label></div>
+
+  <div class="card"><h2>Demande sur place</h2>
+    <input type="search" id="find" placeholder="Titre ou artiste" autocomplete="off" enterkeyhint="search">
+    <div id="found"></div>
+  </div>
 
   <div class="card"><h2>File d’attente <span class="muted" id="qn"></span></h2>
     <ul class="q" id="queue" style="padding:0;margin:0"></ul>
+    <button class="ghost" id="qMore" hidden style="width:100%;margin-top:6px"></button>
     <div class="inline"><button class="ghost" id="bLine" style="margin-top:8px">💃 Une danse en ligne, la prochaine</button></div>
   </div>
 
@@ -64,7 +77,7 @@
     <textarea id="msg" maxlength="300" placeholder="Ex. : À table, c’est prêt !"></textarea>
     <div class="chips" id="presets"></div>
     <button id="bSay" style="width:100%;min-height:56px">🔊 Dire à haute voix</button>
-    <p class="muted">La voix sort des haut-parleurs de l’ordinateur de la soirée.</p>
+    <div class="chips"><button class="ghost" data-m="open">👋 Mot d’ouverture</button><button class="ghost" data-m="close">🌙 Dernière toune</button></div>
   </div>
 
   <p class="muted" style="text-align:center"><a href="/host">Ouvrir le dashboard complet</a></p>
@@ -74,7 +87,7 @@
 <script src="/anim.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-let state = null, tt;
+let state = null, tt, qAll = false;
 const say = m => { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; }, 2200); };
 const buzz = () => { try { navigator.vibrate && navigator.vibrate(15); } catch {} };
 async function api(url, method = 'POST', body) {
@@ -88,12 +101,16 @@ const cmd = (body, ok) => api('/api/remote', 'POST', body).then(() => { buzz(); 
 
 function render() {
   const n = state.nowPlaying;
-  $('np').innerHTML = n ? '<b>' + esc(n.title) + '</b><span>' + esc(n.artist) + '</span>' : '<span>Rien en lecture</span>';
+  $('np').innerHTML = n ? (n.artwork ? '<img src="' + esc(n.artwork) + '" alt="">' : '') + '<div><b>' + esc(n.title) + '</b><span>' + esc(n.artist) + '</span></div>' : '<span>Rien en lecture</span>';
+  $('reqOpen').checked = !!state.requestsOpen;
+  $('phases').style.display = state.phases.length <= 2 ? 'none' : ''; // Souper / Soirée suffisent ; la liste sert seulement s'il y a d'autres périodes
   $('phases').innerHTML = state.phases.map(p => '<button class="ghost' + (state.phase && state.phase.id === p.id ? ' cur' : '') + '" data-ph="' + esc(p.id) + '">' + (p.intensity === 'party' ? '🪩 ' : '🍽️ ') + esc(p.start + ' ' + p.name) + '</button>').join('') || '<span class="muted">Aucune période.</span>';
   $('qn').textContent = '(' + state.queue.length + ')';
   const cur = state.phase && state.phase.intensity; $('mCalm').classList.toggle('cur', cur === 'calm'); $('mParty').classList.toggle('cur', cur === 'party');
   const tag = s => ({ guest: 'invité', line: 'danse en ligne', auto: 'auto' }[s.source] || 'hôte');
-  $('queue').innerHTML = state.queue.map(s => '<li class="row" data-uid="' + esc(s.uid) + '"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span>' + esc(s.artist) + '<em class="tag">' + tag(s) + '</em></span></div>'
+  const shown = qAll ? state.queue : state.queue.slice(0, 6);
+  $('qMore').hidden = state.queue.length <= 6; $('qMore').textContent = qAll ? 'Voir moins' : 'Voir les ' + state.queue.length + ' titres';
+  $('queue').innerHTML = shown.map(s => '<li class="row" data-uid="' + esc(s.uid) + '"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span>' + esc(s.artist) + '<em class="tag">' + tag(s) + '</em></span></div>'
     + '<div class="btns"><button class="mini" data-act="top">⏫</button><button class="mini" data-act="up">▲</button><button class="mini" data-act="down">▼</button><button class="mini" data-act="del">✕</button></div></li>').join('') || '<p class="muted">File vide.</p>';
 }
 $('queue').onclick = async e => {
@@ -104,12 +121,37 @@ $('queue').onclick = async e => {
   api('/api/queue/reorder', 'POST', { uids: ids }).catch(() => {});
 };
 $('phases').onclick = e => { const b = e.target.closest('button[data-ph]'); if (b && confirm('Lancer « ' + b.textContent.trim() + ' » ?')) cmd({ cmd: 'phase', id: b.dataset.ph }, 'Période lancée'); };
-const modeBtn = kind => () => { const p = (state.phases || []).find(x => x.intensity === kind); if (!p) return say('Crée d’abord une période de ce type dans le dashboard'); if (state.phase && state.phase.id === p.id) return say('Déjà en mode ' + (kind === 'calm' ? 'Souper' : 'Soirée')); cmd({ cmd: 'phase', id: p.id }, kind === 'calm' ? 'Mode Souper' : 'Mode Soirée'); };
+const modeBtn = kind => () => { const p = (state.phases || []).find(x => x.intensity === kind); if (!p) return say('Crée d’abord une période de ce type dans le dashboard'); if (state.phase && state.phase.id === p.id) return say('Déjà en mode ' + (kind === 'calm' ? 'Souper' : 'Soirée'));
+  if (!confirm(kind === 'calm' ? 'Passer en mode Souper ?' : 'Ouvrir la piste de danse (mode Soirée) ?')) return; cmd({ cmd: 'phase', id: p.id }, kind === 'calm' ? 'Mode Souper' : 'Mode Soirée'); };
 $('mCalm').onclick = modeBtn('calm'); $('mParty').onclick = modeBtn('party');
 $('bStart').onclick = () => cmd({ cmd: 'start' }, 'Démarrage de la soirée…');
 const gainBtn = step => () => { const n = state && state.nowPlaying; if (!n) return say('Rien en lecture'); api('/api/gain', 'POST', { songId: n.songId, step }).then(r => { buzz(); say('Volume de ce titre : ' + (r.gain > 0 ? '+' : '') + String(r.gain).replace('.', ',') + ' dB'); }).catch(() => {}); };
 $('bQuiet').onclick = gainBtn(-1); $('bLoud').onclick = gainBtn(1);
 $('bNext').onclick = () => cmd({ cmd: 'next' }, 'Titre suivant');
+// note pour la mémoire des soirées ; « Vide la piste » passe aussi au titre suivant (promesse de Vinny)
+const rate = vote => () => {
+  const n = state && state.nowPlaying; if (!n) return say('Rien en lecture');
+  api('/api/rate', 'POST', { songId: n.songId, vote }).then(() => (vote < 0 ? cmd({ cmd: 'next' }, 'Noté, on change de toune') : (buzz(), say('Noté : ça danse')))).catch(() => {});
+};
+$('bUp').onclick = rate(1); $('bDown').onclick = rate(-1);
+$('reqOpen').onchange = e => api('/api/settings', 'POST', { requestsOpen: e.target.checked }).then(() => { buzz(); say(e.target.checked ? 'Demandes ouvertes' : 'Demandes fermées'); }).catch(() => {});
+$('qMore').onclick = () => { qAll = !qAll; render(); };
+// demande faite en personne au DJ : recherche Spotify, puis le titre passe en prochaine
+let findT, found = {};
+$('find').oninput = () => {
+  clearTimeout(findT);
+  findT = setTimeout(async () => {
+    const q = $('find').value.trim(); if (q.length < 2) { $('found').innerHTML = ''; return; }
+    const list = await api('/api/search?q=' + encodeURIComponent(q), 'GET').catch(() => []);
+    found = Object.fromEntries((list.map ? list : []).map(s => [s.songId, s]));
+    $('found').innerHTML = Object.values(found).slice(0, 6).map(s => '<div class="row"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span class="muted">' + esc(s.artist) + '</span></div><button data-add="' + esc(s.songId) + '">Prochaine</button></div>').join('') || '<p class="muted">Aucun résultat</p>';
+  }, 350);
+};
+$('found').onclick = e => {
+  const b = e.target.closest('button[data-add]'); if (!b) return;
+  api('/api/queue/add', 'POST', { songId: b.dataset.add, top: true }).then(() => { buzz(); say('Prochaine : ' + found[b.dataset.add].title); $('find').value = ''; $('found').innerHTML = ''; }).catch(() => {});
+};
+document.querySelectorAll('[data-m]').forEach(b => { b.onclick = () => cmd({ cmd: 'moment', src: b.dataset.m }, 'Vinny parle'); });
 $('bPause').onclick = () => cmd({ cmd: 'pause' });
 $('bCall').onclick = () => cmd({ cmd: 'callout' }, 'Rappel du QR');
 $('bLine').onclick = () => api('/api/linedance').then(() => { buzz(); say('Danse en ligne ajoutée'); }).catch(() => {});
@@ -134,6 +176,9 @@ async function ping() {
   } catch {}
 }
 ping(); setInterval(ping, 6000);
+// garde l'écran du téléphone allumé pendant la soirée (sinon il faut le redéverrouiller à chaque commande)
+const wake = () => { if (document.visibilityState === 'visible' && 'wakeLock' in navigator) navigator.wakeLock.request('screen').catch(() => {}); };
+wake(); document.addEventListener('visibilitychange', wake);
 const es = new EventSource('/api/events');
 es.onmessage = e => { state = JSON.parse(e.data); render(); };
 if ('serviceWorker' in navigator && isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});

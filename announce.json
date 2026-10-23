@@ -2,10 +2,10 @@
  "model": "elevenlabs/eleven-v4-turbo",
  "voice": "liam",
  "party": {
-  "tempo": 1.06,
-  "reverb": 0.75,
-  "ratio": 6,
-  "presence": 5,
+  "tempo": 1,
+  "reverb": 0,
+  "ratio": 2.5,
+  "presence": 1.5,
   "lufs": -14,
   "voiceSettings": null,
   "named": [
@@ -56,10 +56,10 @@
   ]
  },
  "calm": {
-  "tempo": 0.92,
-  "reverb": 0.5,
-  "ratio": 3,
-  "presence": 2,
+  "tempo": 1,
+  "reverb": 0,
+  "ratio": 2,
+  "presence": 1,
   "lufs": -16,
   "voiceSettings": null,
   "named": [

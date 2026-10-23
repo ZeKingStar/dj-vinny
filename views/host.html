@@ -16,8 +16,8 @@
   .inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; } .inline input[type=text] { flex: 1; min-width: 120px; width: auto; }
   .inline select, .inline input[type=time] { width: auto; height: 44px; font-size: 15px; }
   .active { border: 2px solid var(--accent); border-radius: 18px; padding: 8px 12px; background: var(--chip); }
-  .fx { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
-  .fx button { min-height: 76px; border-radius: 20px; text-align: left; padding: 12px 14px; box-shadow: 0 4px 0 rgba(0,0,0,.4); }
+  .fx { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .fx button { min-height: 52px; border-radius: 16px; text-align: left; padding: 8px 14px; box-shadow: 0 3px 0 rgba(0,0,0,.4); }
   .fx .b2 { background: var(--accent2); } .fx .b3 { background: var(--mint); } .fx .b4 { background: var(--text); }
   .logo { display: inline-flex; width: 44px; height: 44px; border-radius: 14px; background: var(--accent); align-items: center; justify-content: center; transform: rotate(-6deg); }
   #player.card { border-color: var(--accent); }
@@ -55,10 +55,22 @@
   .evform textarea { min-height: 70px; border-radius: 16px; border: 2px solid var(--line); background: var(--ink); color: var(--text); font: 600 16px Figtree, system-ui, sans-serif; padding: 10px 14px; }
   .evsec { margin: 18px 0 0; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
   .wg { border-bottom: 2px solid var(--line); padding: 8px 0; } .wg:last-child { border-bottom: 0; }
+  /* Version compacte : cartes serrées, texte d'aide d'une ligne + bouton « i » pour le détail */
+  .wrap { padding-top: 10px; } .wrap button { min-height: 36px; padding: 0 14px; font-size: 14px; }
+  .card { padding: 10px 14px; margin-bottom: 10px; border-radius: 18px; } .card > h2 { font-size: 18px; margin-bottom: 4px; }
+  .card .muted { font-size: 13px; } .inline { margin-top: 6px; gap: 6px; } .inline select, .inline input[type=time] { height: 38px; font-size: 14px; }
+  .row { padding: 6px 0; } h1 { font-size: 28px; } .tabs { margin: 2px 0 8px; } .tabs button { min-width: 110px; }
+  .hint { margin: 0 0 6px; font-size: 13px; line-height: 1.3; color: var(--muted); }
+  .wrap button.ib { min-height: 22px; width: 22px; padding: 0; border-radius: 50%; font-size: 13px; font-style: italic; font-family: Georgia, serif; background: var(--chip); color: var(--muted); border: 1.5px solid var(--line); box-shadow: none; flex: none; }
+  .card.showinfo button.ib { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+  .card:not(.showinfo) .info { display: none; } .info { margin: 0 0 8px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--chip); border-radius: 0 10px 10px 0; }
+  details.dt > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; margin-top: 8px; } details.dt[open] > summary { margin-bottom: 2px; }
+  #remoteDlg { background: var(--card); color: var(--text); border: 2px solid var(--line); border-radius: 24px; padding: 20px; width: min(420px, 94vw); } #remoteDlg::backdrop { background: rgba(10, 6, 30, .75); }
+  .phbox { padding: 8px 10px; margin-top: 6px; border-radius: 14px; } .phbox input[type=text], .phbox input[type=color] { height: 38px; }
 </style></head>
 <body><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" title="Passe en mode Souper (calme)">🍽️ Souper</button><button id="modeParty" title="Passe en mode Soirée (dansant)">🪩 Soirée</button></span><button class="ghost" id="openSettings">⚙ Réglages</button><button class="ghost" id="logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" title="Passe en mode Souper (calme)">🍽️ Souper</button><button id="modeParty" title="Passe en mode Soirée (dansant)">🪩 Soirée</button></span><button class="ghost" id="btnScreen" title="Ouvre (ou relance) l’écran de la soirée dans sa fenêtre : glisse-la sur le second écran, touche F = plein écran">🖥 Écran</button><button class="ghost" id="btnRemote" title="Affiche le QR de la télécommande (téléphone)">📱 Remote</button><button class="ghost" id="openSettings">⚙ Réglages</button><button class="ghost" id="logout">Déconnexion</button></div>
 
   <div class="tabs" id="tabs"><button data-tab="soiree" class="on">🎧 Soirée</button><button data-tab="souhaits">💌 Souhaits<span id="wishBadge"></span></button><button data-tab="evenements">📅 Événements</button></div>
   <div id="tab-soiree">
@@ -77,9 +89,11 @@
         <button id="rateUp">Ça danse</button><button class="ghost" id="rateDown">Ça vide la piste</button>
         <button class="ghost" id="volDown" title="Baisse le volume de ce titre (retenu pour les prochaines fois)">🔉 Trop fort</button><button class="ghost" id="volUp" title="Monte le volume de ce titre (retenu pour les prochaines fois)">🔊 Trop faible</button>
         <button class="ghost" id="trimStart">Début ici</button><button class="ghost" id="trimEnd">Fin ici</button><button class="ghost" id="trimClear">Effacer les repères</button>
+        <details class="dt" style="width:100%"><summary>Fondu, musique de transition, fin anticipée</summary><div class="inline">
         <select id="fadeSec"><option value="0">Fondu : aucun</option><option value="1.5">Fondu de 1,5 s</option><option value="2">Fondu de 2 s</option><option value="3">Fondu de 3 s</option></select>
         <select id="transSound"><option value="">Musique de transition : aucune</option><option value="beats">Transition : beat (au hasard)</option><option value="beat_hiphop">Beat hip-hop</option><option value="beat_molly">Beat Molly</option><option value="beat_trill">Beat Trill</option><option value="beat_trap">Beat trap</option><option value="beat_mustard">Beat Mustard</option><option value="beat_astro">Beat Astrology</option></select>
         <select id="endCut"><option value="0">Fin anticipée : aucune</option><option value="4">Couper les 4 dernières s</option><option value="8">Couper les 8 dernières s</option><option value="12">Couper les 12 dernières s</option></select>
+        </div></details>
       </div>
       <p class="muted" id="trimNote"></p><p class="muted" id="volNote"></p>
     </div>
@@ -97,23 +111,21 @@
     </div>
     <div>
       <div class="card"><h2>Périodes</h2>
-        <p class="muted">Une période règle l'heure, l'ambiance (calme ou dansante), la couleur des écrans, la liste de chansons de l'autopilote et ce que Vinny dit au début.</p>
-        <label class="sw"><input type="checkbox" id="autoPh"> Changement automatique à l’heure</label>
+        <p class="muted info">Une période règle l'ambiance (calme ou dansante), la couleur des écrans, la liste de chansons de l'autopilote, les demandes des invités et ce que Vinny dit au début. Tu passes de l'une à l'autre avec les boutons Souper / Soirée en haut.</p>
         <div id="phases"></div>
         <div class="inline"><button class="ghost" id="phAddCalm">+ Période calme (souper)</button><button class="ghost" id="phAddParty">+ Période dansante</button></div>
-        <p class="muted">Ex. : 19:00 Souper (calme, demandes fermées) → 22:00 Soirée (dansante, demandes ouvertes).</p>
       </div>
       <div class="card"><h2>DJ Vinny autopilote</h2>
         <p class="muted" id="apStatus"></p>
         <label class="sw">Titres « auto » gardés dans la file : <input type="number" id="autoCount" min="1" max="30" style="width:84px"></label>
-        <p class="muted">Quand personne ne demande rien, Vinny pige dans la liste de la période et remplit la file jusqu'à ce nombre. Tu peux réordonner ou retirer ces titres dans la file.</p>
+        <p class="muted info">Quand personne ne demande rien, Vinny pige dans la liste de la période et remplit la file jusqu'à ce nombre. Tu peux réordonner ou retirer ces titres dans la file.</p>
         <div class="inline"><select id="apSel"></select><button class="ghost" id="apDel" hidden>Supprimer cette liste</button></div>
         <p class="muted" id="apSum"></p>
         <div class="inline" id="apTools"><button id="curResolve">Chercher les titres sur Spotify</button><button class="ghost" id="curSafe" title="Active les titres « proposé » trouvés sûrement sur Spotify">Valider les titres sûrs</button></div>
         <div id="apItems" style="max-height:300px;overflow:auto;margin-top:8px"></div>
         <div id="apAddBox" hidden><div class="inline"><input type="text" id="apAdd" placeholder="Ajouter un titre à cette liste…"></div><div id="apAddRes"></div></div>
         <h2 style="margin-top:16px;font-size:18px">Importer une playlist Spotify</h2>
-        <p class="muted">Copie une de tes playlists dans l'app pour en faire une liste de l'autopilote (la copie ne suit pas les changements faits ensuite dans Spotify).</p>
+        <p class="muted info">Copie une de tes playlists dans l'app pour en faire une liste de l'autopilote (la copie ne suit pas les changements faits ensuite dans Spotify).</p>
         <div class="inline"><select id="impPl"><option>Démarre la soirée pour voir tes playlists…</option></select></div>
         <div class="inline"><input type="text" id="impName" placeholder="Nom de la liste"><button id="impGo">Importer</button></div>
       </div>
@@ -130,10 +142,10 @@
           <button id="btnConf" class="b3">Confettis</button>
           <button id="btnParty" class="b4">Mode fête 30 s</button>
         </div>
-        <div class="inline" id="jingles"><span class="muted">Jingles sonores :</span>
+        <details class="dt"><summary>Jingles sonores</summary><div class="inline" id="jingles">
           <button class="ghost" data-j="fanfare">Fanfare</button><button class="ghost" data-j="carillon">Carillon</button>
           <button class="ghost" data-j="riser">Montée</button><button class="ghost" data-j="ding">Ding</button>
-          <button class="ghost" data-j="scratch">Scratch DJ</button><button class="ghost" data-j="cornet">Cornet</button><button class="ghost" data-j="ovation">Ovation</button><button class="ghost" data-j="applause">Applaudissements</button><button class="ghost" data-j="roulement">Roulement</button><button class="ghost" data-j="klaxon">Klaxon DJ</button><button class="ghost" data-j="rewind">Rewind</button></div>
+          <button class="ghost" data-j="scratch">Scratch DJ</button><button class="ghost" data-j="cornet">Cornet</button><button class="ghost" data-j="ovation">Ovation</button><button class="ghost" data-j="applause">Applaudissements</button><button class="ghost" data-j="roulement">Roulement</button><button class="ghost" data-j="klaxon">Klaxon DJ</button><button class="ghost" data-j="rewind">Rewind</button></div></details>
         <div class="inline"><button class="ghost" id="calloutNow">Rappel du QR maintenant</button><button class="ghost" id="vOpen">Vinny : mot d’ouverture</button><button class="ghost" id="vClose">Vinny : mot de clôture</button></div>
         <div class="inline"><input type="text" id="say" maxlength="300" placeholder="Message de Vinny (ex. À table, c’est prêt !)"><button id="sayGo">🔊 Dire</button></div>
       </div>
@@ -142,16 +154,16 @@
         <label class="sw"><input type="checkbox" id="announce"> Annonces vocales automatiques (titres invités, danse en ligne, phrase de période)</label>
         <label class="sw"><input type="checkbox" id="autoFx"> Animations et jingles sonores automatiques (confettis, mode fête, ding)</label>
         <div class="inline"><select id="calloutEvery"><option value="0">Rappel du QR : jamais</option><option value="8">Rappel du QR après 8 titres sans demande</option><option value="10">Rappel du QR après 10 titres sans demande</option><option value="15">Rappel du QR après 15 titres sans demande</option></select></div>
-        <p class="muted">La voix de Vinny se choisit dans ⚙ Réglages.</p>
+        <p class="muted info">La voix de Vinny se choisit dans ⚙ Réglages.</p>
       </div>
       <div class="card"><h2>Mémoire des soirées</h2>
         <p class="muted" id="memNote">Cliquez « Ça danse » ou « Ça vide la piste » pendant la lecture pour bâtir votre propre liste.</p>
         <div id="memList"></div>
-        <p class="muted" style="margin-top:10px">Chaque soirée est gardée dans un journal (titres joués, demandes, notes, mouvement de la caméra, sans nom ni image). <a href="/api/soirees/today" id="logLink">Télécharger le journal du jour</a></p>
+        <p class="muted info" style="margin-top:10px">Chaque soirée est gardée dans un journal (titres joués, demandes, notes, mouvement de la caméra, sans nom ni image). <a href="/api/soirees/today" id="logLink">Télécharger le journal du jour</a></p>
         <label class="sw" style="margin-top:10px"><input type="checkbox" id="learn"> L'autopilote apprend : il favorise les titres qui font danser et les artistes demandés par les invités</label>
       </div>
       <div class="card"><h2>Piste de danse (caméra, essai)</h2>
-        <p class="muted">La vidéo reste dans ce navigateur : rien n'est enregistré ni envoyé. Prévenez les invités par une affiche. L'app mesure le mouvement dans l'image, elle ne compte pas les personnes.</p>
+        <p class="muted info">La vidéo reste dans ce navigateur : rien n'est enregistré ni envoyé. Prévenez les invités par une affiche. L'app mesure le mouvement dans l'image, elle ne compte pas les personnes.</p>
         <div class="inline"><button class="ghost" id="camStart">Activer la caméra</button><button class="ghost" id="camStop" hidden>Arrêter</button></div>
         <div id="camBox" hidden>
           <div class="bar" style="height:14px"><div id="camBar"></div></div>
@@ -164,19 +176,19 @@
       </div>
       <div class="card" style="text-align:center"><h2>QR invités</h2>
         <img src="/api/qr.png" alt="QR" style="width:200px;border-radius:12px;background:#fff"><br>
-        <a href="/api/qr.png" target="_blank" class="muted">Ouvrir en grand</a><br><button class="ghost" id="qrRotate" style="margin-top:8px">Nouveau code de soirée</button><p class="muted">Le QR contient un code secret : seuls les invités qui l'ont scanné peuvent chercher et demander. « Nouveau code » rend les anciens QR inutilisables.</p><a href="/ecran.html" target="_blank" style="display:inline-block;margin-top:8px;font-weight:700">Ouvrir l’écran de la soirée (second écran, touche F = plein écran)</a>
+        <a href="/api/qr.png" target="_blank" class="muted">Ouvrir en grand</a><br><button class="ghost" id="qrRotate" style="margin-top:8px">Nouveau code de soirée</button><p class="muted info">Le QR contient un code secret : seuls les invités qui l'ont scanné peuvent chercher et demander. « Nouveau code » rend les anciens QR inutilisables.</p>
       </div>
     </div>
   </div>
   </div><!-- /tab-soiree -->
 
   <div id="tab-souhaits" hidden>
-    <div class="card"><h2>Souhaits des invités <span id="wishCount" class="muted"></span></h2>
+    <div class="card" id="c-souhaits"><h2>Souhaits des invités <span id="wishCount" class="muted"></span></h2>
       <div class="inline"><select id="wishEv" aria-label="Événement"></select><button class="ghost" id="wishClear">Vider cette liste</button></div>
       <p class="muted" id="wishNote"></p>
       <div id="wishList"></div>
     </div>
-    <div class="card" style="text-align:center"><h2>Lien et QR des souhaits</h2>
+    <div class="card" id="c-lien-souhaits" style="text-align:center"><h2>Lien et QR des souhaits</h2>
       <img id="wishQr" src="/api/qr.png?to=souhaits" alt="QR des souhaits" style="width:170px;border-radius:12px;background:#fff"><br>
       <div class="inline"><input type="text" id="wishLink" readonly><button class="ghost" id="wishCopy">Copier le lien</button></div>
       <p class="muted" id="wishLinkNote"></p>
@@ -184,16 +196,15 @@
   </div>
 
   <div id="tab-evenements" hidden>
-    <div class="card"><h2>Événements</h2>
-      <p class="muted">Un événement a sa date, ses heures, son lieu, son propre code et QR, ses souhaits et son programme de périodes. Il s'active tout seul à l'heure prévue (case « ouverture automatique »). Tu peux aussi le démarrer ou le terminer à la main. Les invités qui scannent avant l'heure voient « à venir » et peuvent envoyer leurs souhaits.</p>
+    <div class="card" id="c-evenements"><h2>Événements</h2>
       <div class="inline"><button id="evNew">＋ Nouvel événement</button></div>
       <div class="evform" id="evForm" hidden>
         <h2 id="evFormTitle" style="margin:0 0 4px;font-size:20px">Nouvel événement</h2>
         <label for="evf_name">Nom</label><input type="text" id="evf_name" maxlength="60" placeholder="Ex. : Party de Noël de la famille">
         <div class="inline" style="flex-wrap:wrap">
           <div style="flex:1;min-width:150px"><label for="evf_date">Date</label><input type="date" id="evf_date"></div>
-          <div style="flex:1;min-width:110px"><label for="evf_start">Début</label><input type="time" id="evf_start"></div>
-          <div style="flex:1;min-width:110px"><label for="evf_end">Fin</label><input type="time" id="evf_end"></div>
+          <div style="flex:1;min-width:110px"><label for="evf_start">Début</label><input type="text" id="evf_start" inputmode="numeric" maxlength="5" placeholder="18:00" autocomplete="off"></div>
+          <div style="flex:1;min-width:110px"><label for="evf_end">Fin</label><input type="text" id="evf_end" inputmode="numeric" maxlength="5" placeholder="01:00" autocomplete="off"></div>
         </div>
         <label for="evf_place">Lieu (optionnel)</label><input type="text" id="evf_place" maxlength="80">
         <label for="evf_welcome">Message d'accueil pour les invités (optionnel)</label><textarea id="evf_welcome" maxlength="300" placeholder="Ex. : Bienvenue ! Demande tes tounes préférées, Vinny s'en occupe."></textarea>
@@ -209,20 +220,21 @@
   </div>
 </div>
 
+<dialog id="remoteDlg"><form method="dialog">
+  <h2 style="margin-top:0">📱 Télécommande</h2>
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <img id="remoteQr" alt="QR de la télécommande" width="170" height="170" style="border-radius:12px;background:#fff;flex:none">
+    <div style="flex:1;min-width:180px">
+      <div class="inline" style="margin-top:0"><input type="text" id="remoteUrl" readonly><button type="button" class="ghost" id="remoteCopy">Copier</button></div>
+      <span class="muted" id="remoteNote"></span>
+    </div>
+  </div>
+  <div class="inline" style="justify-content:flex-end"><button type="button" id="remoteClose">Fermer</button></div>
+</form></dialog>
 <dialog id="settingsDlg"><form method="dialog" id="settingsForm">
   <h2>Réglages</h2>
   <p class="muted">Ces valeurs sont gardées dans l'app (data/settings.json) et passent avant le fichier .env. Le mot de passe, le port, le secret de session et les clés Apple restent dans le .env.</p>
   <div id="setFields"></div>
-  <div class="sf" style="border-top:2px solid var(--line);margin-top:20px;padding-top:14px">
-    <label>Télécommande (téléphone)</label>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:8px">
-      <img id="remoteQr" alt="QR de la télécommande" width="150" height="150" style="border-radius:12px;background:#fff;flex:none">
-      <div style="flex:1;min-width:200px">
-        <div class="inline" style="margin-top:0"><input type="text" id="remoteUrl" readonly><button type="button" class="ghost" id="remoteCopy">Copier</button></div>
-        <span class="muted" id="remoteNote"></span>
-      </div>
-    </div>
-  </div>
   <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="setCancel">Fermer</button><button type="button" id="setSave">Enregistrer</button></div>
 </form></dialog>
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
@@ -236,7 +248,7 @@ const api = async (url, method = 'POST', body) => {
   if (!r.ok) { toast(j.error || 'Erreur'); throw new Error(j.error); }
   return j;
 };
-let failStreak = 0, cfg = { provider: 'spotify' }, state = null, music = null, started = false, advancing = false, endedUid = null, playlists = [], phaseBusy = false;
+let wishSel = null, evData = null, evEditing = null, autoPhOff = false, failStreak = 0, cfg = { provider: 'spotify' }, state = null, music = null, started = false, advancing = false, endedUid = null, playlists = [], phaseBusy = false;
 const artUrl = a => (a && a.url ? a.url.replace('{w}', 300).replace('{h}', 300) : '');
 
 // ---------- Rendu ----------
@@ -255,7 +267,7 @@ function render() {
     <img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)} · ${{ guest: 'invité', line: 'danse en ligne', auto: 'auto' }[s.source] || 'hôte'}</span></div>
     <button class="mini" data-act="top" title="En premier">⏫</button><button class="mini" data-act="up">▲</button><button class="mini" data-act="down">▼</button><button class="mini" data-act="del">✕</button></li>`).join('')
     || '<p class="muted">File vide.</p>';
-  $('reqOpen').checked = state.requestsOpen; $('autoPh').checked = state.autoPhases;
+  $('reqOpen').checked = state.requestsOpen; if (state.autoPhases && !autoPhOff) { autoPhOff = true; api('/api/settings', 'POST', { autoPhases: false }); } // le changement de période à l'heure est retiré : tout se fait à la main
   renderPhases();
   renderApStatus();
   $('announce').checked = state.announce; $('autoFx').checked = state.autoFx;
@@ -330,8 +342,8 @@ $('jingles').onclick = e => { const b = e.target.closest('button[data-j]'); if (
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ko) => setTimeout(() => ko(new Error('délai dépassé')), ms))]);
 let busyN = 0, busyUntil = 0; // sons de l'app en cours (annonce, jingle) : le garde-fou de silence ne doit pas les confondre avec un arrêt
 const audioEl = new Audio();
-async function playUrl(url) {
-  const duck = duckStart(0.2); // baisse la musique pendant l'annonce
+async function playUrl(url, level = 0.2) {
+  const duck = duckStart(level); // baisse la musique pendant l'annonce
   busyN++;
   try {
     audioEl.src = url;
@@ -371,10 +383,10 @@ $('announce').onchange = e => api('/api/settings', 'POST', { announce: e.target.
 
 // ---------- Lecture ----------
 // Fondu de volume (le lecteur Spotify ne joue qu'un titre à la fois : pas de chevauchement, mais un fondu sortant puis entrant)
-function fadeTo(target, sec) {
+function fadeTo(target, sec, ease) { // ease : départ lent puis montée rapide (sensation de « build » pour l'ouverture de la piste)
   return new Promise(done => {
     const from = duckN > 0 ? duckSaved : music.volume, t0 = Date.now(), tm = setInterval(() => {
-      const k = Math.min(1, (Date.now() - t0) / (sec * 1000)); setVol(from + (target - from) * k);
+      const k = Math.min(1, (Date.now() - t0) / (sec * 1000)); setVol(from + (target - from) * (ease ? k * k : k));
       if (k >= 1) { clearInterval(tm); done(); }
     }, 100);
   });
@@ -397,15 +409,26 @@ function applyTrackGain() { // réglage « Trop fort / Trop faible » appliqué 
   if (Math.abs(b - old) < 0.001) return;
   music.baseVol = b; if (Math.abs((duckN > 0 ? duckSaved : music.volume) - old) < 0.03) setVol(b); // pas pendant un fondu ou une annonce
 }
-async function startTrack(n) {
+// o.at : départ (s) au lieu du début mémorisé ; o.fade / o.ease : fondu d'entrée propre à ce lancement (chanson d'ouverture)
+async function startTrack(n, o = {}) {
   music.baseVol = trackBase(n.songId);
   music.startAt = Date.now(); music.sawPlaying = false; music.userPaused = false; // suivi du démarrage pour le garde-fou
-  const fade = state.fade || 0;
+  const fade = o.fade != null ? o.fade : state.fade || 0, t = state.trims[n.songId]; // début mémorisé : on saute l'intro silencieuse
+  const at = o.at != null ? o.at : (t && t.start) || 0;
   setVol(fade > 0 ? 0 : music.baseVol); // le titre démarre à zéro puis monte (ou directement au volume de base)
-  await music.setQueue({ song: n.songId }); await music.play();
-  if (fade > 0) fadeTo(music.baseVol, fade);
-  const t = state.trims[n.songId]; // début mémorisé : on saute l'intro silencieuse
-  if (t && t.start > 0 && music.seek) setTimeout(() => music.seek(t.start * 1000).catch(() => {}), 700);
+  await music.setQueue(music.startsAt ? { song: n.songId, at } : { song: n.songId }); await music.play();
+  if (fade > 0) fadeTo(music.baseVol, fade, o.ease);
+  if (at > 0 && music.seek && !music.startsAt) setTimeout(() => music.seek(at * 1000).catch(() => {}), 700); // Spotify part déjà au bon endroit
+}
+// Ouverture de la piste : le titre choisi part à son passage, monte en fondu, Vinny parle par-dessus à mi-fondu (musique peu baissée, l'énergie reste)
+async function startOpener(n) {
+  const ann = state.announce && state.tts ? withTimeout(api('/api/announce', 'POST', { source: 'phase' }), 12000) : null; // préparée pendant le fondu
+  if (ann) ann.catch(() => {});
+  await startTrack(n, { at: n.opener.at, fade: n.opener.fade, ease: true });
+  if (!ann) return;
+  await new Promise(ok => setTimeout(ok, n.opener.fade * 500));
+  try { await playUrl((await ann).url, 0.4); } catch (e) { console.error(e); }
+  if (state.autoFx) api('/api/fx', 'POST', { type: 'confetti' }).catch(() => {});
 }
 async function playNext(why) {
   why = typeof why === 'string' ? why : 'end';
@@ -413,8 +436,9 @@ async function playNext(why) {
   advancing = true; advStart = Date.now();
   try {
     const peek = state.queue[0], announced = peek && (peek.source === 'guest' || peek.source === 'line'); // une annonce remplit déjà le creux
-    if (state.transSound && !announced && why !== 'start') playTransition();
+    if (state.transSound && !announced && why !== 'start' && why !== 'phase') playTransition();
     if ((why === 'skip' || why === 'camera') && state.fade > 0 && music.isPlaying) await fadeTo(0, state.fade);
+    if (why === 'phase' && music.isPlaying) await fadeTo(0, 4); // le souper s'éteint doucement avant l'ouverture de la piste
     const { nowPlaying: n, callout } = await api('/api/next', 'POST', { why });
     endedUid = null;
     if (why === 'start' && n && state.announce && state.tts) { // début de soirée : mot d'ouverture de Vinny avant la première toune
@@ -425,7 +449,7 @@ async function playNext(why) {
       if (state.autoFx) await playJingle(n.source === 'line' ? 'fanfare' : 'ding');
       if (state.announce) await announceSong(n);
     }
-    if (n) await startTrack(n); else { await music.stop(); }
+    if (n && n.opener) await startOpener(n); else if (n) await startTrack(n); else { await music.stop(); }
     failStreak = 0;
   } catch (e) {
     console.error(e); failStreak++;
@@ -538,14 +562,15 @@ async function initSpotify() {
     get volume() { return this.vol; }, set volume(v) { this.vol = v; player.setVolume(v); },
     baseVol: 0.7, resetVolume() { this.volume = this.baseVol; }, seek(ms) { return player.seek(ms); },
     posSec() { return (this.pos + (this.playing ? Date.now() - this.at : 0)) / 1000; },
-    async setQueue({ song }) { this.uri = 'spotify:track:' + song; },
+    startsAt: true, // le titre démarre directement à la position voulue (position_ms), sans entendre l'intro
+    async setQueue({ song, at }) { this.uri = 'spotify:track:' + song; this.atMs = Math.round((at || 0) * 1000); },
     async play() {
       if (!this.uri) { this.userPaused = false; return player.resume(); }
-      const uri = this.uri; this.uri = null;
+      const uri = this.uri, body = { uris: [uri], ...(this.atMs > 0 ? { position_ms: this.atMs } : {}) }; this.uri = null;
       let r;
       for (const wait of [0, 600, 1500, 3000]) { // 502/503/429 : erreurs temporaires, on réessaie
         if (wait) await new Promise(ok => setTimeout(ok, wait));
-        r = await fetch('https://api.spotify.com/v1/me/player/play?device_id=' + this.deviceId, { method: 'PUT', headers: { Authorization: 'Bearer ' + await SP.access(), 'Content-Type': 'application/json' }, body: JSON.stringify({ uris: [uri] }) });
+        r = await fetch('https://api.spotify.com/v1/me/player/play?device_id=' + this.deviceId, { method: 'PUT', headers: { Authorization: 'Bearer ' + await SP.access(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         if (r.ok || ![429, 500, 502, 503, 504].includes(r.status)) break;
       }
       if (!r.ok) throw new Error('Lecture Spotify ' + r.status);
@@ -681,8 +706,23 @@ async function fetchTracks(playlistId) {
 // ---------- Périodes ----------
 const PH_DEFAULTS = {
   calm: { name: 'Souper', start: '19:00', jingle: 'Bonsoir tout le monde ! DJ Vinny vous souhaite un excellent souper.' },
-  party: { name: 'Soirée', start: '22:00', jingle: '[excited] Mesdames et messieurs, la piste de danse est ouverte ! Allez, la gang, tout le monde sur la piste !' },
+  party: { name: 'Soirée', start: '22:00', jingle: 'Mesdames et messieurs, la piste de danse est officiellement ouverte ! Vos demandes spéciales, c’est le code QR sur l’écran. Pis si une toune vide la piste, pas de panique : on passe à une autre, vite vite ! Allez, la gang, on danse !' },
 };
+// Chansons d'ouverture de la piste : électro sans voix (ou presque), connues des 40+, avec une montée qui se prête au fondu.
+// Le passage est indicatif : le trouver à l'oreille (barre de lecture), puis « Prendre le titre et la position en cours ».
+const OPENERS = [
+  ['Right Here, Right Now', 'Fatboy Slim', 'La montée de cordes du début est faite pour ça : départ à 0, fondu de 12 s, Vinny parle pendant la montée'],
+  ['Pjanoo', 'Eric Prydz', 'Piano house joyeux, 100 % instrumental : partir juste avant l’entrée du piano'],
+  ['9 PM (Till I Come)', 'ATB', 'Riff de guitare culte, presque sans voix : partir juste avant le riff'],
+  ['Sandstorm', 'Darude', 'Partir dans la montée de batterie, juste avant le riff'],
+  ['Levels', 'Avicii', 'Partir dans la montée avant le riff principal'],
+  ['Insomnia', 'Faithless', 'Partir avant l’entrée du riff de synthé (la voix parlée est courte)'],
+  ['Kernkraft 400', 'Zombie Nation', 'Le riff des arénas : énergie garantie, un peu « sport »'],
+  ['Children', 'Robert Miles', 'Plus doux, nostalgie 1996 : bonne transition après un souper calme'],
+  ['Animals', 'Martin Garrix', 'Plus jeune et plus dur : partir dans la montée, le drop arrive après l’annonce'],
+  ['Greyhound', 'Swedish House Mafia', 'Montée épique, instrumental'],
+];
+let opResults = {};
 let phSig = '';
 function renderPhases() {
   const lists = state.lists || [];
@@ -691,26 +731,44 @@ function renderPhases() {
   if (document.activeElement && $('phases').contains(document.activeElement)) { phSig = ''; return; } // on ne réécrit pas pendant la saisie
   const opts = id => lists.map(l => '<option value="' + esc(l.id) + '"' + (l.id === id ? ' selected' : '') + '>' + esc(l.name) + ' (' + l.count + ')</option>').join('');
   $('phases').innerHTML = state.phases.map(p => '<div class="phbox' + (state.phase && state.phase.id === p.id ? ' active' : '') + '" data-id="' + esc(p.id) + '">'
-    + '<div class="inline"><input type="text" data-f="name" value="' + esc(p.name) + '" maxlength="40" style="min-width:110px"><input type="time" data-f="start" value="' + esc(p.start) + '">'
+    + '<div class="inline"><input type="text" data-f="name" value="' + esc(p.name) + '" maxlength="40" style="min-width:110px">'
     + '<select data-f="intensity"><option value="calm"' + (p.intensity === 'calm' ? ' selected' : '') + '>🍽️ Calme</option><option value="party"' + (p.intensity === 'party' ? ' selected' : '') + '>🪩 Dansante</option></select>'
     + '<input type="color" data-f="color" value="' + esc(p.color || '#FFD23F') + '" title="Couleur des écrans"></div>'
     + '<div class="inline"><span class="muted">Liste de l’autopilote</span><select data-f="listId">' + opts(p.listId) + '</select></div>'
     + '<label class="sw"><input type="checkbox" data-f="requestsOpen"' + (p.requestsOpen ? ' checked' : '') + '> Demandes des invités ouvertes</label>'
-    + '<div class="muted" style="margin-top:6px">Phrase de Vinny au début de cette période</div>'
-    + '<input type="text" data-f="jingle" maxlength="300" value="' + esc(p.jingle || '') + '" placeholder="Ex. : Mesdames et messieurs, la piste de danse est ouverte ! (laisse vide : Vinny ne dit rien)">'
+    + '<details class="dt"><summary>Phrase de Vinny au début de cette période</summary>'
+    + '<input type="text" data-f="jingle" maxlength="300" value="' + esc(p.jingle || '') + '" placeholder="Ex. : Mesdames et messieurs, la piste de danse est ouverte ! (laisse vide : Vinny ne dit rien)"></details>'
+    + (p.intensity === 'party' ? '<details class="dt"><summary>Chanson d’ouverture de la piste (fondu) : ' + (p.open ? esc(p.open.title + ' — ' + p.open.artist) : 'premier titre de la liste') + '</summary>'
+      + '<p class="muted">Au lancement de la période, le souper s’éteint, cette chanson part au passage choisi et monte en fondu, puis Vinny dit sa phrase par-dessus. Pour choisir le passage : fais jouer la chanson, place-toi avec la barre de lecture, puis clique « Prendre le titre et la position en cours ».</p>'
+      + '<div class="inline"><button class="mini" data-ph="openHere">Prendre le titre et la position en cours</button>'
+      + '<span class="muted">Départ à</span><input type="number" data-f="openAt" min="0" max="900" step="0.5" value="' + (p.openAt || 0) + '" style="width:80px"><span class="muted">s</span>'
+      + '<select data-f="openFade">' + [6, 8, 10, 12, 15, 20].map(s => '<option value="' + s + '"' + ((p.openFade || 10) === s ? ' selected' : '') + '>Fondu de ' + s + ' s</option>').join('') + '</select>'
+      + (p.open ? '<button class="mini" data-ph="openClear">Retirer</button>' : '') + '</div>'
+      + '<input type="text" data-opsearch placeholder="Chercher une chanson (ex. Right Here, Right Now)"><div class="opres"></div>'
+      + '<div class="inline"><span class="muted">Idées :</span>' + OPENERS.map(([t, a, h]) => '<button class="mini" data-opidea="' + esc(t + ' ' + a) + '" title="' + esc(h) + '">' + esc(t) + '</button>').join('') + '</div></details>' : '')
     + '<div class="inline"><button class="mini" data-ph="go">Lancer maintenant</button><button class="mini" data-ph="say">Écouter la phrase</button><button class="mini" data-ph="del">Supprimer</button></div></div>').join('') || '<p class="muted">Aucune période.</p>';
 }
 $('phases').addEventListener('change', async e => {
   const box = e.target.closest('.phbox'), f = e.target.dataset.f; if (!box || !f) return;
-  const v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+  const v = e.target.type === 'checkbox' ? e.target.checked : f === 'openAt' || f === 'openFade' ? Number(e.target.value) : e.target.value;
   try { await api('/api/phases/' + box.dataset.id, 'PUT', { [f]: v }); phSig = ''; } catch {}
 });
+let opT;
+async function opSearch(input) {
+  const q = input.value.trim(), out = input.parentElement.querySelector('.opres'); if (q.length < 2) { out.innerHTML = ''; return; }
+  const list = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
+  (list.map ? list : []).forEach(s => { opResults[s.songId] = s; });
+  out.innerHTML = (list.map ? list : []).map(s => `<div class="row"><img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)}</span></div><button class="mini" data-opadd="${esc(s.songId)}">Choisir</button></div>`).join('') || '<p class="muted">Aucun résultat (Spotify connecté ?)</p>';
+}
+$('phases').addEventListener('input', e => { if (e.target.dataset.opsearch === undefined) return; clearTimeout(opT); opT = setTimeout(() => opSearch(e.target), 350); });
 const addPhase = kind => async () => { const d = PH_DEFAULTS[kind]; await api('/api/phases', 'POST', { name: d.name, start: d.start, intensity: kind, jingle: d.jingle, requestsOpen: kind === 'party' }); phSig = ''; toast('Période ajoutée : modifie-la ci-dessus'); };
 $('phAddCalm').onclick = addPhase('calm'); $('phAddParty').onclick = addPhase('party');
 async function launchPhase(id) {
   if (phaseBusy) return; phaseBusy = true;
   try {
-    const r = await api(`/api/phases/${id}/activate`);
+    const p = state.phases.find(x => x.id === id), opener = !!(started && music && p && p.intensity === 'party'); // ouverture de la piste : seulement si la soirée joue déjà
+    const r = await api(`/api/phases/${id}/activate`, 'POST', { opener });
+    if (r.opener) { await playNext('phase'); return; } // fondu de la vraie chanson + phrase de Vinny (startOpener)
     if (state.autoFx) await playJingle(r.intensity === 'party' ? 'riser' : 'carillon');
     if (r.jingle && state.announce) await speak(r.jingle);
   } finally { phaseBusy = false; }
@@ -720,15 +778,23 @@ $('phases').onclick = async e => {
   const id = b.closest('.phbox').dataset.id;
   if (b.dataset.ph === 'del') { if (confirm('Supprimer cette période ?')) { await api('/api/phases/' + id, 'DELETE'); phSig = ''; } }
   else if (b.dataset.ph === 'say') { const p = state.phases.find(x => x.id === id); if (p && p.jingle) speak(p.jingle); else toast('Aucune phrase pour cette période'); }
-  else await launchPhase(id);
+  else if (b.dataset.ph === 'openHere') {
+    const n = state.nowPlaying; if (!n || !music || !music.posSec) return toast('Fais d’abord jouer la chanson (Spotify), place-toi au bon passage, puis clique ici');
+    const at = Math.round(music.posSec() * 2) / 2;
+    await api('/api/phases/' + id, 'PUT', { open: plainSong(n), openAt: at }); phSig = ''; b.blur(); toast('Ouverture : ' + n.title + ', départ à ' + at + ' s');
+  } else if (b.dataset.ph === 'openClear') { await api('/api/phases/' + id, 'PUT', { open: null }); phSig = ''; b.blur(); }
+  else if (b.dataset.ph === 'go') await launchPhase(id);
 };
-$('autoPh').onchange = e => api('/api/settings', 'POST', { autoPhases: e.target.checked });
-setInterval(() => {
-  if (!state || !state.autoPhases || !started || phaseBusy) return;
-  const d = new Date(), now = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-  const cur = [...state.phases].reverse().find(p => p.start <= now);
-  if (cur && (!state.phase || state.phase.id !== cur.id)) launchPhase(cur.id);
-}, 20000);
+const plainSong = s => ({ songId: s.songId, title: s.title, artist: s.artist, artwork: s.artwork || '' });
+$('phases').addEventListener('click', async e => {
+  const idea = e.target.closest('button[data-opidea]'), add = e.target.closest('button[data-opadd]'); if (!idea && !add) return;
+  const box = e.target.closest('.phbox');
+  if (idea) { const inp = box.querySelector('[data-opsearch]'); inp.value = idea.dataset.opidea; return opSearch(inp); }
+  const s = opResults[add.dataset.opadd]; if (!s) return;
+  await api('/api/phases/' + box.dataset.id, 'PUT', { open: plainSong(s), openAt: 0 }); phSig = ''; add.blur();
+  toast('Ouverture : ' + s.title + '. Pour un autre passage que le début : fais-la jouer et « Prendre le titre et la position en cours »');
+});
+
 
 // ---------- File d'attente ----------
 $('qrRotate').onclick = async () => { if (!confirm('Générer un nouveau code ? Les QR déjà imprimés ou scannés cesseront de fonctionner.')) return; await api('/api/event/rotate'); toast('Nouveau code : réaffiche le QR'); };
@@ -842,7 +908,8 @@ const rate = vote => async () => {
 };
 const gain = step => async () => { const n = state.nowPlaying; if (!n) return toast('Rien en lecture'); await api('/api/gain', 'POST', { songId: n.songId, step }); };
 $('volDown').onclick = gain(-1); $('volUp').onclick = gain(1);
-$('rateUp').onclick = rate(1); $('rateDown').onclick = rate(-1);
+$('rateUp').onclick = rate(1);
+$('rateDown').onclick = async () => { await rate(-1)(); if (started) playNext('skip'); }; // promesse de Vinny : si ça vide la piste, on change vite
 async function loadMemory() {
   const list = await api('/api/ratings', 'GET');
   const row = r => `<div class="row"><div class="t"><b>${esc(r.title)}</b><span class="muted">${esc(r.artist)}</span></div><span class="tag">${r.up} ✓ · ${r.down} ✗</span></div>`;
@@ -957,7 +1024,6 @@ function showTab(t) {
 $('tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); };
 
 // Souhaits
-let wishSel = null;
 const ago = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : m < 1440 ? 'il y a ' + Math.round(m / 60) + ' h' : 'il y a ' + Math.round(m / 1440) + ' j'; };
 const wishEvId = () => (wishSel && wishSel !== 'all' && wishSel !== 'none' ? wishSel : '');
 function fillWishEv() {
@@ -971,7 +1037,7 @@ async function loadWishes() {
   const w = await api('/api/wishes' + (wishSel ? '?ev=' + encodeURIComponent(wishSel) : ''), 'GET');
   const n = w.total, g = w.groups.length, s = x => (x > 1 ? 's' : '');
   $('wishCount').textContent = n ? '(' + n + ')' : ''; $('wishBadge').textContent = n ? ' (' + n + ')' : '';
-  $('wishNote').textContent = n ? n + ' souhait' + s(n) + ' reçu' + s(n) + ', ' + g + ' chanson' + s(g) + ' différente' + s(g) + '. « Chercher » la trouve sur Spotify ; « Traité » la retire de la liste.' : 'Aucun souhait pour le moment.';
+  $('wishNote').textContent = n ? n + ' souhait' + s(n) + ' reçu' + s(n) + ', ' + g + ' chanson' + s(g) + ' différente' + s(g) + '. 🔎 Chercher = recherche Spotify maintenant ; ✓ Traité = retire de la liste.' : 'Aucun souhait pour le moment.';
   if (document.activeElement && $('wishList').contains(document.activeElement)) return;
   $('wishList').innerHTML = w.groups.map(x => '<div class="wg" data-ids="' + esc(x.ids.join(',')) + '" data-text="' + esc(x.text) + '"><div class="row"><div class="t"><b>' + esc(x.text) + '</b><span class="muted">'
     + (x.names.length ? esc(x.names.join(', ')) + ' · ' : '') + ago(x.last) + '</span></div><span class="tag">×' + x.count + '</span></div>'
@@ -997,7 +1063,6 @@ $('wishClear').onclick = async () => { if (confirm('Vider la liste de souhaits a
 $('wishEv').onchange = () => { wishSel = $('wishEv').value; loadWishes(); loadLinks(); };
 
 // Événements
-let evData = null, evEditing = null;
 const fmtEv = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return e.date; } };
 const STAT = { upcoming: 'À venir', live: 'En cours', ended: 'Terminé' };
 async function loadEvents() { evData = await api('/api/evts', 'GET'); renderEvents(); fillWishEv(); }
@@ -1010,7 +1075,7 @@ function evCard(e) {
   btns.push(['links', 'Liens et QR'], ['edit', 'Modifier'], ['dup', 'Dupliquer'], ['del', 'Supprimer']);
   return '<div class="evcard' + (act ? ' act' : '') + '" data-id="' + esc(e.id) + '"><div class="inline" style="justify-content:space-between;margin-top:0"><h3>' + esc(e.name) + '</h3><span><span class="tag">' + STAT[e.status] + '</span>' + (act ? ' <span class="tag">actif</span>' : '') + '</span></div>'
     + '<div class="muted">' + esc(fmtEv(e)) + ' · ' + esc(e.start) + ' → ' + esc(e.end) + (e.place ? ' · ' + esc(e.place) : '') + '</div>'
-    + '<div class="muted">' + e.wishCount + ' souhait' + s(e.wishCount) + ' · ' + e.phaseCount + ' période' + s(e.phaseCount) + ' · demandes ouvertes ' + (e.openBeforeMin ? e.openBeforeMin + ' min avant le début' : 'au début') + (e.auto === false ? ' · ouverture manuelle' : '') + '</div>'
+    + '<div class="muted">' + e.wishCount + ' souhait' + s(e.wishCount) + ' · ' + e.phaseCount + ' période' + s(e.phaseCount) + ' · demandes ouvertes ' + (e.openBeforeMin ? e.openBeforeMin + ' min avant le début (' + timeMinus(e.start, e.openBeforeMin) + ')' : 'au début') + (e.auto === false ? ' · ouverture manuelle' : '') + '</div>'
     + (e.welcome ? '<div class="muted">« ' + esc(e.welcome) + ' »</div>' : '')
     + '<div class="inline">' + btns.map(b => '<button class="mini" style="padding:0 14px" data-ea="' + b[0] + '">' + b[1] + '</button>').join('') + '</div><div class="evlinks" hidden></div></div>';
 }
@@ -1032,8 +1097,18 @@ function openEvForm(e) {
 }
 $('evNew').onclick = () => openEvForm(null);
 $('evCancel').onclick = () => { $('evForm').hidden = true; evEditing = null; };
+// Heures tapées au clavier, pavé numérique compris (le champ « heure » du navigateur le refusait) : 1800, 18, 18h30, 6:30 -> HH:MM
+const timeMinus = (t, min) => { const x = (+t.slice(0, 2) * 60 + +t.slice(3) - min + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
+const normTime = v => {
+  const d = String(v || '').replace(/\D/g, ''); if (!d || d.length > 4) return '';
+  const h = +(d.length <= 2 ? d : d.slice(0, -2)), m = d.length <= 2 ? 0 : +d.slice(-2);
+  return h < 24 && m < 60 ? String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') : '';
+};
+for (const k of ['start', 'end']) evF(k).addEventListener('blur', e => { const t = normTime(e.target.value); if (t) e.target.value = t; });
 $('evSave').onclick = async () => {
-  const body = { name: evF('name').value, date: evF('date').value, start: evF('start').value, end: evF('end').value, place: evF('place').value, welcome: evF('welcome').value, thanks: evF('thanks').value, openBeforeMin: Number(evF('before').value), auto: evF('auto').checked };
+  const start = normTime(evF('start').value), end = normTime(evF('end').value);
+  if ((evF('start').value && !start) || (evF('end').value && !end)) return toast('Heure invalide : tape par exemple 18:00 ou 1800');
+  const body = { name: evF('name').value, date: evF('date').value, start, end, place: evF('place').value, welcome: evF('welcome').value, thanks: evF('thanks').value, openBeforeMin: Number(evF('before').value), auto: evF('auto').checked };
   if (!body.name.trim() || !body.date || !body.start || !body.end) return toast('Nom, date, début et fin sont requis');
   if (evEditing) await api('/api/evts/' + evEditing, 'PUT', body);
   else { const p = evF('program').value; if (p === 'default') body.program = 'default'; else if (p.startsWith('copy:')) body.copyFrom = p.slice(5); await api('/api/evts', 'POST', body); }
@@ -1093,6 +1168,7 @@ es.addEventListener('cmd', async e => {
     else if (c.cmd === 'pause') { if (music) music.isPlaying ? music.pause() : music.play(); }
     else if (c.cmd === 'say') await speak(c.text);
     else if (c.cmd === 'jingle') await playJingle(c.name);
+    else if (c.cmd === 'moment') await sayMoment(c.src)();
     else if (c.cmd === 'phase') await launchPhase(c.id);
     else if (c.cmd === 'callout') { await api('/api/fx', 'POST', { type: 'callout' }); if (state.tts) await speakCallout(); }
   } catch (err) { console.error(err); }
@@ -1112,10 +1188,17 @@ function paintSettings() {
 }
 $('openSettings').onclick = async () => {
   setView = await api('/api/app-settings', 'GET'); setReset = new Set(); paintSettings(); dlg.showModal();
-  try { // télécommande : adresse + QR (même Wi-Fi que l'ordinateur ; installable en HTTPS)
+};
+$('btnRemote').onclick = async () => { // télécommande : adresse + QR (même Wi-Fi que l'ordinateur ; installable en HTTPS)
+  $('remoteDlg').showModal();
+  try {
     const l = await api('/api/links', 'GET'); $('remoteUrl').value = l.remote; $('remoteQr').src = '/api/qr.png?to=remote&v=' + Date.now();
-    $('remoteNote').textContent = 'Scanne ce code ou ouvre l’adresse sur ton téléphone (même Wi-Fi que l’ordinateur), entre le mot de passe hôte, puis ajoute la page à l’écran d’accueil. Le dashboard doit rester ouvert sur l’ordinateur.' + (l.public ? '' : ' Adresse du réseau local : elle ne marche pas hors de ce Wi-Fi.');
+    $('remoteNote').textContent = 'Scanne ce code avec ton téléphone, entre le mot de passe hôte, puis ajoute la page à l’écran d’accueil. Le dashboard doit rester ouvert sur l’ordinateur.' + (l.public ? '' : ' Adresse du réseau local : elle ne marche pas hors de ce Wi-Fi.');
   } catch {}
+};
+$('remoteClose').onclick = () => $('remoteDlg').close();
+$('btnScreen').onclick = () => { // même nom de fenêtre = l'écran déjà ouvert est rechargé (relancé) au lieu d'en ouvrir un deuxième
+  const w = window.open('/ecran.html', 'dj-ecran'); if (w) { w.focus(); toast('Écran de la soirée (re)lancé'); } else toast('Le navigateur a bloqué la fenêtre : autorise les fenêtres surgissantes');
 };
 $('remoteCopy').onclick = async () => { try { await navigator.clipboard.writeText($('remoteUrl').value); toast('Adresse copiée'); } catch { $('remoteUrl').select(); toast('Sélectionnée : fais Ctrl+C'); } };
 $('setCancel').onclick = () => dlg.close();
@@ -1136,7 +1219,7 @@ $('setSave').onclick = async () => {
 <script>
 // ---------- Disposition du dashboard : menu collant, cartes repliables / déplaçables (mémorisé dans ce navigateur) ----------
 (() => {
-  const DEF = [['File', 'file', 'File d’attente', 0], ['Périodes', 'periodes', 'Périodes', 0], ['DJ Vinny autopilote', 'autopilote', 'Autopilote', 0], ['Danse en ligne', 'ligne', 'Danse en ligne', 1],
+  const DEF = [['File', 'file', 'File d’attente', 0], ['Périodes', 'periodes', 'Périodes', 0], ['DJ Vinny autopilote', 'autopilote', 'Autopilote', 1], ['Danse en ligne', 'ligne', 'Danse en ligne', 1],
     ['Boutons DJ', 'boutons', 'Boutons DJ', 0], ['Annonces', 'annonces', 'Annonces', 1], ['Mémoire', 'memoire', 'Mémoire', 1], ['Piste', 'camera', 'Caméra', 1], ['Souhaits', 'souhaits', 'Souhaits', 1], ['QR', 'qr', 'QR', 1]];
   const KEY = 'djLayout', cols = [...document.querySelectorAll('.grid > div')], cards = {};
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
@@ -1193,5 +1276,34 @@ $('setSave').onclick = async () => {
     if (e.target.id === 'arrBtn') { const on = document.body.classList.toggle('arrange'); document.getElementById('arrReset').hidden = !on; }
     if (e.target.id === 'arrReset' && confirm('Remettre la disposition et les cartes repliées par défaut ?')) { try { localStorage.removeItem(KEY); } catch {} location.reload(); }
   });
+})();
+
+// ---------- Aide : une ligne sous chaque titre + bouton « i » pour le détail ----------
+function addHelp(card, short, long) {
+  const h = card && card.querySelector('h2'); if (!h || card.querySelector(':scope > .hint')) return;
+  h.insertAdjacentHTML('afterend', '<p class="hint">' + short + '</p>' + (long ? '<p class="muted info" data-gen="1">' + long + '</p>' : ''));
+  const hasInfo = long || card.querySelector(':scope > .info');
+  if (!hasInfo) return;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'ib'; b.textContent = 'i'; b.title = 'Plus d’info'; b.setAttribute('aria-label', 'Plus d’info');
+  b.onclick = e => { e.stopPropagation(); card.classList.toggle('showinfo'); };
+  const ctl = h.querySelector('.ctl'); h.insertBefore(b, ctl || null);
+}
+(() => {
+  const H = {
+    file: ['Les prochains titres : glisse pour réordonner, les demandes des invités passent devant.', 'Les titres demandés par les invités passent en premier, puis les titres « auto » choisis par l’autopilote. Tu peux ajouter un titre toi-même, le monter (⏫), le descendre ou le retirer. « Demandes ouvertes » décide si les invités peuvent encore demander.'],
+    periodes: ['Souper ou Soirée : ambiance, liste de chansons, couleur et phrase de Vinny.'],
+    autopilote: ['Sans demande, Vinny pige tout seul dans la liste de la période.'],
+    ligne: ['Glisse une danse en ligne dans la file, sur demande ou à intervalle.', 'Le bouton met la prochaine danse en ligne devant la file. Le menu permet d’en lancer une automatiquement toutes les 20, 30 ou 45 minutes. Les titres viennent de la liste de danses en ligne ci-dessous.'],
+    boutons: ['Effets, jingles et messages de Vinny, d’un clic.', 'Annoncer le prochain titre = Vinny le présente à la voix. Phrase de la période = Vinny redit son texte d’ouverture. Confettis et Mode fête agissent sur l’écran de la soirée. Le champ du bas fait dire n’importe quel message à Vinny (ex. « À table, c’est prêt ! »).'],
+    annonces: ['Vinny annonce les demandes ; réglage du rappel du QR.', 'Annonces vocales : Vinny annonce les titres demandés et les danses en ligne. Animations et jingles : confettis, mode fête et « ding » automatiques à chaque demande. Rappel du QR : Vinny invite les gens à scanner si personne n’a rien demandé depuis un certain nombre de titres.'],
+    memoire: ['Titres notés « Ça danse » / « Ça vide la piste » et journal du jour.'],
+    camera: ['Mesure le mouvement sur la piste, rien n’est enregistré (essai).'],
+    qr: ['Le QR à montrer aux invités pour qu’ils demandent des tounes.']
+  };
+  document.querySelectorAll('.grid .card[data-k]').forEach(c => { const h = H[c.dataset.k]; if (h) addHelp(c, h[0], h[1]); });
+  addHelp(document.getElementById('c-souhaits'), 'Chansons que les invités écrivent à l’avance, en texte libre.',
+    'Les invités tapent jusqu’à 3 chansons (titre et artiste) sur la page des souhaits : c’est du texte libre, sans recherche Spotify de leur côté, donc ça marche même des jours avant la soirée. Les souhaits identiques sont regroupés (×2, ×3…). Le soir même, tu cliques 🔎 Chercher : c’est à ce moment que Spotify est interrogé (il faut que Spotify soit connecté), puis ＋ File ou ⏫ pour l’ajouter. Rien n’est ajouté tout seul à la musique. Un événement n’est pas obligatoire : sans événement, les souhaits vont dans « Sans événement » avec le QR habituel.');
+  addHelp(document.getElementById('c-evenements'), 'Facultatif : une fiche datée avec son propre lien, QR et souhaits.',
+    'Pas obligatoire : sans événement, tu démarres la soirée et les invités scannent le QR habituel. Crée un événement seulement pour envoyer un lien AVANT la soirée : il a sa date, ses heures, son lieu, son code et sa liste de souhaits. Les invités qui scannent avant l’heure voient « à venir » et peuvent envoyer leurs souhaits ; une fois terminé, ils voient ton message de remerciement. Il s’active tout seul à l’heure prévue si « ouverture automatique » est cochée, ou tu le démarres/termines à la main.');
 })();
 </script></body></html>
