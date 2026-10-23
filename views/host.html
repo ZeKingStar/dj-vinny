@@ -1118,7 +1118,7 @@ $('evSave').onclick = async () => {
 function wishMail(e, url) {
   const day = new Date(e.date + 'T12:00:00').toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
   return 'Objet : ' + e.name + ' : choisis tes tounes d’avance !\n\nBonjour à tous,\n\n'
-    + 'Le ' + day + ' à ' + e.start.replace(/^0/, '').replace(':00', ' h').replace(':', ' h ') + (e.place ? ', au ' + e.place : '') + ', c’est ' + e.name + ' ! '
+    + 'Le ' + day + (e.place ? ', au ' + e.place : '') + ', c’est ' + e.name + ' ! '
     + 'DJ Vinny prépare la musique de la soirée et veut savoir ce qui vous fait danser.\n\n'
     + 'Envoyez-lui vos 3 chansons préférées ici (30 secondes, aucun compte à créer) :\n' + url + '\n\n'
     + 'Le soir même, un code QR à l’écran vous permettra aussi de faire vos demandes spéciales.\n\nÀ bientôt sur la piste !';
