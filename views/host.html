@@ -78,7 +78,7 @@
 
   <div class="card" id="player">
     <div id="startBox"><p class="muted" id="startText"></p>
-      <button id="start">Connecter &amp; démarrer</button> <span id="startErr" class="muted"></span></div>
+      <button class="ghost" id="spConnect">Connecter Spotify</button> <button id="start">Démarrer la soirée</button> <span id="startErr" class="muted"></span></div>
     <div id="playBox" hidden>
       <div class="np"><div class="cover" id="cover"></div>
         <div class="t" style="flex:1"><span class="eq"><i></i><i></i><i></i><i></i></span><div><b id="title">—</b></div><div class="muted" id="artist"></div><div class="muted" id="src"></div></div>
@@ -546,6 +546,11 @@ const SP = {
   },
   async pushToken() { await api('/api/spotify/token', 'POST', { token: await SP.access() }); },
 };
+let spTimer = null;
+async function shareSpotify() { // envoie l'accès Spotify au serveur, puis le renouvelle toutes les 20 min (une seule minuterie)
+  await SP.pushToken();
+  if (!spTimer) spTimer = setInterval(() => SP.pushToken().catch(console.error), 20 * 60e3);
+}
 let sdkReady = null;
 function preloadSpotifySdk() {
   sdkReady = new Promise(ok => { window.onSpotifyWebPlaybackSDKReady = ok; });
@@ -616,9 +621,16 @@ async function initSpotify() {
     $('prog').style.width = cur / m.dur * 100 + '%'; $('seekTime').textContent = mm(cur) + ' / ' + mm(m.dur);
   }, 500);
   await player.connect(); await ready;
-  await SP.pushToken(); setInterval(() => SP.pushToken().catch(console.error), 20 * 60e3);
+  await shareSpotify();
 }
 
+// Connecter Spotify sans démarrer la soirée : recherche, listes, chanson d'ouverture et télécommande fonctionnent, aucune musique ne part
+$('spConnect').hidden = true;
+$('spConnect').onclick = async () => {
+  if (!SP.load().access) return SP.login().catch(e => { $('startErr').textContent = e.message; });
+  try { await shareSpotify(); $('spConnect').textContent = '✓ Spotify connecté'; $('spConnect').disabled = true; $('startErr').textContent = ''; }
+  catch (e) { $('startErr').textContent = e.message; }
+};
 $('start').onclick = async () => {
   try {
     if (cfg.provider === 'spotify') await initSpotify(); else { if (!music) await initApple(); }
@@ -626,7 +638,15 @@ $('start').onclick = async () => {
     started = true; $('startBox').hidden = true; $('playBox').hidden = false;
     await loadPlaylists();
     // page rechargée en pleine soirée : on reprend le titre en cours ; sinon on lance la soirée (avec le mot d'ouverture)
-    if (state.nowPlaying) await startTrack(state.nowPlaying); else playNext('start');
+    if (state.nowPlaying) await startTrack(state.nowPlaying);
+    else {
+      // une soirée commence toujours en Souper (une Soirée laissée active par un essai ne doit pas ouvrir la piste) ; sans jingle : le mot d'ouverture suffit
+      if (!state.phase || state.phase.intensity !== 'calm') {
+        const p = state.phases.find(x => x.intensity === 'calm') || await api('/api/phases/ensure', 'POST', { intensity: 'calm' });
+        await api('/api/phases/' + p.id + '/activate');
+      }
+      playNext('start');
+    }
   } catch (e) { $('startErr').textContent = e.message || 'Échec de connexion'; }
 };
 (async () => {
@@ -639,7 +659,8 @@ $('start').onclick = async () => {
   if (!cfg.spotifyClientId) { $('startErr').textContent = 'SPOTIFY_CLIENT_ID manquant dans .env'; $('start').disabled = true; return; }
   preloadSpotifySdk();
   try { await SP.callback(); } catch (e) { $('startErr').textContent = e.message; }
-  $('start').textContent = SP.load().access ? 'Démarrer la soirée' : 'Connecter Spotify';
+  $('spConnect').hidden = false;
+  if (SP.load().access) $('spConnect').click(); // déjà autorisé : l'accès est partagé avec le serveur sans démarrer la soirée
 })();
 $('pp').onclick = () => (music.isPlaying ? music.pause() : music.play());
 // clic sur la barre : saute à cet endroit du titre (Spotify). Utile pour passer à la fin d'un morceau
