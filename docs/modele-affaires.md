@@ -189,6 +189,7 @@ Le forfait ElevenLabs à 22 $ US/mois inclut 275 000 caractères (~50 soirées) 
 | 4 | Portail `compte.djvinny.ca` : Clerk + Stripe Checkout, webhook vers Convex, clé de licence | A, B, 3 |
 | 5 | Serveur local : réglage « Clé de licence », publication de l'événement, récupération des souhaits, voix via Convex | 3 |
 | 6 | Tunnel automatique : clé SSH générée par l'app, script sur le VPS (clé restreinte, nginx, certbot, ouverture selon les droits), repli QR local | A, 3 |
+| 6b | Démarrage sans fenêtre, en gratuit comme en payant : serveur lancé caché (`Demarrer.vbs`), tunnel lancé et relancé par le serveur lui-même (aucune fenêtre), journal dans `data/serveur.log`, bouton « Fermer DJ Vinny » dans le dashboard, avertissement avant de fermer l’onglet du dashboard une fois la soirée démarrée. Pas d’installateur (Inno Setup écarté pour l’instant) | 6 pour le tunnel ; le reste ne dépend de rien |
 | 7 | Page des souhaits sur `<client>.djvinny.ca` (écrit dans Convex), courriel d'invitation (Brevo), QR imprimable (PDF) | 3, 5 |
 | 8 | Conditions d'utilisation et politique de confidentialité (FR/EN) | D |
 | 9 | Dépôt GitHub public de la version gratuite (sans `.env` ni `data/`), README FR/EN avec les étapes Spotify | 2 |
@@ -207,6 +208,7 @@ Le travail commercial se fait sur une branche à part ; `perso` et l'étiquette 
 | Ordre bilingue / payant | Sans importance : bilingue d'abord (étape 2), il ne dépend de rien |
 | Entreprise | Pop & Show |
 | Catalogue | `ca` |
+| Fenêtres sur le PC du client | Aucune fenêtre de terminal visible, en gratuit comme en payant. Pas d’installateur pour l’instant. L’onglet du dashboard est protégé contre une fermeture par erreur (seulement une fois la soirée démarrée) |
 
 ## 9. Deux points expliqués
 
