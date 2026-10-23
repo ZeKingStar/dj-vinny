@@ -1037,12 +1037,12 @@ app.get('/api/tts/:name', requireHost, (req, res) => {
 });
 app.use((err, req, res, next) => res.status(err.status || 500).json({ error: err.type === 'entity.parse.failed' ? 'JSON invalide' : 'Erreur serveur' }));
 
-// ---------- Fermeture automatique à 3 h (évite un serveur et un tunnel oubliés ouverts) ----------
+// ---------- Fermeture automatique à 1 h du matin (évite un serveur et un tunnel oubliés ouverts) ----------
 // 60 s avant, le dashboard et la télécommande affichent un avis avec « Encore 1 h » (autant de fois que voulu).
-// SHUTDOWN_TEST_SEC : pour les essais, fermeture N secondes après le démarrage au lieu de 3 h.
+// SHUTDOWN_TEST_SEC : pour les essais, fermeture N secondes après le démarrage au lieu de 1 h.
 const WARN_SEC = 60;
-const nextThree = () => { const d = new Date(); d.setHours(3, 0, 0, 0); if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); return d.getTime(); };
-let shutdownAt = process.env.SHUTDOWN_TEST_SEC ? Date.now() + Number(process.env.SHUTDOWN_TEST_SEC) * 1000 : nextThree(), warned = false, closing = false;
+const nextClose = () => { const d = new Date(); d.setHours(1, 0, 0, 0); if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); return d.getTime(); };
+let shutdownAt = process.env.SHUTDOWN_TEST_SEC ? Date.now() + Number(process.env.SHUTDOWN_TEST_SEC) * 1000 : nextClose(), warned = false, closing = false;
 const sendShutdown = data => { const msg = `event: shutdown\ndata: ${JSON.stringify(data)}\n\n`; for (const res of clients) res.write(msg); };
 const hhmm = t => new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
 setInterval(() => {
