@@ -10,21 +10,21 @@ const QRCode = require('qrcode');
 const {
   PORT = 3000, HOST_PASSWORD, SESSION_SECRET, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY_PATH,
 } = process.env;
-const SETTING_DEFS = { // clé : [étiquette, type, défaut, aide, validation]
-  MUSIC_PROVIDER: ['Source musicale', 'select:spotify,apple', 'spotify', 'Spotify (Premium) ou Apple Music. Recharge la page après un changement.', v => ['spotify', 'apple'].includes(v)],
-  SPOTIFY_CLIENT_ID: ['Spotify : Client ID', 'text', '', 'developer.spotify.com/dashboard. Le Redirect URI doit être l’adresse du dashboard (http://127.0.0.1:3000/host).', v => /^[A-Za-z0-9]{0,64}$/.test(v)],
-  STOREFRONT: ['Pays du catalogue', 'text', 'fr', 'Code à 2 lettres : ca, fr, be…', v => /^[a-z]{2}$/i.test(v)],
-  PUBLIC_URL: ['Adresse publique (QR des invités)', 'text', '', 'Vide = adresse du réseau local détectée. Sur le VPS : https://ton-domaine', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
-  MAX_PENDING_PER_GUEST: ['Demandes en attente par invité', 'number:1:20', '3', 'Nombre de demandes d’un même invité qui peuvent attendre dans la file.', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
-  REQ_PER_PERIOD: ['Demandes par invité et par période', 'number:1:50', '2', 'Limite par appareil d’invité (plus un plafond large par adresse IP, car les invités d’un même Wi-Fi partagent la leur), remise à zéro à chaque période.', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
-  OPENROUTER_API_KEY: ['Voix : clé OpenRouter', 'secret', '', 'openrouter.ai/settings/keys. Jamais réaffichée une fois enregistrée.', v => /^[\w.-]{10,200}$/.test(v)],
-  TTS_MODEL: ['Voix : modèle', 'text', 'elevenlabs/eleven-v3', 'Ex. elevenlabs/eleven-v3 ou fish-audio/s2.1-pro-free (les annonces utilisent aussi announce.json).', v => /^[\w./:-]{1,80}$/.test(v)],
-  VINNY_VOICE: ['Voix de Vinny', 'text', 'liam', 'Voix ElevenLabs de toutes les annonces et messages (ex. liam, george, sarah). Sans effet avec un serveur de voix local.', v => /^[\w -]{1,40}$/.test(v)],
-  TTS_BASE_URL: ['Voix : serveur local (optionnel)', 'text', '', 'Ex. http://127.0.0.1:8020/v1 pour un serveur compatible OpenAI. Vide = OpenRouter.', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
+const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aide : locales/<langue>.json (set.CLÉ, set.CLÉ.help)
+  MUSIC_PROVIDER: ['select:spotify,apple', 'spotify', v => ['spotify', 'apple'].includes(v)],
+  SPOTIFY_CLIENT_ID: ['text', '', v => /^[A-Za-z0-9]{0,64}$/.test(v)],
+  STOREFRONT: ['text', 'ca', v => /^[a-z]{2}$/i.test(v)],
+  PUBLIC_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
+  MAX_PENDING_PER_GUEST: ['number:1:20', '3', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
+  REQ_PER_PERIOD: ['number:1:50', '2', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
+  OPENROUTER_API_KEY: ['secret', '', v => /^[\w.-]{10,200}$/.test(v)],
+  TTS_MODEL: ['text', 'elevenlabs/eleven-v3', v => /^[\w./:-]{1,80}$/.test(v)],
+  VINNY_VOICE: ['text', 'liam', v => /^[\w -]{1,40}$/.test(v)],
+  TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
 };
 let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, OPENROUTER_API_KEY, TTS_MODEL, TTS_VOICE, VINNY_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_ENABLED, SPOTIFY;
-const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? '.env' : 'défaut');
-const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][2];
+const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
+const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
   const g = settingValue;
   PUBLIC_URL = g('PUBLIC_URL').replace(/\/$/, ''); STOREFRONT = g('STOREFRONT').toLowerCase();
@@ -46,6 +46,17 @@ const lanUrls = () => Object.entries(os.networkInterfaces())
 if (!HOST_PASSWORD) { console.error('HOST_PASSWORD manquant (.env)'); process.exit(1); }
 const secret = SESSION_SECRET || HOST_PASSWORD;
 if (!SESSION_SECRET) console.warn('Attention : SESSION_SECRET absent du .env (le mot de passe sert de secret). Définis une longue valeur aléatoire avant le déploiement.');
+
+// ---------- Langues : locales/<langue>.json (interface et erreurs) et announce/<langue>.json (Vinny) ----------
+// Les invités voient la langue de l'événement (ev.lang, fr par défaut) ; l'hôte, celle de son navigateur. Les pages envoient leur langue dans l'en-tête x-lang.
+const LANGS = ['fr', 'en'];
+const LOCALES = Object.fromEntries(LANGS.map(l => [l, JSON.parse(fs.readFileSync(path.join(__dirname, 'locales', l + '.json'), 'utf8'))]));
+const okLang = l => (LANGS.includes(l) ? l : 'fr');
+const tr = (lang, key, v = {}) => String(LOCALES[okLang(lang)][key] ?? LOCALES.fr[key] ?? key).replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
+const announceCfg = lang => JSON.parse(fs.readFileSync(path.join(__dirname, 'announce', okLang(lang) + '.json'), 'utf8')); // relu à chaque fois : se modifie sans redémarrer
+const reqLang = req => okLang(req.get('x-lang'));
+const E = (key, code, vars) => Object.assign(new Error(key), { key, code, vars }); // erreur traduite à l'envoi (clés err.*)
+const fail = (req, res, code, key, vars) => res.status(code).json({ error: tr(reqLang(req), key, vars) });
 
 // ---------- État persistant ----------
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data'); // DATA_DIR : dossier séparé pour les essais
@@ -86,15 +97,24 @@ if (!state.eventToken) { state.eventToken = crypto.randomBytes(9).toString('base
 // en direct et son code est le code de la soirée. Sans événement, l'app fonctionne comme avant (code unique).
 const prep = { running: false }; // préparation automatique des listes (recherche Spotify)
 const OLD_FLOOR_JINGLE = '[excited] Mesdames et messieurs, la piste de danse est ouverte ! Allez, la gang, tout le monde sur la piste !';
-const FLOOR_JINGLE = 'Mesdames et messieurs, la piste de danse est officiellement ouverte ! Vos demandes spéciales, c’est le code QR sur l’écran. Pis si une toune vide la piste, pas de panique : on passe à une autre, vite vite ! Allez, la gang, on danse !';
-const PH_DEFAULTS = {
-  calm: { name: 'Souper', start: '19:00', color: '#FFD23F', requestsOpen: false, listId: 'builtin:souper', jingle: 'Bonsoir tout le monde ! DJ Vinny vous souhaite un excellent souper.' },
-  party: { name: 'Soirée', start: '22:00', color: '#FF4F7B', requestsOpen: true, listId: 'builtin:dance', openAt: 0, openFade: 10, jingle: FLOOR_JINGLE },
+const PH_BASE = {
+  calm: { start: '19:00', color: '#FFD23F', requestsOpen: false, listId: 'builtin:souper' },
+  party: { start: '22:00', color: '#FF4F7B', requestsOpen: true, listId: 'builtin:dance', openAt: 0, openFade: 10 },
 };
-const newPhase = kind => ({ id: crypto.randomUUID(), intensity: kind, ...PH_DEFAULTS[kind] });
+const phDefaults = (kind, lang) => ({ ...PH_BASE[kind], ...announceCfg(lang).phases[kind] }); // nom et phrase de Vinny : announce/<langue>.json
+const newPhase = (kind, lang = 'fr') => ({ id: crypto.randomUUID(), intensity: kind, ...phDefaults(kind, lang) });
+// changement de langue d'un événement : les noms et phrases par défaut suivent ; ceux que l'hôte a écrits restent
+function relang(phases, from, to) {
+  if (okLang(from) === okLang(to)) return;
+  for (const p of phases || []) {
+    const a = phDefaults(p.intensity, from), b = phDefaults(p.intensity, to);
+    if (p.name === a.name) p.name = b.name;
+    if (p.jingle === a.jingle) p.jingle = b.jingle;
+  }
+}
 if (!state.phases.length) { state.phases = [newPhase('calm'), newPhase('party')]; save(); } // toujours de quoi passer de Souper à Soirée, sans horaire à créer
 // ancienne phrase par défaut de la Soirée : remplacée par l'annonce complète (piste ouverte, demandes, on change vite si ça vide la piste)
-for (const p of [...state.phases, ...state.events.flatMap(e => e.phases || [])]) if (p.jingle === OLD_FLOOR_JINGLE) p.jingle = FLOOR_JINGLE;
+for (const p of [...state.phases, ...state.events.flatMap(e => e.phases || [])]) if (p.jingle === OLD_FLOOR_JINGLE) p.jingle = phDefaults('party', 'fr').jingle;
 const clonePhases = a => (a || []).map(p => ({ ...p }));
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/, TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 function evTimes(ev) {
@@ -112,14 +132,15 @@ function eventStatus(ev, now = Date.now()) {
   return now >= start - (ev.openBeforeMin || 0) * 60e3 ? 'live' : 'upcoming';
 }
 const activeEvent = () => state.events.find(e => e.id === state.activeEventId) || null;
+const evLang = () => okLang((activeEvent() || {}).lang); // langue de la salle : celle de l'événement actif
 const eventByToken = t => state.events.find(e => safeEq(String(t || ''), e.token)) || null;
 const tokenFor = req => { const e = state.events.find(x => x.id === req.query.ev); return e ? e.token : state.eventToken; };
-const publicEvent = e => ({ id: e.id, name: e.name, date: e.date, start: e.start, end: e.end, place: e.place || '', welcome: e.welcome || '', thanks: e.thanks || '', status: eventStatus(e) });
+const publicEvent = e => ({ id: e.id, lang: okLang(e.lang), name: e.name, date: e.date, start: e.start, end: e.end, place: e.place || '', welcome: e.welcome || '', thanks: e.thanks || '', status: eventStatus(e) });
 // Demandes et recherches des invités : seulement pendant que l'événement actif est en cours (sans événement actif : comme avant)
 const needLive = () => {
   const e = activeEvent(); if (!e) return;
   const s = eventStatus(e);
-  if (s !== 'live') throw Object.assign(new Error(s === 'ended' ? 'La soirée est terminée. Merci !' : 'La soirée n’a pas encore commencé'), { code: 403 });
+  if (s !== 'live') throw E(s === 'ended' ? 'err.notLiveEnded' : 'err.notLiveYet', 403);
 };
 
 
@@ -216,7 +237,7 @@ setInterval(() => { for (const res of clients) res.write(': ping\n\n'); }, 25000
 let cachedToken = null;
 function devToken() {
   if (cachedToken && cachedToken.exp > Date.now() + 3600e3) return cachedToken.token;
-  if (!APPLE_TEAM_ID || !APPLE_KEY_ID || !APPLE_PRIVATE_KEY_PATH) throw new Error('Clés Apple non configurées (.env)');
+  if (!APPLE_TEAM_ID || !APPLE_KEY_ID || !APPLE_PRIVATE_KEY_PATH) throw E('err.appleKeys', 500);
   const key = fs.readFileSync(APPLE_PRIVATE_KEY_PATH, 'utf8');
   const token = jwt.sign({}, key, {
     algorithm: 'ES256', expiresIn: '12h', issuer: APPLE_TEAM_ID, header: { alg: 'ES256', kid: APPLE_KEY_ID },
@@ -240,9 +261,9 @@ const SONG_ID_RE = /^[A-Za-z0-9]{5,40}$/; // identifiant de titre Spotify (base 
 // Spotify : le token vient du navigateur de l'hôte (PKCE), le serveur n'a pas de secret.
 let spotifyToken = null;
 async function spotifyGet(p) {
-  if (!spotifyToken) throw Object.assign(new Error('Spotify non connecté : l’hôte doit ouvrir le dashboard'), { code: 503 });
+  if (!spotifyToken) throw E('err.spotifyOff', 503);
   const r = await fetch('https://api.spotify.com' + p, { headers: { Authorization: 'Bearer ' + spotifyToken } });
-  if (r.status === 401) { spotifyToken = null; throw Object.assign(new Error('Session Spotify expirée'), { code: 503 }); }
+  if (r.status === 401) { spotifyToken = null; throw E('err.spotifyExpired', 503); }
   if (!r.ok) throw Object.assign(new Error('Spotify API ' + r.status), { code: r.status === 429 ? 429 : 502 });
   return r.json();
 }
@@ -259,13 +280,13 @@ async function searchSongs(q) {
   return ((r.results.songs && r.results.songs.data) || []).map(d => ({ songId: d.id, title: d.attributes.name, artist: d.attributes.artistName, artwork: art(d.attributes.artwork) }));
 }
 async function lookupSong(songId, extra) {
-  if (!SONG_ID_RE.test(songId)) throw Object.assign(new Error('ID invalide'), { code: 400 });
+  if (!SONG_ID_RE.test(songId)) throw E('err.badId', 400);
   if (SPOTIFY) {
     const t = await spotifyGet(`/v1/tracks/${songId}?market=${STOREFRONT.toUpperCase()}`);
     return { uid: crypto.randomUUID(), ...fromSpotify(t), ...extra };
   }
   const r = await appleGet(`/v1/catalog/${STOREFRONT}/songs/${songId}`);
-  if (!r.data || !r.data[0]) throw Object.assign(new Error('Titre introuvable'), { code: 404 });
+  if (!r.data || !r.data[0]) throw E('err.trackNotFound', 404);
   return toSong(r.data[0], extra);
 }
 
@@ -280,7 +301,7 @@ const isHost = req => {
   const m = /(?:^|; )host=([^;]+)/.exec(req.headers.cookie || '');
   return !!m && safeEq(m[1], sign());
 };
-const requireHost = (req, res, next) => (isHost(req) ? next() : res.status(401).json({ error: 'Non autorisé' }));
+const requireHost = (req, res, next) => (isHost(req) ? next() : fail(req, res, 401, 'err.unauthorized'));
 
 // Limiteur simple en mémoire
 const hits = new Map();
@@ -293,7 +314,7 @@ function limited(key, max, windowMs) {
 }
 
 const wrap = fn => (req, res) => Promise.resolve(fn(req, res)).catch(e =>
-  res.status(e.code || 500).json({ error: e.message }));
+  res.status(e.code || 500).json({ error: e.key ? tr(reqLang(req), e.key, e.vars) : e.message }));
 
 // ---------- App ----------
 const app = express();
@@ -305,11 +326,19 @@ app.use((req, res, next) => {
 });
 app.use(['/api/request', '/api/wish'], express.json({ limit: '8kb' })); // routes ouvertes aux invités : petits corps seulement
 app.use(express.json({ limit: '1mb' }));
+// Textes de l'interface (les deux langues) + t() : chargé en <script> avant le code des pages, donc disponible tout de suite.
+// ?p=guest : seulement les textes des pages invités (g.*, c.*) pour les téléphones. Les erreurs (err.*) restent au serveur.
+app.get('/i18n.js', (req, res) => {
+  const keep = req.query.p === 'guest' ? k => /^(g|c)\./.test(k) : k => !k.startsWith('err.');
+  const pick = o => Object.fromEntries(Object.entries(o).filter(([k]) => keep(k)));
+  res.set('Cache-Control', 'no-cache').type('js').send('window.I18N = ' + JSON.stringify(Object.fromEntries(LANGS.map(l => [l, pick(LOCALES[l])]))) + ';\n'
+    + fs.readFileSync(path.join(__dirname, 'locales', 'i18n.js'), 'utf8'));
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/login', (req, res) => {
-  if (limited('login:' + req.ip, 10, 15 * 60e3)) return res.status(429).json({ error: 'Trop d’essais' });
-  if (!safeEq(req.body.password || '', HOST_PASSWORD)) return res.status(401).json({ error: 'Mot de passe incorrect' });
+  if (limited('login:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
+  if (!safeEq(req.body.password || '', HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
   const secure = req.secure || (PUBLIC_URL || '').startsWith('https') ? '; Secure' : '';
   res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
   res.json({ ok: true });
@@ -328,12 +357,12 @@ const eventOk = req => isActiveToken(req.get('x-event') || '');
 const loopback = req => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.ip);
 // État et flux temps réel : l'hôte, ce PC (écran animé), ou un invité avec le code de la soirée (en-tête ou ?e=)
 const viewerOk = req => isHost(req) || loopback(req) || eventOk(req) || isActiveToken(req.query.e);
-const needEvent = req => { if (!eventOk(req)) throw Object.assign(new Error('Code de la soirée invalide : scanne à nouveau le QR'), { code: 403 }); };
+const needEvent = req => { if (!eventOk(req)) throw E('err.badCode', 403); };
 app.get('/api/state', (req, res) => {
   if (viewerOk(req)) return res.json(publicState());
   const ev = eventByToken(req.get('x-event') || req.query.e || '');
   if (ev) return res.json({ guestMode: eventStatus(ev), event: publicEvent(ev) });
-  res.status(403).json({ error: 'Code de la soirée invalide' });
+  fail(req, res, 403, 'err.badCodeShort');
 });
 const sseByIp = new Map();
 const dashClients = new Set(); // dashboards hôte ouverts : seuls à recevoir les commandes de la télécommande
@@ -358,10 +387,10 @@ const searchCache = new Map();
 app.get('/api/search', wrap(async (req, res) => {
   if (!isHost(req)) { // les invités : code de la soirée + demandes ouvertes ; l'hôte (dashboard, télécommande) passe
     needEvent(req); needLive();
-    if (!state.requestsOpen) throw Object.assign(new Error('Les demandes sont fermées'), { code: 403 });
+    if (!state.requestsOpen) throw E('err.closed', 403);
   }
-  if (limited('s:all', 150, 60e3)) throw Object.assign(new Error('Beaucoup de monde : réessaie dans un instant'), { code: 429 }); // protège le quota Spotify de l'hôte
-  if (limited('s:' + req.ip, 40, 60e3)) throw Object.assign(new Error('Trop de recherches'), { code: 429 });
+  if (limited('s:all', 150, 60e3)) throw E('err.busy', 429); // protège le quota Spotify de l'hôte
+  if (limited('s:' + req.ip, 40, 60e3)) throw E('err.tooManySearches', 429);
   const q = String(req.query.q || '').trim().slice(0, 80);
   if (q.length < 2) return res.json([]);
   const ck = norm(q), hit = searchCache.get(ck);
@@ -374,21 +403,21 @@ app.get('/api/config', (req, res) => res.json({ provider: SPOTIFY ? 'spotify' : 
 app.post('/api/request', wrap(async (req, res) => {
   needEvent(req); needLive();
   // tentatives (réussies ou non) : protège le quota Spotify de l'hôte
-  if (limited('ra:all', 100, 60e3) || limited('ra:' + req.ip, 200, 10 * 60e3)) throw Object.assign(new Error('Beaucoup de monde : réessaie dans un instant'), { code: 429 });
+  if (limited('ra:all', 100, 60e3) || limited('ra:' + req.ip, 200, 10 * 60e3)) throw E('err.busy', 429);
   const { songId, guestId } = req.body || {};
-  if (!state.requestsOpen) throw Object.assign(new Error('Les demandes sont fermées'), { code: 403 });
-  if (!ID_RE.test(String(guestId || ''))) throw Object.assign(new Error('Invité invalide'), { code: 400 });
-  if (limited('r:' + guestId, 20, 10 * 60e3)) throw Object.assign(new Error('Doucement !'), { code: 429 });
+  if (!state.requestsOpen) throw E('err.closed', 403);
+  if (!ID_RE.test(String(guestId || ''))) throw E('err.badGuest', 400);
+  if (limited('r:' + guestId, 20, 10 * 60e3)) throw E('err.slowDown', 429);
   if (state.queue.filter(s => s.by === guestId).length >= MAX_PENDING)
-    throw Object.assign(new Error(`Maximum ${MAX_PENDING} demandes en attente`), { code: 429 });
+    throw E('err.maxPending', 429, { n: MAX_PENDING });
   if (state.queue.some(s => s.songId === songId && s.source !== 'auto') || (state.nowPlaying && state.nowPlaying.songId === songId))
-    throw Object.assign(new Error('Déjà dans la file'), { code: 409 });
+    throw E('err.inQueue', 409);
   // limite par appareil (guestId) ; plafond large par IP pour freiner les faux identifiants
   const pk = (state.activePhaseId || '-') + '|' + guestId, pkIp = (state.activePhaseId || '-') + '|ip|' + req.ip, ipMax = Math.max(40, PER_PERIOD * 25);
   if ((state.periodReq[pk] || 0) >= PER_PERIOD)
-    throw Object.assign(new Error(`Limite atteinte : ${PER_PERIOD} demandes par période`), { code: 429 });
+    throw E('err.periodLimit', 429, { n: PER_PERIOD });
   if ((state.periodReq[pkIp] || 0) >= ipMax)
-    throw Object.assign(new Error('Trop de demandes depuis ce réseau pour cette période'), { code: 429 });
+    throw E('err.networkLimit', 429);
   const byName = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   const song = await lookupSong(songId, { by: guestId, source: 'guest', byName });
   state.queue = state.queue.filter(s => s.songId !== song.songId); // un titre auto identique cède sa place à la demande
@@ -550,25 +579,25 @@ app.post('/api/curated/use', requireHost, (req, res) => { // conservé pour comp
 app.get('/api/lists', requireHost, (req, res) => res.json(listsView()));
 app.get('/api/lists/:id', requireHost, (req, res) => {
   const l = state.lists.find(x => x.id === req.params.id);
-  l ? res.json({ id: l.id, name: l.name, tracks: l.tracks }) : res.status(404).json({ error: 'Liste introuvable' });
+  l ? res.json({ id: l.id, name: l.name, tracks: l.tracks }) : fail(req, res, 404, 'err.listNotFound');
 });
 app.post('/api/lists/import', requireHost, (req, res) => {
   const name = String(req.body.name || '').trim().slice(0, 60);
   const tracks = (Array.isArray(req.body.tracks) ? req.body.tracks : []).filter(t => t && ID_RE.test(String(t.songId)))
     .map(t => ({ songId: String(t.songId), title: String(t.title || '').slice(0, 200), artist: String(t.artist || '').slice(0, 200), artwork: String(t.artwork || '').slice(0, 300) })).slice(0, 600);
-  if (!name || !tracks.length) return res.status(400).json({ error: 'Nom et titres requis (la playlist est peut-être vide ou illisible)' });
+  if (!name || !tracks.length) return fail(req, res, 400, 'err.importEmpty');
   state.lists.push({ id: crypto.randomUUID(), name, tracks });
   commit(); res.json({ ok: true, count: tracks.length });
 });
 app.post('/api/lists/:id/toggle', requireHost, (req, res) => {
   const l = state.lists.find(x => x.id === req.params.id), t = l && l.tracks.find(x => x.songId === req.body.songId);
-  if (!t) return res.status(404).json({ error: 'Titre introuvable' });
+  if (!t) return fail(req, res, 404, 'err.trackNotFound');
   t.off = !t.off; if (!t.off) delete t.off;
   commit(); res.json({ id: l.id, name: l.name, tracks: l.tracks });
 });
 app.post('/api/lists/:id/add', requireHost, wrap(async (req, res) => {
   const l = state.lists.find(x => x.id === req.params.id);
-  if (!l) throw Object.assign(new Error('Liste introuvable'), { code: 404 });
+  if (!l) throw E('err.listNotFound', 404);
   const song = await lookupSong(req.body.songId, {});
   if (!l.tracks.some(t => t.songId === song.songId)) l.tracks.push(plainTrack(song));
   commit(); res.json({ id: l.id, name: l.name, tracks: l.tracks });
@@ -581,7 +610,7 @@ app.delete('/api/lists/:id', requireHost, (req, res) => {
 // Repères par titre (secondes) : début utile et fin anticipée, mémorisés pour les prochaines lectures
 app.post('/api/trim', requireHost, (req, res) => {
   const { songId, start, end, clear } = req.body;
-  if (!ID_RE.test(String(songId || ''))) return res.status(400).json({ error: 'Titre invalide' });
+  if (!ID_RE.test(String(songId || ''))) return fail(req, res, 400, 'err.badTrack');
   if (clear) delete state.trims[songId];
   else {
     const t = state.trims[songId] || {}, ok = n => typeof n === 'number' && n >= 0 && n <= 900;
@@ -594,7 +623,7 @@ app.post('/api/trim', requireHost, (req, res) => {
 // ---------- Mémoire des soirées : « ça danse » / « ça vide la piste » ----------
 app.post('/api/rate', requireHost, (req, res) => {
   const n = state.nowPlaying, vote = Number(req.body.vote);
-  if (!n || n.songId !== req.body.songId || ![1, -1].includes(vote)) return res.status(400).json({ error: 'Rien à noter' });
+  if (!n || n.songId !== req.body.songId || ![1, -1].includes(vote)) return fail(req, res, 400, 'err.nothingToRate');
   const r = state.ratings[n.songId] || (state.ratings[n.songId] = { title: n.title, artist: n.artist, up: 0, down: 0 });
   vote > 0 ? r.up++ : r.down++; r.last = Date.now();
   logEvent('rate', { songId: n.songId, title: n.title, vote, elapsed: state.nowStartedAt ? Math.round((Date.now() - state.nowStartedAt) / 1000) : null });
@@ -606,16 +635,16 @@ app.get('/api/ratings', requireHost, (req, res) =>
 // ---------- Souhaits d'avant la soirée (page publique /souhaits.html, texte libre : fonctionne sans Spotify) ----------
 app.post('/api/wish', wrap(async (req, res) => {
   const ev = eventByToken(req.get('x-event') || ''); // le code de n'importe quel événement non terminé suffit : on souhaite avant la soirée
-  if (ev) { if (eventStatus(ev) === 'ended') throw Object.assign(new Error('Cet événement est terminé. Merci !'), { code: 403 }); }
+  if (ev) { if (eventStatus(ev) === 'ended') throw E('err.eventEnded', 403); }
   else needEvent(req);
   const text = String(req.body.text || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   const name = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   const by = String(req.body.guestId || '');
-  if (text.length < 3 || !ID_RE.test(by)) throw Object.assign(new Error('Souhait invalide'), { code: 400 });
-  if (limited('w:' + req.ip, 30, 10 * 60e3)) throw Object.assign(new Error('Doucement !'), { code: 429 });
+  if (text.length < 3 || !ID_RE.test(by)) throw E('err.badWish', 400);
+  if (limited('w:' + req.ip, 30, 10 * 60e3)) throw E('err.slowDown', 429);
   const evId = ev ? ev.id : (state.activeEventId || null), mine = state.wishes.filter(w => (w.ev || null) === evId);
-  if (mine.filter(w => w.by === by).length >= 3) throw Object.assign(new Error('3 chansons maximum par personne'), { code: 429 });
-  if (mine.length >= 400) throw Object.assign(new Error('Liste de souhaits pleine'), { code: 429 });
+  if (mine.filter(w => w.by === by).length >= 3) throw E('err.maxWishes', 429);
+  if (mine.length >= 400) throw E('err.wishesFull', 429);
   state.wishes.push({ id: crypto.randomUUID(), text, name, by, at: Date.now(), ev: evId });
   save(); res.json({ ok: true });
 }));
@@ -644,12 +673,12 @@ app.post('/api/wishes/done', requireHost, (req, res) => { // souhait traité : r
 app.post('/api/wishes/clear', requireHost, (req, res) => { const scope = wishScope(req.body); state.wishes = state.wishes.filter(w => !scope(w)); save(); res.json({ ok: true }); });
 app.post('/api/linedance', requireHost, (req, res) => {
   const t = pickLine();
-  if (!t) return res.status(400).json({ error: 'Aucune danse en ligne : utilisez d’abord la liste commentée' });
+  if (!t) return fail(req, res, 400, 'err.noLineDance');
   state.queue.unshift(t); commit(); res.json({ ok: true });
 });
 
 app.post('/api/spotify/token', requireHost, (req, res) => {
-  if (typeof req.body.token !== 'string' || req.body.token.length > 600) return res.status(400).json({ error: 'Token invalide' });
+  if (typeof req.body.token !== 'string' || req.body.token.length > 600) return fail(req, res, 400, 'err.badToken');
   spotifyToken = req.body.token; res.json({ ok: true });
   ensureDefaultOpener().catch(e => console.error('chanson d’ouverture :', e.message));
   autoPrepare().catch(() => {});
@@ -681,11 +710,11 @@ app.delete('/api/queue/:uid', requireHost, (req, res) => {
 // Volume par titre : « Trop fort » / « Trop faible » ajuste de 1,5 dB (de -12 à +3 dB : le volume de base est à 70 %, donc +3 dB atteint le maximum), retenu pour les prochaines lectures
 app.post('/api/gain', requireHost, (req, res) => {
   const id = String(req.body.songId || '');
-  if (!ID_RE.test(id)) return res.status(400).json({ error: 'Titre invalide' });
+  if (!ID_RE.test(id)) return fail(req, res, 400, 'err.badTrack');
   if (req.body.reset) delete state.gains[id];
   else {
     const step = Number(req.body.step);
-    if (![-1, 1].includes(step)) return res.status(400).json({ error: 'Réglage invalide' });
+    if (![-1, 1].includes(step)) return fail(req, res, 400, 'err.badSetting');
     const g = Math.max(-12, Math.min(3, Math.round(((state.gains[id] || 0) + step * 1.5) * 10) / 10));
     g ? (state.gains[id] = g) : delete state.gains[id];
   }
@@ -693,13 +722,13 @@ app.post('/api/gain', requireHost, (req, res) => {
   commit(); res.json({ gain: state.gains[id] || 0 });
 });
 app.post('/api/clientlog', requireHost, (req, res) => { // incidents de lecture vus par le dashboard (titre qui ne démarre pas, fin non détectée…), pour comprendre après coup
-  if (limited('clog', 60, 60e3)) return res.status(429).json({ error: 'Trop d’événements' });
+  if (limited('clog', 60, 60e3)) return fail(req, res, 429, 'err.tooManyEvents');
   logEvent('client', { kind: String(req.body.kind || '').slice(0, 40), detail: String(req.body.detail || '').slice(0, 200), songId: state.nowPlaying ? state.nowPlaying.songId : null });
   res.json({ ok: true });
 });
 app.post('/api/motion', requireHost, (req, res) => { // mesure de mouvement (nombre seulement) envoyée par le dashboard quand la caméra est active
   const lvl = Number(req.body.level), avg = Number(req.body.avg90);
-  if (!Number.isFinite(lvl) || !Number.isFinite(avg)) return res.status(400).json({ error: 'Mesure invalide' });
+  if (!Number.isFinite(lvl) || !Number.isFinite(avg)) return fail(req, res, 400, 'err.badMeasure');
   const n = state.nowPlaying;
   logEvent('motion', { level: Math.round(lvl * 10) / 10, avg90: Math.round(avg * 10) / 10, songId: n ? n.songId : null, elapsed: n && state.nowStartedAt ? Math.round((Date.now() - state.nowStartedAt) / 1000) : null });
   res.json({ ok: true });
@@ -707,11 +736,11 @@ app.post('/api/motion', requireHost, (req, res) => { // mesure de mouvement (nom
 app.get('/api/soirees', requireHost, (req, res) => res.json(fs.existsSync(LOG_DIR) ? fs.readdirSync(LOG_DIR).filter(f => f.endsWith('.jsonl')).sort().reverse().map(f => f.slice(0, -6)) : []));
 app.get('/api/soirees/:day', requireHost, (req, res) => {
   const day = /^\d{4}-\d{2}-\d{2}$/.test(req.params.day) ? req.params.day : logDay(), f = path.join(LOG_DIR, day + '.jsonl');
-  fs.existsSync(f) ? res.download(f) : res.status(404).json({ error: 'Pas de journal pour ce jour' });
+  fs.existsSync(f) ? res.download(f) : fail(req, res, 404, 'err.noLog');
 });
 function settingsView() {
-  return Object.entries(SETTING_DEFS).map(([key, [label, type, def, help]]) => ({
-    key, label, type, help, def, source: settingSource(key),
+  return Object.entries(SETTING_DEFS).map(([key, [type, def]]) => ({
+    key, type, def, source: settingSource(key),
     ...(type === 'secret' ? { set: key === 'OPENROUTER_API_KEY' ? !!OPENROUTER_API_KEY : !!settingValue(key) } : { value: settingValue(key) }),
   }));
 }
@@ -720,10 +749,10 @@ app.post('/api/app-settings', requireHost, (req, res) => {
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   for (const [k, v] of Object.entries(body)) {
     const d = SETTING_DEFS[k];
-    if (!d) return res.status(400).json({ error: 'Réglage inconnu : ' + k });
+    if (!d) return fail(req, res, 400, 'err.unknownSetting', { k });
     if (v === null || v === '') { delete overrides[k]; continue; } // retour à la valeur du .env ou par défaut
     const val = String(v).trim();
-    if (!d[4](val)) return res.status(400).json({ error: 'Valeur invalide : ' + d[0] });
+    if (!d[2](val)) return fail(req, res, 400, 'err.badValue', { name: tr(reqLang(req), 'set.' + k) });
     overrides[k] = val;
   }
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -749,19 +778,19 @@ app.get('/api/remote/status', requireHost, (req, res) => {
   res.json({ dashboard: dashClients.size > 0, started: fresh && dashStatus.started, ready: fresh && dashStatus.ready, active: fresh && dashStatus.active });
 });
 app.post('/api/remote', requireHost, (req, res) => {
-  if (limited('remote', 90, 60e3)) return res.status(429).json({ error: 'Doucement !' });
+  if (limited('remote', 90, 60e3)) return fail(req, res, 429, 'err.slowDown');
   const b = req.body || {};
   let msg;
   if (b.cmd === 'next' || b.cmd === 'pause' || b.cmd === 'callout' || b.cmd === 'start') msg = { cmd: b.cmd };
   else if (b.cmd === 'say') {
     const text = String(b.text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
-    if (text.length < 2) return res.status(400).json({ error: 'Message vide' });
+    if (text.length < 2) return fail(req, res, 400, 'err.emptyMessage');
     msg = { cmd: 'say', text };
   } else if (b.cmd === 'jingle' && REMOTE_JINGLES.includes(b.name)) msg = { cmd: 'jingle', name: b.name };
   else if (b.cmd === 'moment' && ['open', 'close'].includes(b.src)) msg = { cmd: 'moment', src: b.src }; // mot d'ouverture / dernière toune de Vinny
   else if (b.cmd === 'phase' && state.phases.some(p => p.id === b.id)) msg = { cmd: 'phase', id: b.id };
-  else return res.status(400).json({ error: 'Commande inconnue' });
-  if (!dashClients.size) return res.status(409).json({ error: 'Le dashboard n’est pas ouvert sur l’ordinateur' });
+  else return fail(req, res, 400, 'err.unknownCommand');
+  if (!dashClients.size) return fail(req, res, 409, 'err.noDashboard');
   for (const r of dashClients) r.write('event: cmd\ndata: ' + JSON.stringify(msg) + '\n\n');
   res.json({ ok: true });
 });
@@ -772,7 +801,7 @@ app.post('/api/event/rotate', requireHost, (req, res) => { // nouveau code : les
   state.qrRev++; commit(); res.json({ ok: true });
 });
 app.post('/api/fx', requireHost, (req, res) => {
-  if (!['confetti', 'party', 'callout'].includes(req.body.type)) return res.status(400).json({ error: 'Type inconnu' });
+  if (!['confetti', 'party', 'callout'].includes(req.body.type)) return fail(req, res, 400, 'err.unknownType');
   fx(req.body.type); res.json({ ok: true });
 });
 app.post('/api/queue/clear', requireHost, (req, res) => { state.queue = []; commit(); res.json({ ok: true }); });
@@ -809,7 +838,12 @@ function phaseFields(b, p) {
 }
 app.post('/api/phases', requireHost, (req, res) => {
   const b = req.body || {};
-  if (!b.name || !/^([01]\d|2[0-3]):[0-5]\d$/.test(b.start || '')) return res.status(400).json({ error: 'Nom et heure (HH:MM) requis' });
+  if (b.preset) { // période par défaut (nom, heure, phrase de Vinny) dans la langue de la salle
+    const p = newPhase(b.intensity === 'party' ? 'party' : 'calm', evLang());
+    state.phases.push(p); state.phases.sort((a, c) => a.start.localeCompare(c.start));
+    commit(); return res.json({ ok: true, id: p.id });
+  }
+  if (!b.name || !/^([01]\d|2[0-3]):[0-5]\d$/.test(b.start || '')) return fail(req, res, 400, 'err.phaseFields');
   const calm = b.intensity !== 'party';
   const p = { id: crypto.randomUUID(), name: '', start: b.start, intensity: calm ? 'calm' : 'party', requestsOpen: true, jingle: '', color: calm ? '#FFD23F' : '#FF4F7B', listId: calm ? 'builtin:souper' : 'builtin:dance' };
   phaseFields(b, p);
@@ -819,12 +853,12 @@ app.post('/api/phases', requireHost, (req, res) => {
 app.post('/api/phases/ensure', requireHost, (req, res) => { // Souper / Soirée en un clic : crée la période par défaut si elle manque
   const kind = req.body && req.body.intensity === 'calm' ? 'calm' : 'party';
   let p = state.phases.find(x => x.intensity === kind);
-  if (!p) { p = newPhase(kind); state.phases.push(p); state.phases.sort((a, c) => a.start.localeCompare(c.start)); commit(); }
+  if (!p) { p = newPhase(kind, evLang()); state.phases.push(p); state.phases.sort((a, c) => a.start.localeCompare(c.start)); commit(); }
   res.json({ id: p.id });
 });
 app.put('/api/phases/:id', requireHost, (req, res) => {
   const p = state.phases.find(x => x.id === req.params.id);
-  if (!p) return res.status(404).json({ error: 'Période introuvable' });
+  if (!p) return fail(req, res, 404, 'err.phaseNotFound');
   phaseFields(req.body || {}, p); state.phases.sort((a, c) => a.start.localeCompare(c.start));
   if (p.id === state.activePhaseId && typeof req.body.requestsOpen === 'boolean') state.requestsOpen = p.requestsOpen;
   commit(); res.json({ ok: true });
@@ -836,7 +870,7 @@ app.delete('/api/phases/:id', requireHost, (req, res) => {
 });
 app.post('/api/phases/:id/activate', requireHost, async (req, res) => {
   const p = state.phases.find(x => x.id === req.params.id);
-  if (!p) return res.status(404).json({ error: 'Période introuvable' });
+  if (!p) return fail(req, res, 404, 'err.phaseNotFound');
   if (p.intensity === 'party' && !p.open) await ensureDefaultOpener().catch(() => {}); // Levels pas encore trouvée : dernier essai avant d'ouvrir la piste
   state.activePhaseId = p.id; state.requestsOpen = p.requestsOpen; state.periodReq = {}; logEvent('phase', { name: p.name, intensity: p.intensity }); // nouvelle période : les compteurs par IP repartent à zéro
   // ouverture de la piste (période dansante, musique déjà en cours) : le dashboard enchaîne aussitôt en fondu sur la chanson choisie,
@@ -868,6 +902,10 @@ const evFields = (b, ev) => {
   if (typeof b.thanks === 'string') ev.thanks = b.thanks.trim().slice(0, 300);
   if (Number.isInteger(b.openBeforeMin) && b.openBeforeMin >= 0 && b.openBeforeMin <= 360) ev.openBeforeMin = b.openBeforeMin;
   if (typeof b.auto === 'boolean') ev.auto = b.auto;
+  if (LANGS.includes(b.lang) && b.lang !== okLang(ev.lang)) { // langue de l'événement : pages invités, voix et annonces de Vinny
+    relang(ev.id === state.activeEventId ? state.phases : ev.phases, ev.lang, b.lang);
+    ev.lang = b.lang;
+  }
 };
 const freshIds = a => clonePhases(a).map(p => ({ ...p, id: crypto.randomUUID() }));
 function activateEvent(ev) {
@@ -881,7 +919,7 @@ function activateEvent(ev) {
   state.requestsOpen = eventStatus(ev) === 'live' ? (state.phases.find(p => p.id === state.activePhaseId) || { requestsOpen: true }).requestsOpen : false;
   logEvent('event', { action: 'activate' });
 }
-const evById = (req, res) => { const ev = state.events.find(e => e.id === req.params.id); if (!ev) res.status(404).json({ error: 'Événement introuvable' }); return ev; };
+const evById = (req, res) => { const ev = state.events.find(e => e.id === req.params.id); if (!ev) fail(req, res, 404, 'err.eventNotFound'); return ev; };
 app.get('/api/evts', requireHost, (req, res) => {
   const now = Date.now();
   res.json({ now, activeId: state.activeEventId, events: state.events.map(e => ({ ...e, phases: undefined, phaseCount: (e.phases || []).length, status: eventStatus(e, now), wishCount: state.wishes.filter(w => w.ev === e.id).length }))
@@ -889,11 +927,12 @@ app.get('/api/evts', requireHost, (req, res) => {
 });
 app.post('/api/evts', requireHost, (req, res) => {
   const b = req.body || {};
-  if (!b.name || !DATE_RE.test(b.date || '') || !TIME_RE.test(b.start || '') || !TIME_RE.test(b.end || '')) return res.status(400).json({ error: 'Nom, date, heure de début et heure de fin requis' });
-  if (state.events.length >= 100) return res.status(400).json({ error: 'Trop d’événements : supprime les anciens' });
-  const src = b.copyFrom && state.events.find(e => e.id === b.copyFrom);
-  const phases = b.program === 'default' ? [newPhase('calm'), newPhase('party')] : freshIds(src ? (src.id === state.activeEventId ? state.phases : src.phases) : state.phases);
-  const ev = { id: crypto.randomUUID(), name: '', date: '', start: '', end: '', place: '', welcome: '', thanks: 'Merci d’être venus, la gang ! À la prochaine !', openBeforeMin: 30, auto: true,
+  if (!b.name || !DATE_RE.test(b.date || '') || !TIME_RE.test(b.start || '') || !TIME_RE.test(b.end || '')) return fail(req, res, 400, 'err.eventFields');
+  if (state.events.length >= 100) return fail(req, res, 400, 'err.eventLimit');
+  const src = b.copyFrom && state.events.find(e => e.id === b.copyFrom), lang = okLang(b.lang);
+  const phases = b.program === 'default' ? [newPhase('calm', lang), newPhase('party', lang)] : freshIds(src ? (src.id === state.activeEventId ? state.phases : src.phases) : state.phases);
+  if (b.program !== 'default') relang(phases, src ? src.lang : evLang(), lang);
+  const ev = { id: crypto.randomUUID(), lang, name: '', date: '', start: '', end: '', place: '', welcome: '', thanks: tr(lang, 'ev.thanksDefault'), openBeforeMin: 30, auto: true,
     token: !state.events.length && !state.activeEventId ? state.eventToken : crypto.randomBytes(9).toString('base64url'), phases, createdAt: Date.now() };
   evFields(b, ev);
   state.events.push(ev); commit(); res.json({ ok: true, id: ev.id });
@@ -918,7 +957,7 @@ app.post('/api/evts/:id/end', requireHost, (req, res) => {
 app.post('/api/evts/:id/duplicate', requireHost, (req, res) => {
   const src = evById(req, res); if (!src) return;
   const b = req.body || {};
-  if (!DATE_RE.test(b.date || '')) return res.status(400).json({ error: 'Date requise (AAAA-MM-JJ)' });
+  if (!DATE_RE.test(b.date || '')) return fail(req, res, 400, 'err.dateRequired');
   const ev = { ...JSON.parse(JSON.stringify(src)), id: crypto.randomUUID(), token: crypto.randomBytes(9).toString('base64url'), date: b.date, createdAt: Date.now(),
     name: (typeof b.name === 'string' && b.name.trim() ? b.name.trim() : src.name).slice(0, 60), phases: freshIds(src.id === state.activeEventId ? state.phases : src.phases) };
   delete ev.startedAt; delete ev.endedAt; delete ev.closed; delete ev.liveAt;
@@ -952,25 +991,26 @@ const sha = parts => crypto.createHash('sha1').update(parts.join('|')).digest('h
 // Synthèse d'un morceau de texte, avec cache disque : un même texte n'est facturé qu'une fois.
 // o : model, voice, prev/next (contexte de prosodie ElevenLabs), voiceSettings
 async function synth(text, o = {}) {
-  if (!TTS_ENABLED) throw Object.assign(new Error('Voix non configurée (OPENROUTER_API_KEY ou TTS_BASE_URL)'), { code: 400 });
+  if (!TTS_ENABLED) throw E('err.ttsOff', 400);
   const model = TTS_LOCAL ? TTS_MODEL : (o.model || TTS_MODEL);
   const voice = TTS_LOCAL ? TTS_VOICE : VINNY_VOICE;
-  const el = TTS_LOCAL ? {} : { language_code: 'fr' }; // force le français (sinon « François » peut être lu à l'anglaise)
+  const lang = okLang(o.lang || evLang());
+  const el = TTS_LOCAL ? {} : { language_code: lang }; // force la langue (sinon « François » peut être lu à l'anglaise)
   if (o.prev) el.previous_text = o.prev;
   if (o.next) el.next_text = o.next;
   if (o.voiceSettings) el.voice_settings = o.voiceSettings;
   const provider = !TTS_LOCAL && Object.keys(el).length ? { options: { elevenlabs: el } } : null;
-  const hash = sha([TTS_BASE, model, voice, text, JSON.stringify(provider)]);
+  const hash = sha([TTS_BASE, model, voice, text, JSON.stringify(provider), ...(TTS_LOCAL ? [lang] : [])]); // la langue est déjà dans provider (ElevenLabs)
   const file = path.join(TTS_DIR, hash + '.mp3');
   if (!fs.existsSync(file)) {
     const headers = { 'Content-Type': 'application/json' };
     if (!TTS_LOCAL) headers.Authorization = 'Bearer ' + OPENROUTER_API_KEY;
     const body = { model, input: text, voice, response_format: 'mp3' };
-    if (TTS_LOCAL) body.language = 'fr';
+    if (TTS_LOCAL) body.language = lang;
     if (provider) body.provider = provider;
     let r;
     try { r = await fetch(TTS_BASE + '/audio/speech', { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) }); }
-    catch { throw new Error('Serveur de voix injoignable (' + TTS_BASE + ')'); }
+    catch { throw E('err.ttsUnreachable', 502, { url: TTS_BASE }); }
     if (!r.ok) throw new Error('TTS ' + r.status);
     fs.mkdirSync(TTS_DIR, { recursive: true });
     fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
@@ -979,39 +1019,39 @@ async function synth(text, o = {}) {
 }
 app.post('/api/tts', requireHost, wrap(async (req, res) => {
   const text = String(req.body.text || '').trim().slice(0, 300);
-  if (!text) throw Object.assign(new Error('Texte vide'), { code: 400 });
-  if (limited('tts', 30, 60e3)) throw Object.assign(new Error('Trop de synthèses vocales'), { code: 429 });
-  res.json({ url: `/api/tts/${(await synth(text)).hash}.mp3` });
+  if (!text) throw E('err.emptyText', 400);
+  if (limited('tts', 30, 60e3)) throw E('err.tooManyTts', 429);
+  res.json({ url: `/api/tts/${(await synth(text, { lang: evLang() })).hash}.mp3` });
 }));
 
-// Annonce d'une demande spéciale : UNE seule génération (phrase complète tirée au hasard dans announce.json,
+// Annonce d'une demande spéciale : UNE seule génération (phrase complète tirée au hasard dans announce/<langue>.json,
 // avec {name} {title} {artist}), puis traitement ffmpeg (vitesse, compression, reverb léger).
-// Les textes et les réglages se modifient dans announce.json, sans redémarrer.
+// Les textes et les réglages se modifient dans announce/fr.json et announce/en.json, sans redémarrer. Langue : celle de l'événement actif.
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const cleanTitle = s => String(s || '').replace(/\[[^\]]*\]/g, '').replace(/\([^)]*\)/g, '').replace(/\s-\s.*$/, '').replace(/\s+/g, ' ').trim().slice(0, 80);
 const fill = (tpl, v) => tpl.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? '');
 const REVERB = [0.32, 0.28, 0.24, 0.2, 0.15, 0.1]; // décroissances de base, multipliées par "reverb"
 app.post('/api/announce', requireHost, wrap(async (req, res) => {
-  if (limited('ann', 30, 60e3)) throw Object.assign(new Error('Trop d’annonces'), { code: 429 });
-  const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'announce.json'), 'utf8'));
+  if (limited('ann', 30, 60e3)) throw E('err.tooManyAnn', 429);
+  const lang = evLang(), cfg = announceCfg(lang);
   const phase = state.phases.find(p => p.id === state.activePhaseId);
   const c = cfg[phase && phase.intensity === 'calm' ? 'calm' : 'party'];
   const title = cleanTitle(req.body.title), artist = cleanTitle(req.body.artist);
   const isCallout = req.body.source === 'callout', moment = ['open', 'close'].includes(req.body.source) ? req.body.source : null;
   const phaseLine = req.body.source === 'phase' ? (phase && phase.jingle) || '' : null; // phrase de la période active (ex. ouverture de la piste)
-  if (phaseLine === '') throw Object.assign(new Error('Aucune phrase pour la période active'), { code: 400 });
-  if (!title && !isCallout && !moment && !phaseLine) throw Object.assign(new Error('Titre manquant'), { code: 400 });
+  if (phaseLine === '') throw E('err.noPhaseLine', 400);
+  if (!title && !isCallout && !moment && !phaseLine) throw E('err.noTitle', 400);
   const name = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   // prénom -> « demande spéciale de X » ; demande sans prénom -> « en demande spéciale » ; autre titre -> annonce simple
-  const tpls = phaseLine ? [phaseLine] : moment && c[moment] ? c[moment] : isCallout ? (c.callout || ['Une demande spéciale ? Scannez le code QR.']) : req.body.source === 'line' && c.line ? c.line : name ? c.named : req.body.source === 'guest' ? c.anon : c.plain;
+  const tpls = phaseLine ? [phaseLine] : moment && c[moment] ? c[moment] : isCallout ? c.callout : req.body.source === 'line' && c.line ? c.line : name ? c.named : req.body.source === 'guest' ? c.anon : c.plain;
   const text = fill(pick(tpls), { title, artist, name });
   console.log('Annonce :', text);
-  const { file } = await synth(text, { model: cfg.model, voice: c.voice || cfg.voice, voiceSettings: c.voiceSettings || null });
+  const { file } = await synth(text, { model: cfg.model, voice: c.voice || cfg.voice, voiceSettings: c.voiceSettings || null, lang });
 
   const key = sha(['v2', file, c.tempo, c.reverb, c.ratio, c.presence, c.lufs]);
   const out = path.join(TTS_DIR, key + '.mp3');
   if (!fs.existsSync(out)) {
-    // voix naturelle : pas de filtre « radio » ; vitesse, reverb et présence seulement si announce.json les demande (1 / 0 / 0 = voix brute).
+    // voix naturelle : pas de filtre « radio » ; vitesse, reverb et présence seulement si announce/<langue>.json les demande (1 / 0 / 0 = voix brute).
     // Restent un coupe-bas (grondement des haut-parleurs), une compression douce et le volume normalisé pour passer par-dessus la musique.
     const decays = REVERB.map(d => (d * c.reverb).toFixed(3)).join('|');
     const af = [c.tempo && c.tempo !== 1 && `atempo=${c.tempo}`, 'highpass=f=90', c.presence > 0 && `equalizer=f=3500:t=q:w=1.1:g=${c.presence}`,
@@ -1058,8 +1098,8 @@ setInterval(() => {
 }, 1000);
 app.post('/api/shutdown/snooze', requireHost, (req, res) => {
   shutdownAt = Math.max(shutdownAt, Date.now()) + 3600e3; warned = false;
-  console.log('Fermeture repoussée à ' + hhmm(shutdownAt)); sendShutdown({ until: hhmm(shutdownAt) });
-  res.json({ until: hhmm(shutdownAt) });
+  console.log('Fermeture repoussée à ' + hhmm(shutdownAt)); sendShutdown({ until: shutdownAt }); // la page formate l'heure dans sa langue
+  res.json({ until: shutdownAt });
 });
 
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)

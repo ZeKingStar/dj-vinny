@@ -13,7 +13,7 @@ server {
     }
 
     # Pages, fichiers et API réservés aux invités
-    location ~ ^/(index\.html|souhaits\.html|style\.css|anim\.js|favicon\.ico|manifest\.webmanifest|sw\.js|vinny[-0-9a-z]*\.(svg|png)|login\.html|remote|api/(state|events|search|request|wish|config|remote|remote/status|gain|linedance|fx|queue/reorder|queue/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+))$ {
+    location ~ ^/(index\.html|souhaits\.html|style\.css|anim\.js|i18n\.js|favicon\.ico|manifest\.webmanifest|sw\.js|vinny[-0-9a-z]*\.(svg|png)|login\.html|remote|api/(state|events|search|request|wish|config|remote|remote/status|gain|linedance|fx|queue/reorder|queue/[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+))$ {
         proxy_pass http://127.0.0.1:3010;
         include /etc/nginx/djvinny-proxy.conf;
     }

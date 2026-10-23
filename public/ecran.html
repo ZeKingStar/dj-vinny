@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/vinny.svg?v=2"><link rel="apple-touch-icon" href="/vinny-48.png?v=2"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DJ Vinny : écran de la soirée</title>
+<title data-i18n="g.screen.pageTitle">DJ Vinny : écran de la soirée</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
+<script src="/i18n.js?p=guest"></script>
 <style>
   html, body { height: 100%; overflow: hidden; cursor: none; }
   .screen { position: relative; z-index: 1; height: 100vh; padding: 3.5vmin 4vmin; display: grid; grid-template-rows: auto 1fr; gap: 3vmin; }
@@ -89,20 +90,22 @@
   <div class="grid2">
     <div class="now" id="now"></div>
     <div class="side">
-      <div class="qr"><img src="/api/qr.png" alt="QR"><div><b>Demande ta chanson !</b><span>Scanne le code avec ton téléphone</span></div></div>
-      <div class="next"><h2>À SUIVRE</h2><div id="next"></div></div>
+      <div class="qr"><img src="/api/qr.png" alt="QR"><div><b data-i18n="g.screen.qrTitle">Demande ta chanson !</b><span data-i18n="g.screen.qrSub">Scanne le code avec ton téléphone</span></div></div>
+      <div class="next"><h2 data-i18n="g.screen.next">À SUIVRE</h2><div id="next"></div></div>
     </div>
   </div>
 </div>
 <div class="ticker" id="ticker"></div>
 <div id="fxinfo"></div>
-<div class="callout" id="callout"><h1>Une demande spéciale ?</h1><img src="/api/qr.png" alt="QR"><p>Scanne le code et choisis ta chanson</p></div>
+<div class="callout" id="callout"><h1 data-i18n="g.screen.calloutTitle">Une demande spéciale ?</h1><img src="/api/qr.png" alt="QR"><p data-i18n="g.screen.calloutSub">Scanne le code et choisis ta chanson</p></div>
 
 <script src="/anim.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 let state = null, seen = null, tickTimer, callTimer, shownUid = null, lastPh;
+setLang('fr');
 function render() {
+  setLang(state.event ? state.event.lang : 'fr'); // langue de l'événement actif
   applyTheme(state.theme);
   const ph = state.phase ? state.phase.intensity : '';
   document.body.className = ph;
@@ -115,16 +118,16 @@ function render() {
   if (isNew) { shownUid = n.uid; songChanged(); }
   $('now').innerHTML = n
     ? `<div class="now-row${isNew ? ' enter' : ''}"><div class="cover" style="${n.artwork ? `background-image:url('${esc(n.artwork)}')` : ''}"></div>
-        <div style="min-width:0"><div class="label"><span class="eq"><i></i><i></i><i></i><i></i></span>EN LECTURE</div>
+        <div style="min-width:0"><div class="label"><span class="eq"><i></i><i></i><i></i><i></i></span>${t('g.screen.playing')}</div>
         <div class="title">${esc(n.title)}</div><div class="artist">${esc(n.artist)}</div>
-        ${n.source === 'guest' ? `<div class="by">${n.byName ? 'demandé par ' + esc(n.byName) : 'demande spéciale'}</div>` : ''}
-        ${n.source === 'line' ? '<div style="margin-top:2vmin"><span class="ribbon">DANSE EN LIGNE</span></div>' : ''}</div></div>`
-    : '<div class="title" style="color:var(--muted)">La musique va commencer…</div>';
-  $('next').innerHTML = state.queue.slice(0, 5).map((s, i) => `<div class="n"><span class="num${i ? '' : ' first'}">${i + 1}</span><div class="t"><b>${esc(s.title)}</b><span>${esc(s.artist)}</span></div>${s.source === 'guest' ? `<span class="who">${esc(s.byName || 'invité')}</span>` : ''}</div>`).join('')
-    || '<p class="muted" style="font-size:2.4vmin">Aucune demande pour le moment : scannez le code !</p>';
+        ${n.source === 'guest' ? `<div class="by">${n.byName ? t('g.screen.by', { name: esc(n.byName) }) : t('g.screen.special')}</div>` : ''}
+        ${n.source === 'line' ? '<div style="margin-top:2vmin"><span class="ribbon">' + t('g.screen.lineDance') + '</span></div>' : ''}</div></div>`
+    : '<div class="title" style="color:var(--muted)">' + t('g.screen.soon') + '</div>';
+  $('next').innerHTML = state.queue.slice(0, 5).map((s, i) => `<div class="n"><span class="num${i ? '' : ' first'}">${i + 1}</span><div class="t"><b>${esc(s.title)}</b><span>${esc(s.artist)}</span></div>${s.source === 'guest' ? `<span class="who">${esc(s.byName || t('c.guest'))}</span>` : ''}</div>`).join('')
+    || '<p class="muted" style="font-size:2.4vmin">' + t('g.screen.noRequests') + '</p>';
   // nouvelle demande d'invité : bandeau de quelques secondes
   const uids = new Set(state.queue.map(q => q.uid));
-  if (seen) for (const q of state.queue) if (!seen.has(q.uid) && q.source === 'guest') { ticker(`${q.byName ? esc(q.byName) + ' demande ' : 'Nouvelle demande : '}${esc(q.title)}`); if (!document.body.classList.contains('calm')) confetti(30); }
+  if (seen) for (const q of state.queue) if (!seen.has(q.uid) && q.source === 'guest') { ticker(q.byName ? t('g.screen.tickerNamed', { name: esc(q.byName), title: esc(q.title) }) : t('g.screen.ticker', { title: esc(q.title) })); if (!document.body.classList.contains('calm')) confetti(30); }
   seen = uids;
 }
 function ticker(html) {
@@ -136,7 +139,7 @@ function showCallout() {
   $('callout').classList.add('show'); confetti(30);
   clearTimeout(callTimer); callTimer = setTimeout(() => $('callout').classList.remove('show'), 14000);
 }
-setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }); }, 1000);
+setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }); }, 1000);
 document.addEventListener('keydown', e => { if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); });
 const es = new EventSource('/api/events');
 let qrRev = null;
@@ -338,7 +341,7 @@ function drawFx(now, sec, e) {
 
 // ---------- Mesure des images par seconde : repli automatique « animations réduites » ----------
 // fenêtres de 2 s; 3 fenêtres lentes de suite pendant que la soirée dessine → on baisse d'un niveau (pas de remontée automatique : recharger la page ou touche A)
-const FX_NAMES = ['animations minimales', 'animations réduites', 'animations complètes'];
+const fxName = l => t('g.screen.fx' + l); // animations minimales, réduites, complètes
 let fpsN = 0, fpsT = 0, fps = 0, fpsMax = 0, slow = 0;
 function meter(now, raw) {
   if (raw > 250 || !fpsT) { fpsN = 0; fpsT = now; return; } // onglet en pause ou premier passage : on ignore
@@ -355,9 +358,9 @@ function setLevel(l, why) {
   fxLevel = Math.max(0, Math.min(2, l)); const h = document.documentElement;
   h.classList.toggle('fx-lite', fxLevel < 2); h.classList.toggle('fx-off', fxLevel === 0);
   sizeFx(); fxDirty = false;
-  console.info(`DJ Vinny : ${FX_NAMES[fxLevel]} (${why}, ${Math.round(fps)} i/s)`); fxInfo();
+  console.info(`DJ Vinny : ${fxName(fxLevel)} (${why}, ${Math.round(fps)} i/s)`); fxInfo();
 }
-function fxInfo() { $('fxinfo').textContent = `${Math.round(fps)} i/s · ${FX_NAMES[fxLevel]}${fxForced ? ' (manuel)' : ''}`; }
+function fxInfo() { $('fxinfo').textContent = `${Math.round(fps)} ${t('g.screen.fps')} · ${fxName(fxLevel)}${fxForced ? ' ' + t('g.screen.manual') : ''}`; }
 if (fxLevel < 2) setLevel(fxLevel, 'manuel');
 // touche I : afficher les i/s; touche A : changer le niveau d'animation à la main
 document.addEventListener('keydown', e => {

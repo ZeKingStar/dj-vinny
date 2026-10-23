@@ -91,5 +91,15 @@
   "close": [
    "Merci d'avoir été avec nous. DJ Vinny vous souhaite une bonne fin de soirée."
   ]
+ },
+ "phases": {
+  "calm": {
+   "name": "Souper",
+   "jingle": "Bonsoir tout le monde ! DJ Vinny vous souhaite un excellent souper."
+  },
+  "party": {
+   "name": "Soirée",
+   "jingle": "Mesdames et messieurs, la piste de danse est officiellement ouverte ! Vos demandes spéciales, c’est le code QR sur l’écran. Pis si une toune vide la piste, pas de panique : on passe à une autre, vite vite ! Allez, la gang, on danse !"
+  }
  }
 }
