@@ -176,9 +176,12 @@ async function ping() {
   } catch {}
 }
 ping(); setInterval(ping, 6000);
-// garde l'écran du téléphone allumé pendant la soirée (sinon il faut le redéverrouiller à chaque commande)
-const wake = () => { if (document.visibilityState === 'visible' && 'wakeLock' in navigator) navigator.wakeLock.request('screen').catch(() => {}); };
-wake(); document.addEventListener('visibilitychange', wake);
+// Téléphone sorti de la poche (écran rallumé) : l'état est relu tout de suite, et la page se recharge si la connexion en direct est morte
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (es.readyState === EventSource.CLOSED) return location.reload();
+  api('/api/state', 'GET').then(s => { state = s; render(); }).catch(() => {}); ping();
+});
 const es = new EventSource('/api/events');
 es.onmessage = e => { state = JSON.parse(e.data); render(); };
 shutdownBanner(es);
