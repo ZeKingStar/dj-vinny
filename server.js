@@ -21,8 +21,10 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   TTS_MODEL: ['text', 'elevenlabs/eleven-v3', v => /^[\w./:-]{1,80}$/.test(v)],
   VINNY_VOICE: ['text', 'liam', v => /^[\w -]{1,40}$/.test(v)],
   TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
+  LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
+  CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
 };
-let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, OPENROUTER_API_KEY, TTS_MODEL, TTS_VOICE, VINNY_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_ENABLED, SPOTIFY;
+let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, OPENROUTER_API_KEY, TTS_MODEL, TTS_VOICE, VINNY_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_ENABLED, SPOTIFY, LICENCE_KEY, CONVEX_URL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
@@ -35,7 +37,8 @@ function applySettings() {
   // Voix : OpenRouter par défaut ; TTS_BASE_URL pointe vers un serveur compatible OpenAI /v1/audio/speech
   TTS_LOCAL = !!TTS_BASE_URL;
   TTS_BASE = (TTS_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
-  TTS_ENABLED = TTS_LOCAL || !!OPENROUTER_API_KEY;
+  LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = g('CONVEX_URL').replace(/\/$/, '');
+  TTS_ENABLED = TTS_LOCAL || !!OPENROUTER_API_KEY || !!(LICENCE_KEY && CONVEX_URL);
   SPOTIFY = MUSIC_PROVIDER === 'spotify';
 }
 // Adresses du PC sur le réseau local (sans les cartes VPN / WSL / virtuelles), pour le QR des invités
@@ -757,7 +760,7 @@ app.post('/api/app-settings', requireHost, (req, res) => {
   }
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(overrides, null, 1));
-  applySettings(); commit(); res.json(settingsView());
+  applySettings(); published.clear(); droits = null; commit(); licSync(); res.json(settingsView());
 });
 app.get('/api/links', requireHost, (req, res) => { // liens à partager (contiennent le code de la soirée)
   const b = (PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
@@ -798,7 +801,7 @@ app.post('/api/event/rotate', requireHost, (req, res) => { // nouveau code : les
   const target = state.events.find(e => e.id === (req.body && req.body.ev)), t = crypto.randomBytes(9).toString('base64url');
   if (target) { target.token = t; if (target.id === state.activeEventId) state.eventToken = t; }
   else { state.eventToken = t; const ae = activeEvent(); if (ae) ae.token = t; }
-  state.qrRev++; commit(); res.json({ ok: true });
+  state.qrRev++; commit(); licSync(); res.json({ ok: true });
 });
 app.post('/api/fx', requireHost, (req, res) => {
   if (!['confetti', 'party', 'callout'].includes(req.body.type)) return fail(req, res, 400, 'err.unknownType');
@@ -935,12 +938,17 @@ app.post('/api/evts', requireHost, (req, res) => {
   const ev = { id: crypto.randomUUID(), lang, name: '', date: '', start: '', end: '', place: '', welcome: '', thanks: tr(lang, 'ev.thanksDefault'), openBeforeMin: 30, auto: true,
     token: !state.events.length && !state.activeEventId ? state.eventToken : crypto.randomBytes(9).toString('base64url'), phases, createdAt: Date.now() };
   evFields(b, ev);
-  state.events.push(ev); commit(); res.json({ ok: true, id: ev.id });
+  state.events.push(ev); commit(); licSync(); res.json({ ok: true, id: ev.id });
 });
-app.put('/api/evts/:id', requireHost, (req, res) => {
+app.put('/api/evts/:id', requireHost, wrap(async (req, res) => {
   const ev = evById(req, res); if (!ev) return;
-  evFields(req.body || {}, ev); commit(); res.json({ ok: true });
-});
+  const old = { date: ev.date, start: ev.start, end: ev.end };
+  evFields(req.body || {}, ev);
+  const locked = await publishEvent(ev, old).catch(() => false); // passe attachée : les dates ne bougent plus (ou seulement avant le début)
+  commit(); licSync();
+  if (locked) throw E('lic.dates_verrouillees', 409);
+  res.json({ ok: true });
+}));
 app.delete('/api/evts/:id', requireHost, (req, res) => {
   const ev = evById(req, res); if (!ev) return;
   state.events = state.events.filter(e => e.id !== ev.id); state.wishes = state.wishes.filter(w => w.ev !== ev.id);
@@ -961,7 +969,7 @@ app.post('/api/evts/:id/duplicate', requireHost, (req, res) => {
   const ev = { ...JSON.parse(JSON.stringify(src)), id: crypto.randomUUID(), token: crypto.randomBytes(9).toString('base64url'), date: b.date, createdAt: Date.now(),
     name: (typeof b.name === 'string' && b.name.trim() ? b.name.trim() : src.name).slice(0, 60), phases: freshIds(src.id === state.activeEventId ? state.phases : src.phases) };
   delete ev.startedAt; delete ev.endedAt; delete ev.closed; delete ev.liveAt;
-  state.events.push(ev); commit(); res.json({ ok: true, id: ev.id });
+  state.events.push(ev); commit(); licSync(); res.json({ ok: true, id: ev.id });
 });
 // Toutes les 30 s : ferme les demandes à la fin de l'événement actif ; ouvre (active) un événement dont l'heure est venue
 function eventTick() {
@@ -984,6 +992,73 @@ function eventTick() {
 setInterval(eventTick, 30000).unref();
 eventTick();
 
+// ---------- Licence : synchro avec Convex (soirées publiées, souhaits d'avance, voix incluse) ----------
+// Sans LICENCE_KEY et CONVEX_URL, rien ne change : tout reste local. Plan : docs/modele-affaires.md ; routes : convex/README.md.
+const licenced = () => !!(LICENCE_KEY && CONVEX_URL);
+let droits = null, licErr = '', syncing = false, lastSync = 0; // droits : dernière réponse de /droits
+const published = new Map(); // evId -> signature de ce qui est déjà publié
+async function convex(route, body = {}, bin = false) {
+  let r;
+  try { r = await fetch(CONVEX_URL + route, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + LICENCE_KEY }, body: JSON.stringify(body), signal: AbortSignal.timeout(30000) }); }
+  catch { throw E('lic.injoignable', 502); }
+  if (!r.ok) {
+    const code = await r.json().then(j => String(j.error || ''), () => '');
+    throw E('lic.' + (/^[a-z_]{3,40}$/.test(code) ? code : 'echec'), r.status === 401 ? 403 : r.status >= 500 ? 502 : r.status); // 401 -> 403 : le dashboard y verrait une session expirée
+  }
+  return bin ? Buffer.from(await r.arrayBuffer()) : r.json();
+}
+const evPayload = ev => {
+  const { start, end } = evTimes(ev);
+  return { evId: ev.id, code: ev.token, nom: ev.name, date: ev.date, debut: ev.start, fin: ev.end, debutTs: start, finTs: end, lang: okLang(ev.lang), lieu: ev.place || '', accueil: ev.welcome || '', merci: ev.thanks || '' };
+};
+// Publie un événement non terminé si quelque chose a changé. Retourne true si Convex a refusé le changement de dates (remises à old).
+async function publishEvent(ev, old) {
+  if (!licenced() || eventStatus(ev) === 'ended') return false;
+  const body = evPayload(ev), sig = sha([JSON.stringify(body)]);
+  if (published.get(ev.id) === sig) return false;
+  try { await convex('/publier-soiree', body); published.set(ev.id, sig); return false; }
+  catch (e) {
+    if (e.key !== 'lic.dates_verrouillees' || !old) throw e;
+    Object.assign(ev, old); const b2 = evPayload(ev); await convex('/publier-soiree', b2); published.set(ev.id, sha([JSON.stringify(b2)]));
+    return true;
+  }
+}
+async function licSync() {
+  if (!licenced() || syncing) return;
+  syncing = true;
+  try {
+    for (const ev of state.events) await publishEvent(ev).catch(e => { if (!['lic.dates_verrouillees', 'lic.soiree_invalide', 'lic.champs_invalides'].includes(e.key)) throw e; });
+    droits = await convex('/droits');
+    const { souhaits = [] } = await convex('/souhaits');
+    let added = false;
+    for (const w of souhaits) {
+      if (!state.events.some(e => e.id === w.evId)) continue;
+      state.wishes.push({ id: crypto.randomUUID(), text: String(w.texte || '').slice(0, 80), name: String(w.prenom || '').slice(0, 20), by: String(w.invite || '').slice(0, 64), at: Number(w.recu) || Date.now(), ev: w.evId }); added = true;
+    }
+    if (added) commit();
+    licErr = ''; lastSync = Date.now();
+  } catch (e) { licErr = e.key || 'lic.echec'; console.warn('Synchro licence :', licErr); }
+  finally { syncing = false; }
+}
+const passOf = evId => droits && (droits.soirees || []).find(s => s.evId === evId);
+const voiceViaPass = () => { const ae = activeEvent(), p = ae && passOf(ae.id); return !!(licenced() && p && p.passe === 'attachee' && p.ouverte); };
+setInterval(licSync, 60e3).unref();
+setTimeout(licSync, 1500).unref();
+app.get('/api/licence', requireHost, wrap(async (req, res) => {
+  if (req.query.refresh === '1') await licSync();
+  res.json({ on: licenced(), error: licErr ? tr(reqLang(req), licErr) : '', at: lastSync, free: droits ? droits.passesLibres : null, domain: droits ? droits.sousDomaine : '',
+    events: Object.fromEntries((droits ? droits.soirees : []).map(s => [s.evId, { pass: s.passe, open: s.ouverte, voice: s.voixRestante }])) });
+}));
+const licEv = req => { const ev = state.events.find(e => e.id === (req.body && req.body.ev)); if (!ev) throw E('err.eventNotFound', 404); return ev; };
+app.post('/api/licence/attacher', requireHost, wrap(async (req, res) => {
+  if (!licenced()) throw E('lic.non_configuree', 400);
+  const ev = licEv(req); await publishEvent(ev); await convex('/attacher-passe', { evId: ev.id }); await licSync(); res.json({ ok: true });
+}));
+app.post('/api/licence/detacher', requireHost, wrap(async (req, res) => {
+  if (!licenced()) throw E('lic.non_configuree', 400);
+  const ev = licEv(req); await convex('/detacher-passe', { evId: ev.id }); await licSync(); res.json({ ok: true });
+}));
+
 // ---------- Voix & jingles (ElevenLabs via OpenRouter) ----------
 const TTS_DIR = path.join(DATA_DIR, 'tts');
 const sha = parts => crypto.createHash('sha1').update(parts.join('|')).digest('hex').slice(0, 24);
@@ -992,6 +1067,21 @@ const sha = parts => crypto.createHash('sha1').update(parts.join('|')).digest('h
 // o : model, voice, prev/next (contexte de prosodie ElevenLabs), voiceSettings
 async function synth(text, o = {}) {
   if (!TTS_ENABLED) throw E('err.ttsOff', 400);
+  if (voiceViaPass() && text.length <= 400) { // voix incluse avec la passe : Convex choisit le modèle et la voix
+    const lang = okLang(o.lang || evLang()), hash = sha(['convex', text, lang, JSON.stringify(o.voiceSettings || null)]), file = path.join(TTS_DIR, hash + '.mp3');
+    if (!fs.existsSync(file)) {
+      try {
+        const mp3 = await convex('/voix', { evId: activeEvent().id, texte: text, lang, prev: o.prev, next: o.next, voiceSettings: o.voiceSettings || undefined }, true);
+        fs.mkdirSync(TTS_DIR, { recursive: true }); fs.writeFileSync(file, mp3);
+      } catch (e) { if (!OPENROUTER_API_KEY && !TTS_LOCAL) throw e; console.warn('Voix incluse indisponible, repli :', e.key); return synthOpenRouter(text, o); }
+      licSync(); // met à jour les caractères restants
+    }
+    return { hash, file };
+  }
+  if (!TTS_LOCAL && !OPENROUTER_API_KEY) throw E('err.ttsNeedPass', 402);
+  return synthOpenRouter(text, o);
+}
+async function synthOpenRouter(text, o) {
   const model = TTS_LOCAL ? TTS_MODEL : (o.model || TTS_MODEL);
   const voice = TTS_LOCAL ? TTS_VOICE : VINNY_VOICE;
   const lang = okLang(o.lang || evLang());

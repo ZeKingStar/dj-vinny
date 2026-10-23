@@ -218,6 +218,7 @@
         <div id="evProgramBox"><label for="evf_program" data-i18n="h.evf.program">Programme (périodes Souper / Soirée…)</label><select id="evf_program"></select></div>
         <div class="inline" style="justify-content:flex-end"><button class="ghost" id="evCancel" data-i18n="c.cancel">Annuler</button><button id="evSave" data-i18n="c.save">Enregistrer</button></div>
       </div>
+      <p class="muted" id="licLine" hidden></p>
       <div id="evList"></div>
     </div>
   </div>
@@ -1077,19 +1078,27 @@ $('wishEv').onchange = () => { wishSel = $('wishEv').value; loadWishes(); loadLi
 
 // Événements
 const fmtEv = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return e.date; } };
-async function loadEvents() { evData = await api('/api/evts', 'GET'); renderEvents(); fillWishEv(); }
+let lic = null;
+async function loadEvents() {
+  evData = await api('/api/evts', 'GET'); lic = await api('/api/licence', 'GET').catch(() => null);
+  const l = $('licLine'); l.hidden = !(lic && lic.on);
+  if (!l.hidden) l.textContent = lic.error ? t('h.lic.err', { msg: lic.error }) : t('h.lic.on', { domain: lic.domain, achat: lic.free ? lic.free.achat : 0, abo: lic.free ? lic.free.abonnement : 0 });
+  renderEvents(); fillWishEv();
+}
 function evCard(e) {
   const act = evData.activeId === e.id, pl = (k, n) => t(k + (n === 1 || (n === 0 && LANG === 'fr') ? '.1' : '.n'), { n }); // 0 : singulier en français, pluriel en anglais
   const btns = [];
   if (e.status !== 'ended' && !act) btns.push(['activate', t('h.ea.activate')]);
   if (e.status === 'ended') btns.push(['start', t('h.ea.reopen')]); else if (!(act && e.status === 'live')) btns.push(['start', t('h.ea.start')]);
   if (e.status === 'live' || (act && e.status !== 'ended')) btns.push(['end', t('h.ea.end')]);
+  const li = lic && lic.on && lic.events[e.id], attached = !!li && li.pass === 'attachee';
+  if (lic && lic.on && e.status !== 'ended') btns.push(attached ? (e.status === 'upcoming' ? ['unpass', t('h.lic.remove')] : null) : ['pass', t('h.lic.use')]);
   btns.push(['links', t('h.ea.links')], ['edit', t('h.ea.edit')], ['dup', t('h.ea.dup')], ['del', t('c.delete')]);
-  return '<div class="evcard' + (act ? ' act' : '') + '" data-id="' + esc(e.id) + '"><div class="inline" style="justify-content:space-between;margin-top:0"><h3>' + esc(e.name) + '</h3><span><span class="tag">' + (e.lang || 'fr').toUpperCase() + '</span> <span class="tag">' + t('h.stat.' + e.status) + '</span>' + (act ? ' <span class="tag">' + t('h.active') + '</span>' : '') + '</span></div>'
+  return '<div class="evcard' + (act ? ' act' : '') + '" data-id="' + esc(e.id) + '"><div class="inline" style="justify-content:space-between;margin-top:0"><h3>' + esc(e.name) + '</h3><span><span class="tag">' + (e.lang || 'fr').toUpperCase() + '</span> <span class="tag">' + t('h.stat.' + e.status) + '</span>' + (act ? ' <span class="tag">' + t('h.active') + '</span>' : '') + (attached ? ' <span class="tag" title="' + esc(t('h.lic.voice', { n: li.voice })) + '">' + t('h.lic.pass') + '</span>' : '') + '</span></div>'
     + '<div class="muted">' + esc(fmtEv(e)) + ' · ' + esc(e.start) + ' → ' + esc(e.end) + (e.place ? ' · ' + esc(e.place) : '') + '</div>'
     + '<div class="muted">' + pl('h.evWishes', e.wishCount) + ' · ' + pl('h.evPhases', e.phaseCount) + ' · ' + (e.openBeforeMin ? t('h.evOpens', { min: e.openBeforeMin, time: timeMinus(e.start, e.openBeforeMin) }) : t('h.evOpensStart')) + (e.auto === false ? ' · ' + t('h.evManual') : '') + '</div>'
     + (e.welcome ? '<div class="muted">« ' + esc(e.welcome) + ' »</div>' : '')
-    + '<div class="inline">' + btns.map(b => '<button class="mini" style="padding:0 14px" data-ea="' + b[0] + '">' + b[1] + '</button>').join('') + '</div><div class="evlinks" hidden></div></div>';
+    + '<div class="inline">' + btns.filter(Boolean).map(b => '<button class="mini" style="padding:0 14px" data-ea="' + b[0] + '">' + b[1] + '</button>').join('') + '</div><div class="evlinks" hidden></div></div>';
 }
 function renderEvents() {
   const ev = evData.events, up = ev.filter(e => e.status !== 'ended'), past = ev.filter(e => e.status === 'ended').reverse();
@@ -1164,6 +1173,8 @@ $('evList').onclick = async ev => {
   else if (a === 'edit') return openEvForm(e);
   else if (a === 'dup') { const d = prompt(t('h.evDupQ'), e.date); if (!d) return; await api('/api/evts/' + id + '/duplicate', 'POST', { date: d.trim() }); toast(t('h.evDuped')); }
   else if (a === 'del') { if (!confirm(t('h.evDelQ', { name: e.name }))) return; await api('/api/evts/' + id, 'DELETE'); toast(t('h.evDeleted')); }
+  else if (a === 'pass') { if (!confirm(t('h.lic.useQ', { name: e.name }))) return; await api('/api/licence/attacher', 'POST', { ev: id }); toast(t('h.lic.used')); }
+  else if (a === 'unpass') { if (!confirm(t('h.lic.removeQ', { name: e.name }))) return; await api('/api/licence/detacher', 'POST', { ev: id }); toast(t('h.lic.removed')); }
   else if (a === 'links') return toggleLinks(card, e);
   else if (a === 'rotate') { if (!confirm(t('h.evRotateQ'))) return; await api('/api/event/rotate', 'POST', { ev: id }); toast(t('h.evRotated')); return toggleLinks(card, e, true); }
   await loadEvents();
