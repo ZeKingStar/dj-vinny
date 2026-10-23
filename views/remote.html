@@ -181,5 +181,6 @@ const wake = () => { if (document.visibilityState === 'visible' && 'wakeLock' in
 wake(); document.addEventListener('visibilitychange', wake);
 const es = new EventSource('/api/events');
 es.onmessage = e => { state = JSON.parse(e.data); render(); };
+shutdownBanner(es);
 if ('serviceWorker' in navigator && isSecureContext) navigator.serviceWorker.register('/sw.js').catch(() => {});
 </script></body></html>

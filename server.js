@@ -1037,9 +1037,35 @@ app.get('/api/tts/:name', requireHost, (req, res) => {
 });
 app.use((err, req, res, next) => res.status(err.status || 500).json({ error: err.type === 'entity.parse.failed' ? 'JSON invalide' : 'Erreur serveur' }));
 
+// ---------- Fermeture automatique à 3 h (évite un serveur et un tunnel oubliés ouverts) ----------
+// 60 s avant, le dashboard et la télécommande affichent un avis avec « Encore 1 h » (autant de fois que voulu).
+// SHUTDOWN_TEST_SEC : pour les essais, fermeture N secondes après le démarrage au lieu de 3 h.
+const WARN_SEC = 60;
+const nextThree = () => { const d = new Date(); d.setHours(3, 0, 0, 0); if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); return d.getTime(); };
+let shutdownAt = process.env.SHUTDOWN_TEST_SEC ? Date.now() + Number(process.env.SHUTDOWN_TEST_SEC) * 1000 : nextThree(), warned = false, closing = false;
+const sendShutdown = data => { const msg = `event: shutdown\ndata: ${JSON.stringify(data)}\n\n`; for (const res of clients) res.write(msg); };
+const hhmm = t => new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+setInterval(() => {
+  const left = shutdownAt - Date.now();
+  if (closing) return;
+  if (left <= 0) {
+    closing = true; console.log('Fermeture automatique (' + hhmm(Date.now()) + ').'); logEvent('shutdown', {});
+    sendShutdown({ closed: true });
+    clearTimeout(saveTimer); fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(STATE_FILE, JSON.stringify(state)); // pas de sauvegarde perdue
+    if (process.platform === 'win32') require('child_process').exec('taskkill /FI "WINDOWTITLE eq Tunnel DJ Vinny*" /T /F', () => {}); // le tunnel vers le VPS aussi
+    setTimeout(() => process.exit(0), 1500);
+  } else if (left <= WARN_SEC * 1000 && !warned) { warned = true; console.log('Fermeture dans 60 s, sauf « Encore 1 h ».'); sendShutdown({ left: Math.round(left / 1000) }); }
+}, 1000);
+app.post('/api/shutdown/snooze', requireHost, (req, res) => {
+  shutdownAt = Math.max(shutdownAt, Date.now()) + 3600e3; warned = false;
+  console.log('Fermeture repoussée à ' + hhmm(shutdownAt)); sendShutdown({ until: hhmm(shutdownAt) });
+  res.json({ until: hhmm(shutdownAt) });
+});
+
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)
 app.listen(PORT, BIND, () => {
   console.log(`DJ Vinny : dashboard http://127.0.0.1:${PORT}/host`);
+  console.log('Fermeture automatique prévue à ' + hhmm(shutdownAt) + ' (avis 60 s avant, « Encore 1 h » pour prolonger).');
   if (BIND) console.log(`Écoute limitée à ${BIND} (BIND) : les appareils du réseau local ne peuvent pas joindre ce serveur directement.`);
   const lan = lanUrls(), pub = PUBLIC_URL || lan[0] || '(aucune adresse trouvée)';
   console.log('Adresse des invités (QR) :', pub);

@@ -1191,6 +1191,7 @@ es.addEventListener('cmd', async e => {
   } catch (err) { console.error(err); }
 });
 es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
+shutdownBanner(es, () => { if (music && music.isPlaying) music.pause(); }); // fermeture à 3 h : la musique du navigateur s'arrête aussi
 // ---------- Réglages (remplacent le .env pour tout sauf le démarrage) ----------
 let setView = [], setReset = new Set();
 const dlg = $('settingsDlg');

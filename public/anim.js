@@ -33,3 +33,27 @@ function applyTheme(theme) {
   if (theme && theme.accent) document.documentElement.style.setProperty('--theme-accent', theme.accent);
   else document.documentElement.style.removeProperty('--theme-accent');
 }
+
+// Avis de fermeture automatique du serveur (dashboard et télécommande) : compte à rebours de 60 s et « Encore 1 h ».
+// onClosed : appelé quand le serveur se ferme (ex. arrêter la musique du dashboard).
+function shutdownBanner(es, onClosed) {
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;display:none;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:94vw;padding:12px 16px;border-radius:18px;background:#FF4F7B;color:#15102E;font:700 17px Figtree,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.5)';
+  bar.innerHTML = '<span></span><button style="min-height:48px;padding:0 18px;border-radius:14px;border:0;background:#15102E;color:#FFF6E5;font:800 17px Figtree,sans-serif;cursor:pointer">Encore 1 h</button>';
+  document.body.appendChild(bar);
+  const txt = bar.querySelector('span'), btn = bar.querySelector('button');
+  let tm = null;
+  const hide = () => { clearInterval(tm); bar.style.display = 'none'; };
+  btn.onclick = async () => {
+    btn.disabled = true;
+    try { const r = await fetch('/api/shutdown/snooze', { method: 'POST' }); if (r.ok) hide(); } finally { btn.disabled = false; }
+  };
+  es.addEventListener('shutdown', e => {
+    const d = JSON.parse(e.data);
+    if (d.until) { hide(); toast('Fermeture repoussée à ' + d.until); return; }
+    if (d.closed) { clearInterval(tm); txt.textContent = 'DJ Vinny est fermé. Relance-le avec « Démarrer DJ Vinny ».'; btn.style.display = 'none'; bar.style.display = 'flex'; if (onClosed) onClosed(); return; }
+    let left = d.left; btn.style.display = ''; bar.style.display = 'flex';
+    const show = () => { txt.textContent = '⏰ DJ Vinny se ferme dans ' + left + ' s'; };
+    show(); clearInterval(tm); tm = setInterval(() => { left = Math.max(0, left - 1); show(); }, 1000);
+  });
+}
