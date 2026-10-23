@@ -1114,6 +1114,15 @@ $('evSave').onclick = async () => {
   else { const p = evF('program').value; if (p === 'default') body.program = 'default'; else if (p.startsWith('copy:')) body.copyFrom = p.slice(5); await api('/api/evts', 'POST', body); }
   $('evForm').hidden = true; evEditing = null; toast('Événement enregistré'); loadEvents();
 };
+// Modèle de courriel (modifiable avant de copier) : première ligne = objet, le reste = message
+function wishMail(e, url) {
+  const day = new Date(e.date + 'T12:00:00').toLocaleDateString('fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+  return 'Objet : ' + e.name + ' : choisis tes tounes d’avance !\n\nBonjour à tous,\n\n'
+    + 'Le ' + day + ' à ' + e.start.replace(/^0/, '').replace(':00', ' h').replace(':', ' h ') + (e.place ? ', au ' + e.place : '') + ', c’est ' + e.name + ' ! '
+    + 'DJ Vinny prépare la musique de la soirée et veut savoir ce qui vous fait danser.\n\n'
+    + 'Envoyez-lui vos 3 chansons préférées ici (30 secondes, aucun compte à créer) :\n' + url + '\n\n'
+    + 'Le soir même, un code QR à l’écran vous permettra aussi de faire vos demandes spéciales.\n\nÀ bientôt sur la piste !';
+}
 async function toggleLinks(card, e, force) {
   const box = card.querySelector('.evlinks');
   if (!box.hidden && !force) { box.hidden = true; return; }
@@ -1121,11 +1130,19 @@ async function toggleLinks(card, e, force) {
   box.innerHTML = '<div class="inline" style="flex-wrap:wrap;justify-content:center">' + im('ev=' + encodeURIComponent(e.id), 'QR de la soirée') + im('to=souhaits&ev=' + encodeURIComponent(e.id), 'QR des souhaits') + '</div>'
     + '<div class="inline"><input type="text" readonly value="' + esc(l.guests) + '"><button class="ghost" data-copy="' + esc(l.guests) + '">Copier le lien de la soirée</button></div>'
     + '<div class="inline"><input type="text" readonly value="' + esc(l.wishes) + '"><button class="ghost" data-copy="' + esc(l.wishes) + '">Copier le lien des souhaits</button></div>'
+    + '<details class="dt"><summary>Courriel d’invitation pour les souhaits</summary><textarea class="evmail" rows="11" style="width:100%;margin-top:6px;font:15px/1.4 Figtree,sans-serif;padding:10px;border-radius:12px">' + esc(wishMail(e, l.wishes)) + '</textarea>'
+    + '<div class="inline"><button class="ghost" data-copymail>Copier le courriel</button><button class="ghost" data-mailto>Ouvrir dans mon courriel</button></div></details>'
     + '<div class="inline"><button class="mini" style="padding:0 14px" data-ea="rotate">Nouveau code…</button></div>'
     + (l.public ? '' : '<p class="muted">Adresse locale seulement : définis l’adresse publique (⚙ Réglages) pour partager hors du Wi-Fi.</p>');
   box.hidden = false;
 }
 $('evList').onclick = async ev => {
+  const mail = ev.target.closest('[data-copymail],[data-mailto]');
+  if (mail) {
+    const t = mail.closest('.evlinks').querySelector('.evmail').value, m = /^Objet ?: ?(.*)\n+/.exec(t);
+    if (mail.dataset.mailto !== undefined) { ev.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent(m ? m[1] : '') + '&body=' + encodeURIComponent(m ? t.slice(m[0].length) : t); return; }
+    try { await navigator.clipboard.writeText(t); toast('Courriel copié'); } catch { toast('Copie impossible : sélectionne le texte'); } return;
+  }
   const c = ev.target.closest('button[data-copy]');
   if (c) { try { await navigator.clipboard.writeText(c.dataset.copy); toast('Lien copié'); } catch { toast('Copie impossible : sélectionne le lien'); } return; }
   const b = ev.target.closest('button[data-ea]'); if (!b) return;
