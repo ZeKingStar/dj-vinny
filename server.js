@@ -23,8 +23,9 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
+  TUNNEL: ['text', '', v => v === '' || /^[\w.-]+@[\w.-]+:\d{2,5}$/.test(v)],
 };
-let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, OPENROUTER_API_KEY, TTS_MODEL, TTS_VOICE, VINNY_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_ENABLED, SPOTIFY, LICENCE_KEY, CONVEX_URL;
+let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, OPENROUTER_API_KEY, TTS_MODEL, TTS_VOICE, VINNY_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_ENABLED, SPOTIFY, LICENCE_KEY, CONVEX_URL, TUNNEL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
@@ -37,7 +38,7 @@ function applySettings() {
   // Voix : OpenRouter par défaut ; TTS_BASE_URL pointe vers un serveur compatible OpenAI /v1/audio/speech
   TTS_LOCAL = !!TTS_BASE_URL;
   TTS_BASE = (TTS_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
-  LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = g('CONVEX_URL').replace(/\/$/, '');
+  LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = g('CONVEX_URL').replace(/\/$/, ''); TUNNEL = g('TUNNEL');
   TTS_ENABLED = TTS_LOCAL || !!OPENROUTER_API_KEY || !!(LICENCE_KEY && CONVEX_URL);
   SPOTIFY = MUSIC_PROVIDER === 'spotify';
 }
@@ -760,7 +761,10 @@ app.post('/api/app-settings', requireHost, (req, res) => {
   }
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(overrides, null, 1));
-  applySettings(); published.clear(); droits = null; commit(); licSync(); res.json(settingsView());
+  const oldTunnel = TUNNEL;
+  applySettings(); published.clear(); droits = null; commit(); licSync();
+  if (TUNNEL !== oldTunnel) { stopTunnel(); startTunnel(); }
+  res.json(settingsView());
 });
 app.get('/api/links', requireHost, (req, res) => { // liens à partager (contiennent le code de la soirée)
   const b = (PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
@@ -1175,25 +1179,55 @@ const nextClose = () => { const d = new Date(); d.setHours(1, 0, 0, 0); if (d.ge
 let shutdownAt = process.env.SHUTDOWN_TEST_SEC ? Date.now() + Number(process.env.SHUTDOWN_TEST_SEC) * 1000 : nextClose(), warned = false, closing = false;
 const sendShutdown = data => { const msg = `event: shutdown\ndata: ${JSON.stringify(data)}\n\n`; for (const res of clients) res.write(msg); };
 const hhmm = t => new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+// Fermeture (automatique, ou bouton « Fermer DJ Vinny » du dashboard) : avis aux pages, sauvegarde, tunnel arrêté, puis sortie
+function closeServer(why) {
+  if (closing) return;
+  closing = true; console.log('Fermeture ' + why + ' (' + hhmm(Date.now()) + ').'); logEvent('shutdown', { why });
+  sendShutdown({ closed: true });
+  clearTimeout(saveTimer); fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(STATE_FILE, JSON.stringify(state)); // pas de sauvegarde perdue
+  stopTunnel();
+  setTimeout(() => process.exit(0), 1500);
+}
 setInterval(() => {
   const left = shutdownAt - Date.now();
   if (closing) return;
-  if (left <= 0) {
-    closing = true; console.log('Fermeture automatique (' + hhmm(Date.now()) + ').'); logEvent('shutdown', {});
-    sendShutdown({ closed: true });
-    clearTimeout(saveTimer); fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(STATE_FILE, JSON.stringify(state)); // pas de sauvegarde perdue
-    if (process.platform === 'win32') require('child_process').exec('taskkill /FI "WINDOWTITLE eq Tunnel DJ Vinny*" /T /F', () => {}); // le tunnel vers le VPS aussi
-    setTimeout(() => process.exit(0), 1500);
-  } else if (left <= WARN_SEC * 1000 && !warned) { warned = true; console.log('Fermeture dans 60 s, sauf « Encore 1 h ».'); sendShutdown({ left: Math.round(left / 1000) }); }
+  if (left <= 0) closeServer('automatique');
+  else if (left <= WARN_SEC * 1000 && !warned) { warned = true; console.log('Fermeture dans 60 s, sauf « Encore 1 h ».'); sendShutdown({ left: Math.round(left / 1000) }); }
 }, 1000);
 app.post('/api/shutdown/snooze', requireHost, (req, res) => {
   shutdownAt = Math.max(shutdownAt, Date.now()) + 3600e3; warned = false;
   console.log('Fermeture repoussée à ' + hhmm(shutdownAt)); sendShutdown({ until: shutdownAt }); // la page formate l'heure dans sa langue
   res.json({ until: shutdownAt });
 });
+app.post('/api/shutdown', requireHost, (req, res) => { res.json({ ok: true }); setTimeout(() => closeServer('demandée'), 200); });
+
+// ---------- Tunnel vers le VPS (adresse publique des invités), lancé par le serveur, sans fenêtre ----------
+// TUNNEL = utilisateur@hôte:port distant (ex. deploy@5.78.177.164:3010). Se relance 5 s après une coupure ; s'arrête avec le serveur.
+// deploy/known_hosts contient l'empreinte du VPS : aucune question, aucune fenêtre (remplace deploy/tunnel.cmd).
+let tunnel = null, tunnelState = 'off', tunnelRetry = null;
+function startTunnel() {
+  clearTimeout(tunnelRetry);
+  const m = /^(.+):(\d+)$/.exec(TUNNEL || '');
+  if (!m || tunnel || closing) { if (!m) tunnelState = 'off'; return; }
+  tunnelState = 'connecting';
+  const p = tunnel = require('child_process').spawn('ssh', ['-N', '-o', 'ExitOnForwardFailure=yes', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3',
+    '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'UserKnownHostsFile=' + path.join(__dirname, 'deploy', 'known_hosts'),
+    '-R', `127.0.0.1:${m[2]}:127.0.0.1:${PORT}`, m[1]], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
+  const up = setTimeout(() => { if (tunnel === p) { tunnelState = 'up'; console.log('Tunnel ouvert vers', m[1]); } }, 5000); // ssh -N ne dit rien quand ça marche
+  p.stderr.on('data', d => console.warn('Tunnel :', String(d).trim()));
+  p.on('error', e => console.warn('Tunnel impossible :', e.message)); // ssh absent
+  p.on('exit', () => {
+    clearTimeout(up); if (tunnel !== p) return;
+    tunnel = null; tunnelState = TUNNEL ? 'down' : 'off';
+    if (TUNNEL && !closing) { console.warn('Tunnel coupé, nouvel essai dans 5 s'); tunnelRetry = setTimeout(startTunnel, 5000); }
+  });
+}
+function stopTunnel() { clearTimeout(tunnelRetry); const p = tunnel; tunnel = null; if (p) p.kill(); tunnelState = 'off'; }
+app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!TUNNEL, state: tunnelState }));
 
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)
 app.listen(PORT, BIND, () => {
+  startTunnel();
   console.log(`DJ Vinny : dashboard http://127.0.0.1:${PORT}/host`);
   console.log('Fermeture automatique prévue à ' + hhmm(shutdownAt) + ' (avis 60 s avant, « Encore 1 h » pour prolonger).');
   if (BIND) console.log(`Écoute limitée à ${BIND} (BIND) : les appareils du réseau local ne peuvent pas joindre ce serveur directement.`);

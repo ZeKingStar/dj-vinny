@@ -17,3 +17,6 @@ Vérifié ensuite (25 oct.) : dashboard à l'écran (ligne d'état, badge « Pas
 Le Convex local peut prendre d'autres ports si une ancienne instance tourne encore : lire le port affiché par `npx convex dev` (routes HTTP sur le port suivant).
 
 Étape 6b (`docs/modele-affaires.md`) : `Demarrer.vbs`, tunnel lancé par le serveur, journal `data/serveur.log`, bouton « Fermer DJ Vinny », avertissement `beforeunload` après le début de la soirée. Pas d'Inno Setup.
+
+## Étape 6b faite (25 oct.)
+`Demarrer.vbs` (aucune fenêtre, pas de doublon, journal `data/serveur.log` + `serveur.old.log`), `Demarrer DJ Vinny.cmd` le lance (faire pointer le raccourci vers `Demarrer.vbs` pour éviter l'éclair), réglage `TUNNEL` (ssh lancé et relancé par le serveur, arrêté à la fermeture), bouton « Fermer DJ Vinny » (⚙ Réglages), avertissement avant de quitter l'onglet une fois la soirée démarrée, état du tunnel dans l'en-tête. Pas essayé : un vrai tunnel vers le VPS (testé seulement avec un hôte injoignable).

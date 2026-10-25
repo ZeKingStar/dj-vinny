@@ -626,5 +626,14 @@
  "lic.texte_invalide": "Texte invalide pour la voix",
  "lic.plafond_voix": "Plafond de voix atteint pour cette passe",
  "lic.voix_non_configuree": "Voix incluse non configurée côté service",
- "lic.voix_echec": "La voix incluse a échoué"
+ "lic.voix_echec": "La voix incluse a échoué",
+ "set.TUNNEL": "Tunnel vers le VPS (adresse publique)",
+ "set.TUNNEL.help": "utilisateur@hôte:port distant, ex. deploy@5.78.177.164:3010. Le serveur ouvre le tunnel lui-même, sans fenêtre, et le relance s’il tombe. Vide = pas de tunnel.",
+ "set.quit": "⏻ Fermer DJ Vinny",
+ "set.quitQ": "Fermer DJ Vinny ? La musique, l’écran de la soirée, la télécommande et le tunnel s’arrêtent.",
+ "h.tunnel.tip": "Adresse publique des invités (tunnel vers le VPS)",
+ "h.tunnel.up": "🌐 En ligne",
+ "h.tunnel.connecting": "🌐 Connexion…",
+ "h.tunnel.down": "🌐 Hors ligne",
+ "h.tunnel.off": "🌐 Arrêté"
 }

@@ -71,7 +71,7 @@
 </style></head>
 <body><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" data-i18n="c.modeCalm" data-i18n-title="h.modeCalmTip">🍽️ Souper</button><button id="modeParty" data-i18n="c.modeParty" data-i18n-title="h.modePartyTip">🪩 Soirée</button></span><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Remote</button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost" id="logout" data-i18n="h.logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" data-i18n="c.modeCalm" data-i18n-title="h.modeCalmTip">🍽️ Souper</button><button id="modeParty" data-i18n="c.modeParty" data-i18n-title="h.modePartyTip">🪩 Soirée</button></span><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Remote</button><span id="tunnelBadge" hidden></span><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost" id="logout" data-i18n="h.logout">Déconnexion</button></div>
 
   <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
   <div id="tab-soiree">
@@ -239,7 +239,7 @@
   <h2 data-i18n="set.title">Réglages</h2>
   <p class="muted" data-i18n="set.intro">Ces valeurs sont gardées dans l'app (data/settings.json) et passent avant le fichier .env. Le mot de passe, le port, le secret de session et les clés Apple restent dans le .env.</p>
   <div id="setFields"></div>
-  <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="setCancel" data-i18n="c.close">Fermer</button><button type="button" id="setSave" data-i18n="c.save">Enregistrer</button></div>
+  <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="quitApp" style="margin-right:auto" data-i18n="set.quit">⏻ Fermer DJ Vinny</button><button type="button" class="ghost" id="setCancel" data-i18n="c.close">Fermer</button><button type="button" id="setSave" data-i18n="c.save">Enregistrer</button></div>
 </form></dialog>
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script src="/anim.js"></script>
@@ -1212,7 +1212,18 @@ es.addEventListener('cmd', async e => {
   } catch (err) { console.error(err); }
 });
 es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
-shutdownBanner(es, () => { if (music && music.isPlaying) music.pause(); }); // fermeture à 3 h : la musique du navigateur s'arrête aussi
+let serverClosed = false;
+shutdownBanner(es, () => { serverClosed = true; if (music && music.isPlaying) music.pause(); }); // serveur fermé : la musique du navigateur s'arrête aussi
+// La musique joue dans cet onglet : une fois la soirée démarrée, le navigateur demande confirmation avant de le fermer ou de le quitter
+addEventListener('beforeunload', e => { if (started && !serverClosed) { e.preventDefault(); e.returnValue = ''; } });
+// Tunnel vers le VPS (adresse publique) : affiché seulement s'il est configuré (⚙ Réglages)
+async function tunnelBadge() {
+  try {
+    const r = await api('/api/tunnel', 'GET'), b = $('tunnelBadge'); b.hidden = !r.on;
+    if (r.on) b.innerHTML = '<span class="phase-badge" title="' + t('h.tunnel.tip') + '">' + t('h.tunnel.' + r.state) + '</span>';
+  } catch {}
+}
+tunnelBadge(); setInterval(tunnelBadge, 15000);
 // ---------- Réglages (remplacent le .env pour tout sauf le démarrage) ----------
 let setView = [], setReset = new Set();
 const dlg = $('settingsDlg');
@@ -1241,6 +1252,7 @@ $('btnScreen').onclick = () => { // même nom de fenêtre = l'écran déjà ouve
 };
 $('remoteCopy').onclick = async () => { try { await navigator.clipboard.writeText($('remoteUrl').value); toast(t('h.addrCopied')); } catch { $('remoteUrl').select(); toast(t('h.selectedCtrlC')); } };
 $('setCancel').onclick = () => dlg.close();
+$('quitApp').onclick = async () => { if (!confirm(t('set.quitQ'))) return; serverClosed = true; dlg.close(); await api('/api/shutdown').catch(() => {}); };
 $('setFields').onclick = e => { const b = e.target.closest('button[data-reset]'); if (!b) return; setReset.add(b.dataset.reset); const i = $('setFields').querySelector('[data-k="' + b.dataset.reset + '"]'); if (i) i.value = ''; paintSettings(); };
 $('setSave').onclick = async () => {
   const body = {};
