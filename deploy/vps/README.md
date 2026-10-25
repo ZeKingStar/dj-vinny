@@ -6,6 +6,8 @@ Rien ici ne touche à `djvinny.korvia.ca` (montage actuel de Pat).
 
 ## Installation (une fois, avec l'accord de Pat)
 
+Raccourci : copier le dossier `deploy/vps/` sur le VPS puis `sudo bash installer.sh`. Il fait les étapes 1, 2 et 4 avec sauvegarde, `sshd -t` et remise de l'ancienne config en cas d'échec, crée `/etc/djvinny-sync.env` avec un jeton, et n'active la minuterie que lorsque `CONVEX_SITE_URL` et le certificat existent. Les étapes 3 (certificat) et 5 (variables Convex) restent à faire.
+
 Prérequis : le domaine `djvinny.ca` (démarche A), avec `*.djvinny.ca` pointé vers le VPS ; nginx et `deploy/djvinny-proxy.conf` + `deploy/djvinny-limits.conf` déjà en place (voir `deploy/appliquer.sh`).
 
 1. Utilisateur des tunnels, sans shell :
