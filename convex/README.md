@@ -17,6 +17,8 @@ Variables d'environnement Convex (`npx convex env set NOM valeur`, jamais dans l
 | `ELEVENLABS_API_KEY` | Clé ElevenLabs de Pop & Show (forfait Creator). Sans elle, `/voix` répond `voix_non_configuree` |
 | `ELEVENLABS_MODEL` | Facultatif, `eleven_v3` par défaut |
 | `ELEVENLABS_VOICE_ID` | Facultatif, Liam (`TX3LPaxmHKxFdv7VOQHJ`) par défaut |
+| `VPS_HOST`, `VPS_USER`, `VPS_HOST_KEY`, `DOMAINE` | Tunnel automatique vers le VPS (voir `deploy/vps/README.md`). Sans `VPS_HOST`, aucun tunnel |
+| `VPS_TOKEN` | Jeton de la minuterie du VPS pour `/vps/clients` |
 
 ## Gestion (en attendant le portail)
 
@@ -36,13 +38,16 @@ Serveur local du client : `POST`, corps JSON, en-tête `Authorization: Bearer dj
 
 | Route | Corps | Réponse |
 |---|---|---|
-| `/droits` | — | sous-domaine, passes libres, soirées publiées |
+| `/droits` | — | sous-domaine, passes libres, soirées publiées, tunnel (hôte, port, empreinte du VPS, adresse publique), clé SSH connue |
+| `/cle-ssh` | `cle` (`ssh-ed25519 …`) | `ok` |
 | `/publier-soiree` | `evId, code, nom, date, debut, fin, debutTs, finTs, lang, lieu, accueil, merci` | `soireeId` (seule l'empreinte du code est gardée) |
 | `/attacher-passe` | `evId` | `passeId` |
 | `/detacher-passe` | `evId` | `ok` (avant le début, sans souhait reçu) |
 | `/souhaits` | — | souhaits pas encore remis, remis une seule fois |
 | `/voix` | `evId, texte, lang, prev?, next?, voiceSettings?` | MP3 (20 000 caractères par passe) |
 
+VPS : `GET /vps/clients` avec `Authorization: Bearer <VPS_TOKEN>` (sous-domaine, port, clé SSH, ouvert ou non).
+
 Invités : `GET /soiree?e=<code>` (fiche publique) et `POST /souhaiter` `{ code, texte, prenom, invite }`.
 
-Erreurs : `{ "error": "<code>" }` avec le statut HTTP. Codes : `licence_absente`, `licence_invalide`, `json_invalide`, `champs_invalides`, `soiree_invalide`, `soiree_inconnue`, `soiree_terminee`, `soiree_commencee`, `soiree_non_ouverte`, `soiree_non_active`, `dates_verrouillees`, `aucune_passe`, `limite_abonnement`, `aucune_passe_attachee`, `souhaits_recus`, `code_invalide`, `souhait_invalide`, `max_souhaits`, `souhaits_pleins`, `texte_invalide`, `plafond_voix`, `voix_non_configuree`, `voix_echec`.
+Erreurs : `{ "error": "<code>" }` avec le statut HTTP. Codes : `licence_absente`, `licence_invalide`, `json_invalide`, `champs_invalides`, `soiree_invalide`, `soiree_inconnue`, `soiree_terminee`, `soiree_commencee`, `soiree_non_ouverte`, `soiree_non_active`, `dates_verrouillees`, `aucune_passe`, `limite_abonnement`, `aucune_passe_attachee`, `souhaits_recus`, `code_invalide`, `souhait_invalide`, `max_souhaits`, `souhaits_pleins`, `texte_invalide`, `plafond_voix`, `voix_non_configuree`, `voix_echec`, `cle_ssh_invalide`, `non_autorise`.

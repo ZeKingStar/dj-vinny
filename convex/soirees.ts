@@ -42,8 +42,12 @@ export const droits = internalQuery({
     const libres = (await ctx.db.query("passes").withIndex("par_client_etat", q => q.eq("clientId", clientId).eq("etat", "libre")).collect())
       .filter(p => p.expireLe > now);
     const soirees = await ctx.db.query("soirees").withIndex("par_client_ev", q => q.eq("clientId", clientId)).collect();
+    const hote = process.env.VPS_HOST, domaine = process.env.DOMAINE || "djvinny.ca";
     return {
       sousDomaine: c.sousDomaine,
+      // Tunnel vers le VPS (étape 6) : le serveur local s'y branche avec sa propre clé SSH (cleSsh), refusée tant qu'elle n'est pas publiée
+      tunnel: hote ? { hote, utilisateur: process.env.VPS_USER || "djv", port: c.portTunnel, cleHote: process.env.VPS_HOST_KEY || "", adresse: `https://${c.sousDomaine}.${domaine}` } : null,
+      cleSsh: c.cleSsh ?? null,
       passesLibres: { achat: libres.filter(p => p.origine === "achat").length, abonnement: libres.filter(p => p.origine === "abonnement").length },
       soirees: await Promise.all(soirees.filter(s => !terminee(s, now)).map(async s => {
         const p = await passeDe(ctx, s);
@@ -142,6 +146,32 @@ export const rendreVoix = internalMutation({
   handler: async (ctx, { passeId, n }) => {
     const p = await ctx.db.get(passeId);
     if (p) await ctx.db.patch(passeId, { voixCaracteres: Math.max(0, p.voixCaracteres - n) });
+  },
+});
+
+// Clé publique SSH générée par le serveur local : le VPS l'autorise pour le seul port de ce client
+export const enregistrerCleSsh = internalMutation({
+  args: { clientId: v.id("clients"), cle: v.string() },
+  handler: async (ctx, { clientId, cle }) => {
+    const m = /^(ssh-ed25519 [A-Za-z0-9+/]{68}={0,2})(?: .*)?$/.exec(cle.trim());
+    if (!m) throw refus("cle_ssh_invalide");
+    await ctx.db.patch(clientId, { cleSsh: m[1] });
+    return { ok: true };
+  },
+});
+
+// Pour la minuterie du VPS (deploy/vps/djvinny-sync.py) : clés à autoriser et sous-domaines ouverts.
+// Ouvert = une passe attachée à une soirée pas encore terminée (de l'attachement à la fin + 6 h).
+export const vpsClients = internalQuery({
+  args: {},
+  handler: async ctx => {
+    const now = Date.now(), ouverts = new Set<string>();
+    for (const p of await ctx.db.query("passes").withIndex("par_etat", q => q.eq("etat", "attachee")).collect()) {
+      const s = p.soireeId && await ctx.db.get(p.soireeId);
+      if (s && !terminee(s, now)) ouverts.add(p.clientId);
+    }
+    return (await ctx.db.query("clients").collect()).filter(c => c.etat === "actif")
+      .map(c => ({ sousDomaine: c.sousDomaine, port: c.portTunnel, cleSsh: c.cleSsh ?? null, ouvert: ouverts.has(c._id) }));
   },
 });
 

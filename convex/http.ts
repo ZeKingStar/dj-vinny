@@ -50,6 +50,7 @@ route("/publier-soiree", licencie(async (ctx, c, b) => {
 
 route("/attacher-passe", licencie(async (ctx, c, b) => json(await ctx.runMutation(internal.soirees.attacherPasse, { clientId: c._id, evId: texte(b.evId) }))));
 route("/detacher-passe", licencie(async (ctx, c, b) => json(await ctx.runMutation(internal.soirees.detacherPasse, { clientId: c._id, evId: texte(b.evId) }))));
+route("/cle-ssh", licencie(async (ctx, c, b) => json(await ctx.runMutation(internal.soirees.enregistrerCleSsh, { clientId: c._id, cle: texte(b.cle) }))));
 route("/souhaits", licencie(async (ctx, c) => json({ souhaits: await ctx.runMutation(internal.soirees.prendreSouhaits, { clientId: c._id }) })));
 
 // Voix de Vinny incluse : texte -> MP3 par ElevenLabs, avec la clé de Pop & Show (variable d'environnement Convex, jamais envoyée au client).
@@ -78,6 +79,13 @@ route("/voix", licencie(async (ctx, c, b) => {
   }
   return new Response(await r.arrayBuffer(), { status: 200, headers: { "Content-Type": "audio/mpeg", ...CORS } });
 }));
+
+// ---------- VPS : liste lue chaque minute par deploy/vps/djvinny-sync.py (jeton VPS_TOKEN, variable d'environnement Convex) ----------
+http.route({ path: "/vps/clients", method: "GET", handler: httpAction(async (ctx, req) => {
+  const jeton = process.env.VPS_TOKEN, recu = /^Bearer (.+)$/.exec(req.headers.get("Authorization") || "");
+  if (!jeton || !recu || (await sha256(recu[1])) !== (await sha256(jeton))) return erreur("non_autorise", 401); // comparaison d'empreintes : même durée quel que soit le jeton
+  return json({ clients: await ctx.runQuery(internal.soirees.vpsClients, {}) });
+}) });
 
 // ---------- Invités ----------
 http.route({ path: "/soiree", method: "GET", handler: httpAction(async (ctx, req) => {

@@ -1,0 +1,8 @@
+[Unit]
+Description=DJ Vinny : clés des tunnels et sous-domaines (lit Convex)
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/djvinny-sync.env
+ExecStart=/usr/bin/python3 /opt/djvinny/djvinny-sync.py

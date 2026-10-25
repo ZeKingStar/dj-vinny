@@ -20,3 +20,10 @@ Le Convex local peut prendre d'autres ports si une ancienne instance tourne enco
 
 ## Étape 6b faite (25 oct.)
 `Demarrer.vbs` (aucune fenêtre, pas de doublon, journal `data/serveur.log` + `serveur.old.log`), `Demarrer DJ Vinny.cmd` le lance (faire pointer le raccourci vers `Demarrer.vbs` pour éviter l'éclair), réglage `TUNNEL` (ssh lancé et relancé par le serveur, arrêté à la fermeture), bouton « Fermer DJ Vinny » (⚙ Réglages), avertissement avant de quitter l'onglet une fois la soirée démarrée, état du tunnel dans l'en-tête. Pas essayé : un vrai tunnel vers le VPS (testé seulement avec un hôte injoignable).
+
+## Étape 6 faite (25 oct.) : tunnel automatique par client
+- Convex : `/cle-ssh`, `/droits` renvoie le tunnel (hôte, port, empreinte du VPS, adresse publique), `GET /vps/clients` (jeton `VPS_TOKEN`).
+- Serveur local : clé `data/tunnel_ed25519` créée par `ssh-keygen` (droits Windows limités au compte), clé publiée, `data/tunnel_known_hosts`, tunnel automatique si `TUNNEL` est vide ; QR et liens sur `https://<client>.<domaine>` quand le tunnel est ouvert, sinon adresse locale (repli).
+- VPS : `deploy/vps/` (script, service, minuterie, README d'installation). Rien n'est installé sur le VPS.
+- Testé : clé, publication, empreinte, relance du tunnel, repli QR, liste du VPS (jeton vérifié), script sur un dossier factice (clé limitée au port, ouvert/fermé, rien réécrit au 2e passage, jeton refusé sans rien modifier).
+- Pas testé : un vrai tunnel SSH (aucun sshd local ; possible avec `openssh-server` dans WSL ou un conteneur), `nginx -t` et certbot sur un vrai VPS.

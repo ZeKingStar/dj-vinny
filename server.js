@@ -382,7 +382,7 @@ app.get('/api/events', (req, res) => {
 });
 app.get('/api/qr.png', requireHost, wrap(async (req, res) => { // le QR contient le code de la soirée : réservé à l'hôte
   res.set('Cache-Control', 'no-store');
-  const base = (PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+  const base = guestBase(req);
   const url = req.query.to === 'remote' ? base + '/remote' // la télécommande n'a pas de code : elle demande le mot de passe hôte
     : base + (req.query.to === 'souhaits' ? '/souhaits.html' : '/') + '?e=' + tokenFor(req);
   res.type('png').send(await QRCode.toBuffer(url, { width: 600, margin: 2 }));
@@ -764,12 +764,13 @@ app.post('/api/app-settings', requireHost, (req, res) => {
   const oldTunnel = TUNNEL;
   applySettings(); published.clear(); droits = null; commit(); licSync();
   if (TUNNEL !== oldTunnel) { stopTunnel(); startTunnel(); }
+  if (!licenced()) syncTunnel(null).catch(() => {}); // licence retirée : plus de tunnel automatique
   res.json(settingsView());
 });
 app.get('/api/links', requireHost, (req, res) => { // liens à partager (contiennent le code de la soirée)
-  const b = (PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+  const b = guestBase(req);
   const t = tokenFor(req);
-  res.json({ guests: `${b}/?e=${t}`, wishes: `${b}/souhaits.html?e=${t}`, remote: `${b}/remote`, public: !!PUBLIC_URL && !/^https?:\/\/(10\.|192\.168\.|127\.|localhost)/.test(PUBLIC_URL) });
+  res.json({ guests: `${b}/?e=${t}`, wishes: `${b}/souhaits.html?e=${t}`, remote: `${b}/remote`, public: !/^https?:\/\/(10\.|192\.168\.|127\.|localhost)/.test(b) });
 });
 app.get('/remote', (req, res) =>
   isHost(req) ? res.sendFile(path.join(__dirname, 'views', 'remote.html')) : res.redirect('/login.html?next=/remote'));
@@ -1033,6 +1034,7 @@ async function licSync() {
   try {
     for (const ev of state.events) await publishEvent(ev).catch(e => { if (!['lic.dates_verrouillees', 'lic.soiree_invalide', 'lic.champs_invalides'].includes(e.key)) throw e; });
     droits = await convex('/droits');
+    await syncTunnel(droits.tunnel, droits.cleSsh).catch(e => console.warn('Tunnel automatique :', e.key || e.message)); // un souci de tunnel n'empêche pas les souhaits
     const { souhaits = [] } = await convex('/souhaits');
     let added = false;
     for (const w of souhaits) {
@@ -1202,28 +1204,66 @@ app.post('/api/shutdown/snooze', requireHost, (req, res) => {
 app.post('/api/shutdown', requireHost, (req, res) => { res.json({ ok: true }); setTimeout(() => closeServer('demandée'), 200); });
 
 // ---------- Tunnel vers le VPS (adresse publique des invités), lancé par le serveur, sans fenêtre ----------
-// TUNNEL = utilisateur@hôte:port distant (ex. deploy@5.78.177.164:3010). Se relance 5 s après une coupure ; s'arrête avec le serveur.
-// deploy/known_hosts contient l'empreinte du VPS : aucune question, aucune fenêtre (remplace deploy/tunnel.cmd).
-let tunnel = null, tunnelState = 'off', tunnelRetry = null;
+// Deux façons : TUNNEL = utilisateur@hôte:port distant (montage manuel, ex. deploy@5.78.177.164:3010, empreinte dans deploy/known_hosts),
+// ou automatique avec la licence : Convex donne l'hôte, le port et l'empreinte du VPS ; la clé SSH est générée ici et ne quitte jamais ce PC.
+// Se relance 5 s après une coupure ; s'arrête avec le serveur. Sans tunnel ouvert, le QR reprend l'adresse du réseau local.
+const KEY_FILE = path.join(DATA_DIR, 'tunnel_ed25519'), KNOWN_FILE = path.join(DATA_DIR, 'tunnel_known_hosts');
+let tunnel = null, tunnelState = 'off', tunnelRetry = null, autoTarget = '';
+const tunnelTarget = () => TUNNEL || autoTarget;
+function setTunnelState(st) {
+  if (st === tunnelState) return;
+  tunnelState = st;
+  if (!TUNNEL && autoTarget) { state.qrRev++; commit(); } // adresse publique ouverte ou fermée : les QR affichés se mettent à jour
+}
 function startTunnel() {
   clearTimeout(tunnelRetry);
-  const m = /^(.+):(\d+)$/.exec(TUNNEL || '');
-  if (!m || tunnel || closing) { if (!m) tunnelState = 'off'; return; }
-  tunnelState = 'connecting';
+  const m = /^(.+):(\d+)$/.exec(tunnelTarget()), auto = !TUNNEL;
+  if (!m || tunnel || closing) { if (!m) setTunnelState('off'); return; }
+  setTunnelState('connecting');
+  const keys = auto ? ['-i', KEY_FILE, '-o', 'IdentitiesOnly=yes', '-o', 'UserKnownHostsFile=' + KNOWN_FILE] : ['-o', 'UserKnownHostsFile=' + path.join(__dirname, 'deploy', 'known_hosts')];
   const p = tunnel = require('child_process').spawn('ssh', ['-N', '-o', 'ExitOnForwardFailure=yes', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3',
-    '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'UserKnownHostsFile=' + path.join(__dirname, 'deploy', 'known_hosts'),
-    '-R', `127.0.0.1:${m[2]}:127.0.0.1:${PORT}`, m[1]], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
-  const up = setTimeout(() => { if (tunnel === p) { tunnelState = 'up'; console.log('Tunnel ouvert vers', m[1]); } }, 5000); // ssh -N ne dit rien quand ça marche
+    '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', ...keys, '-R', `127.0.0.1:${m[2]}:127.0.0.1:${PORT}`, m[1]], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
+  const up = setTimeout(() => { if (tunnel === p) { setTunnelState('up'); console.log('Tunnel ouvert vers', m[1]); } }, 5000); // ssh -N ne dit rien quand ça marche
   p.stderr.on('data', d => console.warn('Tunnel :', String(d).trim()));
   p.on('error', e => console.warn('Tunnel impossible :', e.message)); // ssh absent
   p.on('exit', () => {
     clearTimeout(up); if (tunnel !== p) return;
-    tunnel = null; tunnelState = TUNNEL ? 'down' : 'off';
-    if (TUNNEL && !closing) { console.warn('Tunnel coupé, nouvel essai dans 5 s'); tunnelRetry = setTimeout(startTunnel, 5000); }
+    tunnel = null; setTunnelState(tunnelTarget() ? 'down' : 'off');
+    if (tunnelTarget() && !closing) { console.warn('Tunnel coupé, nouvel essai dans 5 s'); tunnelRetry = setTimeout(startTunnel, 5000); }
   });
 }
-function stopTunnel() { clearTimeout(tunnelRetry); const p = tunnel; tunnel = null; if (p) p.kill(); tunnelState = 'off'; }
-app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!TUNNEL, state: tunnelState }));
+function stopTunnel() { clearTimeout(tunnelRetry); const p = tunnel; tunnel = null; if (p) p.kill(); setTunnelState('off'); }
+// Clé SSH de ce PC (ssh-keygen est inclus dans Windows 10 et 11), créée une seule fois dans data/
+function ensureKey() {
+  if (!fs.existsSync(KEY_FILE) || !fs.existsSync(KEY_FILE + '.pub')) {
+    const cp = require('child_process');
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    for (const f of [KEY_FILE, KEY_FILE + '.pub']) if (fs.existsSync(f)) fs.unlinkSync(f);
+    cp.execFileSync('ssh-keygen', ['-q', '-t', 'ed25519', '-N', '', '-C', 'djvinny', '-f', KEY_FILE], { windowsHide: true });
+    // ssh refuse une clé privée lisible par d'autres comptes : on retire les droits hérités du dossier
+    if (process.platform === 'win32') cp.execFileSync('icacls', [KEY_FILE, '/inheritance:r', '/grant:r', os.userInfo().username + ':F'], { windowsHide: true });
+    console.log('Clé SSH du tunnel créée :', KEY_FILE);
+  }
+  return fs.readFileSync(KEY_FILE + '.pub', 'utf8').trim().split(' ').slice(0, 2).join(' ');
+}
+// Appelé après chaque /droits : publie la clé publique si besoin, puis branche le tunnel sur l'hôte et le port donnés par Convex
+async function syncTunnel(tu, cleConnue) {
+  let target = '';
+  if (tu && tu.hote && /^ssh-[\w-]+ [A-Za-z0-9+/=]+$/.test(tu.cleHote || '')) {
+    const pub = ensureKey();
+    if (cleConnue !== pub) await convex('/cle-ssh', { cle: pub });
+    const known = `${tu.hote} ${tu.cleHote}\n`;
+    if (!fs.existsSync(KNOWN_FILE) || fs.readFileSync(KNOWN_FILE, 'utf8') !== known) fs.writeFileSync(KNOWN_FILE, known);
+    target = `${tu.utilisateur}@${tu.hote}:${tu.port}`;
+  }
+  if (target === autoTarget) return;
+  autoTarget = target;
+  if (!TUNNEL) { stopTunnel(); startTunnel(); }
+}
+// Adresse des invités (QR, liens) : l'adresse publique quand le tunnel automatique est ouvert, sinon PUBLIC_URL ou le réseau local (repli)
+const guestBase = req => (!TUNNEL && autoTarget && tunnelState === 'up' && droits && droits.tunnel ? droits.tunnel.adresse
+  : PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!tunnelTarget(), state: tunnelState, address: !TUNNEL && droits && droits.tunnel ? droits.tunnel.adresse : '' }));
 
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)
 app.listen(PORT, BIND, () => {

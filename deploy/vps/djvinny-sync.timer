@@ -1,0 +1,10 @@
+[Unit]
+Description=DJ Vinny : synchro des tunnels chaque minute
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target

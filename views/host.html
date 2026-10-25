@@ -1220,7 +1220,7 @@ addEventListener('beforeunload', e => { if (started && !serverClosed) { e.preven
 async function tunnelBadge() {
   try {
     const r = await api('/api/tunnel', 'GET'), b = $('tunnelBadge'); b.hidden = !r.on;
-    if (r.on) b.innerHTML = '<span class="phase-badge" title="' + t('h.tunnel.tip') + '">' + t('h.tunnel.' + r.state) + '</span>';
+    if (r.on) b.innerHTML = '<span class="phase-badge" title="' + esc(r.address || t('h.tunnel.tip')) + '">' + t('h.tunnel.' + r.state) + '</span>';
   } catch {}
 }
 tunnelBadge(); setInterval(tunnelBadge, 15000);
