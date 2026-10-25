@@ -209,6 +209,7 @@ Le travail commercial se fait sur une branche à part ; `perso` et l'étiquette 
 | Entreprise | Pop & Show |
 | Catalogue | `ca` |
 | Fenêtres sur le PC du client | Aucune fenêtre de terminal visible, en gratuit comme en payant. Pas d’installateur pour l’instant. L’onglet du dashboard est protégé contre une fermeture par erreur (seulement une fois la soirée démarrée) |
+| Moteur sur le VPS ? | Non : le moteur (`server.js`) reste sur le PC du client, le VPS ne sert que de passerelle pour les invités. Un moteur hébergé par Pop & Show ferait d’elle le service qui fait jouer la musique (§ IV.2.1) |
 
 ## 9. Deux points expliqués
 
