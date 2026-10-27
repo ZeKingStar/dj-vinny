@@ -21,40 +21,49 @@ https://github.com/user-attachments/assets/8badffd4-d403-4612-b47b-27d85223719f
 - **Journal de soirée** sans nom, sans IP ni image : `node report.js` produit un rapport.
 - **Listes** choisies pour un public québécois (`curated/soiree.json`) : danse, danse en ligne, souper.
 
-## Ce qu'il vous faut
+## Installation (Windows)
 
-- **Node.js 22 ou plus récent**.
-- Un compte **Spotify Premium** et votre propre application Spotify (gratuite, 5 minutes, voir ci-dessous). La lecture se fait dans le navigateur de l'ordinateur qui fait tourner l'app : **Chrome ou Edge sur un PC**, pas sur un téléphone.
-- *(Facultatif)* `ffmpeg` installé.
+1. **Télécharger** le fichier `DJ-Vinny-…-windows.zip` depuis la [page des versions](https://github.com/ZeKingStar/dj-vinny/releases).
+2. **Décompresser** : clic droit sur le fichier, puis « Extraire tout ».
+3. **Double-cliquer** sur **Demarrer DJ Vinny** dans le dossier obtenu.
 
-## Installation
+Rien d’autre à installer. Si Windows affiche un avertissement, cliquez sur « Informations complémentaires », puis « Exécuter quand même ».
+
+Au premier démarrage, une page de bienvenue s’ouvre et vous guide :
+
+1. Choisissez le **mot de passe** du tableau de bord.
+2. Créez votre application Spotify (voir plus bas) et collez son **Client ID**.
+
+Ensuite, le tableau de bord s’ouvre tout seul. Aux démarrages suivants, il s’ouvre directement.
+
+Il vous faut un compte **Spotify Premium**. La lecture se fait dans le navigateur de l’ordinateur qui fait tourner l’app : **Chrome ou Edge sur un PC**, pas sur un téléphone.
+
+### Créer votre application Spotify
+
+1. Allez sur <https://developer.spotify.com/dashboard> et créez une app (gratuit, 5 minutes).
+2. **Redirect URI** : `http://127.0.0.1:3000/host` (avec `127.0.0.1`, pas `localhost`). La page de bienvenue l’affiche avec un bouton **Copier**. Cliquez *Add* puis *Save*.
+3. Cochez **Web Playback SDK**.
+4. Copiez le **Client ID**. Il n’y a pas de secret à copier.
+5. Le propriétaire de l’app est déjà autorisé ; dans *User Management*, n’ajoutez d’autres comptes que si nécessaire (maximum 5).
+
+### Utiliser
+
+Ouvrez le tableau de bord à **<http://127.0.0.1:3000/host>** (jamais `localhost` ni l’adresse du réseau : le navigateur refuse certaines fonctions hors de ce contexte), connectez Spotify, puis « Démarrer la soirée ». Les invités accèdent à l’app par le QR affiché sur l’écran animé (même réseau Wi-Fi). Pour arrêter, utilisez « Fermer DJ Vinny » dans les Réglages.
+
+Le premier démarrage fonctionne sans sons : les jingles utilisent un son de secours. Les voix de Vinny sont incluses (`voix/`). Voir `sounds/LICENCES.md` pour ajouter les vôtres.
+
+### Pour les développeurs
+
+Il faut Node.js 22 ou plus récent ; `ffmpeg` est facultatif.
 
 ```bash
 git clone https://github.com/ZeKingStar/dj-vinny.git dj-vinny
 cd dj-vinny
 npm install
-cp .env.example .env     # sous Windows : copy .env.example .env
-```
-
-Éditez `.env` : au minimum `HOST_PASSWORD`, `SESSION_SECRET` (une longue valeur aléatoire) et `SPOTIFY_CLIENT_ID`.
-
-### Créer votre application Spotify
-
-1. Allez sur <https://developer.spotify.com/dashboard> et créez une app.
-2. **Redirect URI** : `http://127.0.0.1:3000/host` (avec `127.0.0.1`, pas `localhost`). Cliquez *Add* puis *Save*.
-3. Cochez **Web Playback SDK**.
-4. Copiez le **Client ID** dans `.env` (`SPOTIFY_CLIENT_ID`). Il n'y a pas de secret à copier.
-5. Le propriétaire de l'app est déjà autorisé ; dans *User Management*, n'ajoutez d'autres comptes que si nécessaire (maximum 5).
-
-### Lancer
-
-```bash
 npm start
 ```
 
-Ouvrez le tableau de bord à **<http://127.0.0.1:3000/host>** (jamais `localhost` ni l'adresse du réseau : le navigateur refuse certaines fonctions hors de ce contexte), connectez Spotify, puis « Démarrer la soirée ». Les invités accèdent à l'app par le QR affiché sur l'écran animé (même réseau Wi-Fi, ou `PUBLIC_URL` si vous l'hébergez).
-
-Le premier démarrage fonctionne sans sons : les jingles utilisent un son de secours. Les voix de Vinny sont incluses (`voix/`). Voir `sounds/LICENCES.md` pour ajouter les vôtres.
+Sans fichier `.env`, la page de bienvenue le crée. Vous pouvez aussi copier `env.example` en `.env` et le remplir. Pour fabriquer le ZIP : `node installateur/construire.js` (résultat dans `installateur/sortie/`).
 
 ## Limites à connaître
 
