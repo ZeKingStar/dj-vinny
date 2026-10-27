@@ -1227,14 +1227,18 @@ tunnelBadge(); setInterval(tunnelBadge, 15000);
 // ---------- Réglages (remplacent le .env pour tout sauf le démarrage) ----------
 let setView = [], setReset = new Set();
 const dlg = $('settingsDlg');
+const PAID = ['LICENCE_KEY', 'CONVEX_URL'];
 function paintSettings() {
-  $('setFields').innerHTML = setView.map(f => {
+  const row = f => {
     const src = '<span class="src">' + t(setReset.has(f.key) ? 'set.willReset' : 'set.src.' + f.source) + '</span>';
     const ctl = f.type.startsWith('select:') ? '<select data-k="' + f.key + '">' + f.type.slice(7).split(',').map(o => '<option' + (o === f.value ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>'
       : f.type === 'secret' ? '<input type="password" autocomplete="new-password" data-k="' + f.key + '" placeholder="' + t(f.set && !setReset.has(f.key) ? 'set.secretSet' : 'set.secretUnset') + '">'
       : '<input type="' + (f.type.startsWith('number') ? 'number' : 'text') + '" data-k="' + f.key + '" value="' + esc(f.value || '') + '" placeholder="' + esc(f.def) + '">';
     return '<div class="sf"><label>' + esc(t('set.' + f.key)) + src + '</label><div class="inline">' + ctl + '<button type="button" class="mini" data-reset="' + f.key + '" title="' + t('set.resetTip') + '">↺</button></div><span class="muted">' + esc(t('set.' + f.key + '.help')) + '</span></div>';
-  }).join('');
+  };
+  const paid = setView.filter(f => PAID.includes(f.key));
+  $('setFields').innerHTML = setView.filter(f => !PAID.includes(f.key)).map(row).join('')
+    + '<details class="sf"' + (paid.some(f => f.set || f.value) ? ' open' : '') + '><summary>' + t('set.paid') + '</summary><p class="muted">' + t('set.paidInfo') + '</p>' + paid.map(row).join('') + '</details>';
 }
 $('openSettings').onclick = async () => {
   setView = await api('/api/app-settings', 'GET'); setReset = new Set(); paintSettings(); dlg.showModal();
