@@ -113,7 +113,7 @@ Client  ──> compte.djvinny.ca  (Clerk + Stripe Checkout)  → Convex
 | Adresse publique `<client>.djvinny.ca` pendant la soirée | — | Oui (tunnel) |
 | Souhaits d'avance, PC éteint | — | Oui (Convex) |
 | Courriel d'invitation, QR imprimable | — | Oui |
-| Voix de Vinny | Sa propre clé OpenRouter ou un serveur local | Incluse (via Convex), ou sa clé |
+| Voix de Vinny | Clips prégénérés (`voix/`), sans titre ni prénom ; ou un serveur de voix local | Incluse (via Convex) : titre, artiste et prénom annoncés |
 
 ### Rôle de chaque pièce
 

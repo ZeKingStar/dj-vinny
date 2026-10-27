@@ -101,5 +101,39 @@
    "name": "Soirée",
    "jingle": "Mesdames et messieurs, la piste de danse est officiellement ouverte ! Vos demandes spéciales, c’est le code QR sur l’écran. Pis si une toune vide la piste, pas de panique : on passe à une autre, vite vite ! Allez, la gang, on danse !"
   }
+ },
+ "gratuit": {
+  "party": {
+   "anon": [
+    "[excited] Une demande spéciale vient d'arriver !",
+    "[excited] Et maintenant, une demande spéciale d'un invité ! [shouting] On danse !",
+    "[excited] Quelqu'un dans la salle a fait une demande ! [laughs] Merci, invité mystère !",
+    "[excited] Demande spéciale ! [shouting] Envoye, on bouge !"
+   ],
+   "plain": [
+    "[excited] Et maintenant, place à la prochaine toune !",
+    "[excited] Ici DJ Vinny ! On enchaîne !",
+    "[excited] Envoye la gang ! [shouting] On continue de danser !",
+    "[excited] Une bonne toune pour vous, juste ici !",
+    "[excited] DJ Vinny enchaîne, restez sur la piste !"
+   ],
+   "line": [
+    "[excited] C'est l'heure de la danse en ligne ! Tout le monde sur la piste !",
+    "[excited] Place à la danse en ligne ! Enlignez-vous, la gang !",
+    "[shouting] Danse en ligne ! Venez vous placer !"
+   ]
+  },
+  "calm": {
+   "anon": [
+    "Une demande spéciale vient d'arriver.",
+    "Une petite demande de la salle.",
+    "En demande spéciale, pour vous."
+   ],
+   "plain": [
+    "Et maintenant, place à la prochaine pièce.",
+    "DJ Vinny vous glisse la suite.",
+    "La musique continue, bon appétit."
+   ]
+  }
  }
 }
