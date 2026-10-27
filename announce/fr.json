@@ -1,0 +1,139 @@
+{
+ "model": "elevenlabs/eleven-v4-turbo",
+ "voice": "liam",
+ "party": {
+  "tempo": 1,
+  "reverb": 0,
+  "ratio": 2.5,
+  "presence": 1.5,
+  "lufs": -14,
+  "voiceSettings": null,
+  "named": [
+   "[excited] Ayoye ! Une demande spéciale de {name} ! {title}, de {artist} !",
+   "[excited] Et maintenant, une demande spéciale de {name} ! {title}, de {artist} ! [shouting] On danse !",
+   "[excited] {name} nous envoie {title}, de {artist} ! [laughs] Bon choix !",
+   "[excited] Attention, la gang ! {name} a demandé {title}, de {artist} ! [shouting] Tout le monde sur la piste !",
+   "[excited] Cette toune-là, c'est pour {name} ! {title}, de {artist} !",
+   "[excited] {name}, t'as du goût ! {title}, de {artist} !",
+   "[excited] Une demande signée {name} ! {title}, de {artist} ! [laughs] Envoye donc !",
+   "[excited] Ça vient de {name} ! {title}, de {artist} ! [shouting] On bouge !",
+   "[excited] {name} a pas niaisé : {title}, de {artist} !"
+  ],
+  "anon": [
+   "[excited] Une demande spéciale vient d'arriver ! {title}, de {artist} !",
+   "[excited] Et maintenant, en demande spéciale, {title}, de {artist} ! [shouting] On danse !",
+   "[excited] Quelqu'un dans la salle a demandé {title}, de {artist} ! [laughs] Merci, invité mystère !",
+   "[excited] Demande spéciale ! {title}, de {artist} ! [shouting] Envoye, on danse !",
+   "[excited] Ça vient d'un invité secret ! {title}, de {artist} !"
+  ],
+  "plain": [
+   "[excited] Et maintenant, place à {title}, de {artist} !",
+   "[excited] Ici DJ Vinny ! On enchaîne avec {title}, de {artist} !",
+   "[excited] Envoye la gang ! {title}, de {artist} !",
+   "[excited] On continue avec {title}, de {artist} ! [shouting] On danse !",
+   "[excited] DJ Vinny enchaîne avec {title}, de {artist} !",
+   "[excited] Une bonne toune pour vous : {title}, de {artist} !"
+  ],
+  "line": [
+   "[excited] C'est l'heure de la danse en ligne ! {title}, de {artist} ! Tout le monde sur la piste !",
+   "[excited] Place à la danse en ligne ! {title}, de {artist} ! Enlignez-vous, la gang !",
+   "[shouting] Danse en ligne ! Venez vous placer ! {title}, de {artist} !",
+   "[excited] Les souliers de danse aux pieds ! {title}, de {artist} ! Pas de gêne, on se met en ligne !"
+  ],
+  "callout": [
+   "[excited] Une demande spéciale ? Scannez le code QR sur l'écran et choisissez votre toune !",
+   "[excited] Envie d'entendre votre toune ? Scannez le code QR !",
+   "[excited] DJ Vinny prend vos demandes ! Scannez le code QR !",
+   "[excited] Pas de gêne, la gang ! Le code QR est sur l'écran, choisissez votre chanson !"
+  ],
+  "open": [
+   "[excited] Bonsoir tout le monde ! Ici DJ Vinny ! [laughs] Attachez vos tuques, ça va bouger ! Scannez le code QR pour choisir vos tounes !",
+   "[excited] Salut la gang ! DJ Vinny est dans la place ! Scannez le code QR et dites-moi ce que vous voulez entendre !"
+  ],
+  "close": [
+   "[excited] Voilà, la gang, c'est la dernière toune ! Merci d'avoir dansé avec DJ Vinny ! Rentrez prudemment, puis revenez-nous vite !",
+   "[excited] Merci à tous, c'était une belle soirée ! DJ Vinny vous souhaite une bonne nuit !"
+  ]
+ },
+ "calm": {
+  "tempo": 1,
+  "reverb": 0,
+  "ratio": 2,
+  "presence": 1,
+  "lufs": -16,
+  "voiceSettings": null,
+  "named": [
+   "Une demande de {name}. {title}, de {artist}.",
+   "Pour {name} : {title}, de {artist}.",
+   "{name} a demandé {title}, de {artist}.",
+   "Cette toune est pour {name} : {title}, de {artist}."
+  ],
+  "anon": [
+   "Une demande spéciale. {title}, de {artist}.",
+   "En demande spéciale, {title}, de {artist}.",
+   "Une petite demande qui vient d'arriver : {title}, de {artist}."
+  ],
+  "plain": [
+   "Et maintenant, place à {title}, de {artist}.",
+   "Pour accompagner le repas, {title}, de {artist}.",
+   "DJ Vinny vous glisse {title}, de {artist}."
+  ],
+  "callout": [
+   "Une demande spéciale ? Le code QR est sur l'écran.",
+   "Vous voulez choisir une chanson ? Scannez le code QR.",
+   "DJ Vinny prend vos demandes. Le code QR est sur l'écran.",
+   "Un air en tête ? Le code QR est sur l'écran, c'est simple."
+  ],
+  "open": [
+   "Bonsoir tout le monde. Ici DJ Vinny. Bon souper, et bonne soirée.",
+   "Bonsoir, tout le monde. DJ Vinny vous souhaite un excellent repas."
+  ],
+  "close": [
+   "Merci d'avoir été avec nous. DJ Vinny vous souhaite une bonne fin de soirée."
+  ]
+ },
+ "phases": {
+  "calm": {
+   "name": "Souper",
+   "jingle": "Bonsoir tout le monde ! DJ Vinny vous souhaite un excellent souper."
+  },
+  "party": {
+   "name": "Soirée",
+   "jingle": "Mesdames et messieurs, la piste de danse est officiellement ouverte ! Vos demandes spéciales, c’est le code QR sur l’écran. Pis si une toune vide la piste, pas de panique : on passe à une autre, vite vite ! Allez, la gang, on danse !"
+  }
+ },
+ "gratuit": {
+  "party": {
+   "anon": [
+    "[excited] Une demande spéciale vient d'arriver !",
+    "[excited] Et maintenant, une demande spéciale d'un invité ! [shouting] On danse !",
+    "[excited] Quelqu'un dans la salle a fait une demande ! [laughs] Merci, invité mystère !",
+    "[excited] Demande spéciale ! [shouting] Envoye, on bouge !"
+   ],
+   "plain": [
+    "[excited] Et maintenant, place à la prochaine toune !",
+    "[excited] Ici DJ Vinny ! On enchaîne !",
+    "[excited] Envoye la gang ! [shouting] On continue de danser !",
+    "[excited] Une bonne toune pour vous, juste ici !",
+    "[excited] DJ Vinny enchaîne, restez sur la piste !"
+   ],
+   "line": [
+    "[excited] C'est l'heure de la danse en ligne ! Tout le monde sur la piste !",
+    "[excited] Place à la danse en ligne ! Enlignez-vous, la gang !",
+    "[shouting] Danse en ligne ! Venez vous placer !"
+   ]
+  },
+  "calm": {
+   "anon": [
+    "Une demande spéciale vient d'arriver.",
+    "Une petite demande de la salle.",
+    "En demande spéciale, pour vous."
+   ],
+   "plain": [
+    "Et maintenant, place à la prochaine pièce.",
+    "DJ Vinny vous glisse la suite.",
+    "La musique continue, bon appétit."
+   ]
+  }
+ }
+}

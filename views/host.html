@@ -1,0 +1,1345 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/vinny.svg?v=2"><link rel="apple-touch-icon" href="/vinny-48.png?v=2"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n="h.pageTitle">DJ Vinny : dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<script src="/i18n.js"></script>
+<style>
+  .wrap { max-width: 1100px; overflow-x: clip; } .grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; } .grid > div { min-width: 0; }
+  @media (min-width: 860px) { .grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+  .q .row .t b, .q .row .t span { white-space: normal; overflow-wrap: anywhere; } /* titres longs : retour à la ligne au lieu d’élargir la page */
+  .q .row .mini { flex: none; }
+  h1 { margin: 0; font-size: 34px; }
+  .bar { height: 8px; background: var(--line); border-radius: 4px; margin-top: 14px; } .bar div { height: 100%; width: 0; background: var(--accent); border-radius: 4px; }
+  .q li { list-style: none; } .q { padding: 0; margin: 0; } .q li.over { outline: 3px dashed var(--accent); border-radius: 12px; }
+  .q li { cursor: grab; }
+  .inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; } .inline input[type=text] { flex: 1; min-width: 120px; width: auto; }
+  .inline select, .inline input[type=time] { width: auto; height: 44px; font-size: 15px; }
+  .active { border: 2px solid var(--accent); border-radius: 18px; padding: 8px 12px; background: var(--chip); }
+  .fx { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+  .fx button { min-height: 52px; border-radius: 16px; text-align: left; padding: 8px 14px; box-shadow: 0 3px 0 rgba(0,0,0,.4); }
+  .fx .b2 { background: var(--accent2); } .fx .b3 { background: var(--mint); } .fx .b4 { background: var(--text); }
+  .logo { display: inline-flex; width: 44px; height: 44px; border-radius: 14px; background: var(--accent); align-items: center; justify-content: center; transform: rotate(-6deg); }
+  #player.card { border-color: var(--accent); }
+  /* Disposition : menu collant, cartes repliables et déplaçables */
+  #nav { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; align-items: center; overflow-x: auto; white-space: nowrap; padding: 8px 4px; margin: 0 -4px 12px; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 2px solid var(--line); scrollbar-width: thin; }
+  #nav a { flex: none; padding: 8px 14px; border-radius: 999px; background: var(--chip); border: 2px solid var(--line); color: var(--text); font-weight: 700; font-size: 14px; text-decoration: none; }
+  #nav a:hover, #nav a:focus-visible { border-color: var(--accent); }
+  #nav .sp { flex: 1; min-width: 8px; } #nav button { flex: none; min-height: 36px; font-size: 13px; padding: 0 12px; }
+  .card[data-k] { scroll-margin-top: 70px; }
+  .card[data-k] > h2:first-child { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .card[data-k] > h2:first-child .chev { display: inline-block; width: 20px; color: var(--muted); transition: transform .15s; }
+  .card.folded > h2:first-child .chev { transform: rotate(-90deg); }
+  .card.folded > :not(h2:first-child) { display: none; }
+  .card.folded > h2:first-child { margin-bottom: 0; }
+  .card .ctl { display: none; margin-left: auto; gap: 4px; } body.arrange .card .ctl { display: inline-flex; }
+  .card .ctl button { min-height: 32px; min-width: 32px; padding: 0 6px; font-size: 14px; } .card .ctl .grip { cursor: grab; }
+  body.arrange .card[data-k] { border-style: dashed; }
+  .grid > div { min-height: 60px; } .grid > div.dropzone { outline: 3px dashed var(--accent); outline-offset: 4px; border-radius: 20px; }
+  .card.flash { animation: flash 1s; } @keyframes flash { 30% { box-shadow: 0 0 0 4px var(--accent); } }
+  #settingsDlg { background: var(--card); color: var(--text); border: 2px solid var(--line); border-radius: 24px; padding: 20px; width: min(640px, 94vw); max-height: 90vh; overflow: auto; }
+  #settingsDlg::backdrop { background: rgba(10, 6, 30, .75); }
+  .sf { margin-top: 14px; } .sf label { font-weight: 700; display: block; } .sf .inline { margin-top: 4px; flex-wrap: nowrap; } .sf input, .sf select { flex: 1; }
+  .sf input[type=number] { height: 52px; padding: 0 14px; border-radius: 16px; border: 2px solid var(--line); background: var(--ink); color: var(--text); font: 600 17px Figtree, system-ui, sans-serif; }
+  .sf .src { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--chip); border: 1px solid var(--line); margin-left: 6px; font-weight: 600; color: var(--muted); }
+  #seekBar { cursor: pointer; height: 14px; margin-top: 12px; position: relative; } #seekBar::before { content: ""; position: absolute; inset: -10px 0; } /* zone de clic plus grande */
+  .phbox { border: 2px solid var(--line); border-radius: 18px; padding: 12px; margin-top: 10px; } .phbox.active { border-color: var(--accent); background: var(--chip); }
+  .phbox input[type=text] { margin-top: 4px; } .phbox .inline select { flex: 1; min-width: 140px; }
+  .tabs { display: flex; gap: 8px; margin: 4px 0 14px; flex-wrap: wrap; } .tabs button { flex: 1; min-width: 130px; }
+  .tabs button:not(.on), .modes button:not(.on) { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
+  .modes { display: flex; gap: 6px; } .modes button { min-height: 46px; font-size: 16px; }
+  .evcard { border: 2px solid var(--line); border-radius: 18px; padding: 14px; margin-top: 12px; } .evcard.act { border-color: var(--accent); background: var(--chip); }
+  .evcard h3 { margin: 0; font-size: 20px; } .evcard .inline { margin-top: 8px; } .evlinks { margin-top: 10px; border-top: 2px dashed var(--line); padding-top: 10px; }
+  .evform { border: 2px solid var(--accent); border-radius: 18px; padding: 14px; margin-top: 12px; } .evform label { font-weight: 700; display: block; margin-top: 10px; }
+  .evform input[type=text], .evform input[type=date], .evform input[type=time], .evform select, .evform textarea { width: 100%; margin-top: 4px; }
+  .evform textarea { min-height: 70px; border-radius: 16px; border: 2px solid var(--line); background: var(--ink); color: var(--text); font: 600 16px Figtree, system-ui, sans-serif; padding: 10px 14px; }
+  .evsec { margin: 18px 0 0; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .wg { border-bottom: 2px solid var(--line); padding: 8px 0; } .wg:last-child { border-bottom: 0; }
+  /* Version compacte : cartes serrées, texte d'aide d'une ligne + bouton « i » pour le détail */
+  .wrap { padding-top: 10px; } .wrap button { min-height: 36px; padding: 0 14px; font-size: 14px; }
+  .card { padding: 10px 14px; margin-bottom: 10px; border-radius: 18px; } .card > h2 { font-size: 18px; margin-bottom: 4px; }
+  .card .muted { font-size: 13px; } .inline { margin-top: 6px; gap: 6px; } .inline select, .inline input[type=time] { height: 38px; font-size: 14px; }
+  .row { padding: 6px 0; } h1 { font-size: 28px; } .tabs { margin: 2px 0 8px; } .tabs button { min-width: 110px; }
+  .hint { margin: 0 0 6px; font-size: 13px; line-height: 1.3; color: var(--muted); }
+  .wrap button.ib { min-height: 22px; width: 22px; padding: 0; border-radius: 50%; font-size: 13px; font-style: italic; font-family: Georgia, serif; background: var(--chip); color: var(--muted); border: 1.5px solid var(--line); box-shadow: none; flex: none; }
+  .card.showinfo button.ib { background: var(--accent); color: var(--ink); border-color: var(--accent); }
+  .card:not(.showinfo) .info { display: none; } .info { margin: 0 0 8px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--chip); border-radius: 0 10px 10px 0; }
+  details.dt > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; margin-top: 8px; } details.dt[open] > summary { margin-bottom: 2px; }
+  #remoteDlg { background: var(--card); color: var(--text); border: 2px solid var(--line); border-radius: 24px; padding: 20px; width: min(420px, 94vw); } #remoteDlg::backdrop { background: rgba(10, 6, 30, .75); }
+  .phbox { padding: 8px 10px; margin-top: 6px; border-radius: 14px; } .phbox input[type=text], .phbox input[type=color] { height: 38px; }
+</style></head>
+<body><div class="bg-anim"></div>
+<div class="wrap">
+  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" data-i18n="c.modeCalm" data-i18n-title="h.modeCalmTip">🍽️ Souper</button><button id="modeParty" data-i18n="c.modeParty" data-i18n-title="h.modePartyTip">🪩 Soirée</button></span><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Remote</button><span id="tunnelBadge" hidden></span><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost" id="logout" data-i18n="h.logout">Déconnexion</button></div>
+
+  <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
+  <div id="tab-soiree">
+  <nav id="nav" data-i18n-aria="h.navAria"></nav>
+
+  <div class="card" id="player">
+    <div id="startBox"><p class="muted" id="startText"></p>
+      <button class="ghost" id="spConnect" data-i18n="h.spConnect">Connecter Spotify</button> <button id="start" data-i18n="h.start">Démarrer la soirée</button> <span id="startErr" class="muted"></span></div>
+    <div id="playBox" hidden>
+      <div class="np"><div class="cover" id="cover"></div>
+        <div class="t" style="flex:1"><span class="eq"><i></i><i></i><i></i><i></i></span><div><b id="title">—</b></div><div class="muted" id="artist"></div><div class="muted" id="src"></div></div>
+        <div style="display:flex;gap:10px"><button id="pp" class="ghost" style="min-height:56px" data-i18n="h.pp">Pause / Lecture</button> <button id="skip" style="min-height:56px;padding:0 24px;font-size:17px" data-i18n="h.skip">Suivant</button></div></div>
+      <div class="bar" id="seekBar" data-i18n-title="h.seekTip"><div id="prog"></div></div>
+      <div class="muted" id="seekTime" style="text-align:right;margin-top:4px"></div>
+      <div class="inline">
+        <button id="rateUp" data-i18n="h.rateUp">Ça danse</button><button class="ghost" id="rateDown" data-i18n="h.rateDown">Ça vide la piste</button>
+        <button class="ghost" id="volDown" data-i18n="h.volDown" data-i18n-title="h.volDownTip">🔉 Trop fort</button><button class="ghost" id="volUp" data-i18n="h.volUp" data-i18n-title="h.volUpTip">🔊 Trop faible</button>
+        <button class="ghost" id="trimStart" data-i18n="h.trimStart">Début ici</button><button class="ghost" id="trimEnd" data-i18n="h.trimEnd">Fin ici</button><button class="ghost" id="trimClear" data-i18n="h.trimClear">Effacer les repères</button>
+        <details class="dt" style="width:100%"><summary data-i18n="h.mixSummary">Fondu, musique de transition, fin anticipée</summary><div class="inline">
+        <select id="fadeSec"><option value="0" data-i18n="h.fade0">Fondu : aucun</option><option value="1.5" data-i18n="h.fade15">Fondu de 1,5 s</option><option value="2" data-i18n="h.fade2">Fondu de 2 s</option><option value="3" data-i18n="h.fade3">Fondu de 3 s</option></select>
+        <select id="transSound"><option value="" data-i18n="h.trans0">Musique de transition : aucune</option><option value="beats" data-i18n="h.transRandom">Transition : beat (au hasard)</option><option value="beat_hiphop">Beat hip-hop</option><option value="beat_molly">Beat Molly</option><option value="beat_trill">Beat Trill</option><option value="beat_trap">Beat trap</option><option value="beat_mustard">Beat Mustard</option><option value="beat_astro">Beat Astrology</option></select>
+        <select id="endCut"><option value="0" data-i18n="h.cut0">Fin anticipée : aucune</option><option value="4" data-i18n="h.cut4">Couper les 4 dernières s</option><option value="8" data-i18n="h.cut8">Couper les 8 dernières s</option><option value="12" data-i18n="h.cut12">Couper les 12 dernières s</option></select>
+        </div></details>
+      </div>
+      <p class="muted" id="trimNote"></p><p class="muted" id="volNote"></p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card" data-k="file"><h2><span data-i18n="c.queue">File d’attente</span> <span id="qcount" class="muted"></span></h2>
+        <div class="inline"><input type="text" id="addq" placeholder="Ajouter un titre…" data-i18n-ph="h.addq"></div>
+        <div id="addres"></div>
+        <ul class="q" id="queue"></ul>
+        <div class="inline"><button class="ghost" id="clear" data-i18n="h.clear">Vider la file</button>
+          <label class="sw"><input type="checkbox" id="reqOpen"> <span data-i18n="c.reqOpen">Demandes des invités ouvertes</span></label></div>
+      </div>
+    </div>
+    <div>
+      <div class="card" data-k="periodes"><h2 data-i18n="h.periods">Périodes</h2>
+        <p class="muted info" data-i18n="h.periodsInfo">Une période règle l'ambiance (calme ou dansante), la couleur des écrans, la liste de chansons de l'autopilote, les demandes des invités et ce que Vinny dit au début. Tu passes de l'une à l'autre avec les boutons Souper / Soirée en haut.</p>
+        <div id="phases"></div>
+        <div class="inline"><button class="ghost" id="phAddCalm" data-i18n="h.phAddCalm">+ Période calme (souper)</button><button class="ghost" id="phAddParty" data-i18n="h.phAddParty">+ Période dansante</button></div>
+      </div>
+      <div class="card" data-k="autopilote"><h2 data-i18n="h.autopilot">DJ Vinny autopilote</h2>
+        <p class="muted" id="apStatus"></p>
+        <label class="sw"><span data-i18n="h.autoCount">Titres « auto » gardés dans la file :</span> <input type="number" id="autoCount" min="1" max="30" style="width:84px"></label>
+        <p class="muted info" data-i18n="h.autoInfo">Quand personne ne demande rien, Vinny pige dans la liste de la période et remplit la file jusqu'à ce nombre. Tu peux réordonner ou retirer ces titres dans la file.</p>
+        <div class="inline"><select id="apSel"></select><button class="ghost" id="apDel" hidden data-i18n="h.apDel">Supprimer cette liste</button></div>
+        <p class="muted" id="apSum"></p>
+        <div class="inline" id="apTools"><button id="curResolve" data-i18n="h.curResolve">Chercher les titres sur Spotify</button><button class="ghost" id="curSafe" data-i18n="h.curSafe" data-i18n-title="h.curSafeTip">Valider les titres sûrs</button></div>
+        <div id="apItems" style="max-height:300px;overflow:auto;margin-top:8px"></div>
+        <div id="apAddBox" hidden><div class="inline"><input type="text" id="apAdd" placeholder="Ajouter un titre à cette liste…" data-i18n-ph="h.apAdd"></div><div id="apAddRes"></div></div>
+        <h2 style="margin-top:16px;font-size:18px" data-i18n="h.import">Importer une playlist Spotify</h2>
+        <p class="muted info" data-i18n="h.importInfo">Copie une de tes playlists dans l'app pour en faire une liste de l'autopilote (la copie ne suit pas les changements faits ensuite dans Spotify).</p>
+        <div class="inline"><select id="impPl"><option data-i18n="h.impWait">Démarre la soirée pour voir tes playlists…</option></select></div>
+        <div class="inline"><input type="text" id="impName" placeholder="Nom de la liste" data-i18n-ph="h.impName"><button id="impGo" data-i18n="h.impGo">Importer</button></div>
+      </div>
+      <div class="card" data-k="ligne"><h2 data-i18n="h.line">Danse en ligne</h2>
+        <p class="muted" id="lineNote"></p>
+        <div class="inline"><button id="lineNow" data-i18n="h.lineNow">Une danse en ligne, la prochaine</button>
+          <select id="lineEvery"><option value="0" data-i18n="h.lineEvery0">Sur demande seulement</option><option value="20" data-i18n="h.lineEvery20">Auto : toutes les 20 min</option><option value="30" data-i18n="h.lineEvery30">Auto : toutes les 30 min</option><option value="45" data-i18n="h.lineEvery45">Auto : toutes les 45 min</option></select></div>
+        <div id="lineList" style="max-height:240px;overflow:auto;margin-top:8px"></div>
+      </div>
+      <div class="card" data-k="boutons"><h2 data-i18n="c.djButtons">Boutons DJ</h2>
+        <div class="fx">
+          <button id="btnNext" data-i18n="h.btnNext">Annoncer le prochain titre</button>
+          <button id="btnJingle" class="b2" data-i18n="h.btnJingle">Phrase de la période</button>
+          <button id="btnConf" class="b3" data-i18n="h.btnConf">Confettis</button>
+          <button id="btnParty" class="b4" data-i18n="h.btnParty">Mode fête 30 s</button>
+        </div>
+        <details class="dt"><summary data-i18n="h.jingles">Jingles sonores</summary><div class="inline" id="jingles">
+          <button class="ghost" data-j="fanfare" data-i18n="r.j.fanfare">Fanfare</button><button class="ghost" data-j="carillon" data-i18n="h.j.carillon">Carillon</button>
+          <button class="ghost" data-j="riser" data-i18n="r.j.riser">Montée</button><button class="ghost" data-j="ding" data-i18n="h.j.ding">Ding</button>
+          <button class="ghost" data-j="scratch" data-i18n="h.j.scratch">Scratch DJ</button><button class="ghost" data-j="cornet" data-i18n="r.j.cornet">Cornet</button><button class="ghost" data-j="ovation" data-i18n="r.j.ovation">Ovation</button><button class="ghost" data-j="applause" data-i18n="h.j.applause">Applaudissements</button><button class="ghost" data-j="roulement" data-i18n="r.j.roulement">Roulement</button><button class="ghost" data-j="klaxon" data-i18n="h.j.klaxon">Klaxon DJ</button><button class="ghost" data-j="rewind" data-i18n="r.j.rewind">Rewind</button></div></details>
+        <div class="inline"><button class="ghost" id="calloutNow" data-i18n="h.calloutNow">Rappel du QR maintenant</button><button class="ghost" id="vOpen" data-i18n="h.vOpen">Vinny : mot d’ouverture</button><button class="ghost" id="vClose" data-i18n="h.vClose">Vinny : mot de clôture</button></div>
+        <div class="inline"><input type="text" id="say" maxlength="300" placeholder="Message de Vinny (ex. À table, c’est prêt !)" data-i18n-ph="h.sayPh"><button id="sayGo" data-i18n="h.sayGo">🔊 Dire</button></div>
+      </div>
+      <div class="card" data-k="annonces"><h2 data-i18n="h.announces">Annonces de Vinny</h2>
+        <p class="muted" id="ttsNote"></p>
+        <label class="sw"><input type="checkbox" id="announce"> <span data-i18n="h.announceAuto">Annonces vocales automatiques (titres invités, danse en ligne, phrase de période)</span></label>
+        <label class="sw"><input type="checkbox" id="autoFx"> <span data-i18n="h.autoFx">Animations et jingles sonores automatiques (confettis, mode fête, ding)</span></label>
+        <div class="inline"><select id="calloutEvery"><option value="0" data-i18n="h.callout0">Rappel du QR : jamais</option><option value="8" data-i18n="h.callout8">Rappel du QR après 8 titres sans demande</option><option value="10" data-i18n="h.callout10">Rappel du QR après 10 titres sans demande</option><option value="15" data-i18n="h.callout15">Rappel du QR après 15 titres sans demande</option></select></div>
+        <p class="muted info" data-i18n="h.voiceInfo">La voix de Vinny se choisit dans ⚙ Réglages.</p>
+      </div>
+      <div class="card" data-k="memoire"><h2 data-i18n="h.memory">Mémoire des soirées</h2>
+        <p class="muted" id="memNote" data-i18n="h.memNote">Cliquez « Ça danse » ou « Ça vide la piste » pendant la lecture pour bâtir votre propre liste.</p>
+        <div id="memList"></div>
+        <p class="muted info" style="margin-top:10px"><span data-i18n="h.logInfo">Chaque soirée est gardée dans un journal (titres joués, demandes, notes, mouvement de la caméra, sans nom ni image).</span> <a href="/api/soirees/today" id="logLink" data-i18n="h.logLink">Télécharger le journal du jour</a></p>
+        <label class="sw" style="margin-top:10px"><input type="checkbox" id="learn"> <span data-i18n="h.learn">L'autopilote apprend : il favorise les titres qui font danser et les artistes demandés par les invités</span></label>
+      </div>
+      <div class="card" data-k="camera"><h2 data-i18n="h.camera">Piste de danse (caméra, essai)</h2>
+        <p class="muted info" data-i18n="h.camInfo">La vidéo reste dans ce navigateur : rien n'est enregistré ni envoyé. Prévenez les invités par une affiche. L'app mesure le mouvement dans l'image, elle ne compte pas les personnes.</p>
+        <div class="inline"><button class="ghost" id="camStart" data-i18n="h.camStart">Activer la caméra</button><button class="ghost" id="camStop" hidden data-i18n="h.camStop">Arrêter</button></div>
+        <div id="camBox" hidden>
+          <div class="bar" style="height:14px"><div id="camBar"></div></div>
+          <p class="muted" id="camNote"></p>
+          <label class="sw"><span data-i18n="h.camThr">Seuil « piste calme »</span> <input type="range" id="camThr" min="1" max="30" value="6" style="flex:1"></label>
+          <label class="sw" style="margin-top:6px"><input type="checkbox" id="camAuto"> <span data-i18n="h.camAuto">Passer au titre suivant automatiquement (expérimental)</span></label>
+          <p id="camAlert" style="color:var(--accent);font-weight:700" hidden></p>
+          <button id="camSkip" hidden data-i18n="h.camSkip">Suivant maintenant</button>
+        </div>
+      </div>
+      <div class="card" data-k="qr" style="text-align:center"><h2 data-i18n="h.qr">QR invités</h2>
+        <img src="/api/qr.png" alt="QR" style="width:200px;border-radius:12px;background:#fff"><br>
+        <a href="/api/qr.png" target="_blank" class="muted" data-i18n="h.qrBig">Ouvrir en grand</a><br><button class="ghost" id="qrRotate" style="margin-top:8px" data-i18n="h.qrRotate">Nouveau code de soirée</button><p class="muted info" data-i18n="h.qrInfo">Le QR contient un code secret : seuls les invités qui l'ont scanné peuvent chercher et demander. « Nouveau code » rend les anciens QR inutilisables.</p>
+      </div>
+    </div>
+  </div>
+  </div><!-- /tab-soiree -->
+
+  <div id="tab-souhaits" hidden>
+    <div class="card" id="c-souhaits"><h2><span data-i18n="h.wishes">Souhaits des invités</span> <span id="wishCount" class="muted"></span></h2>
+      <div class="inline"><select id="wishEv" data-i18n-aria="h.wishEvAria"></select><button class="ghost" id="wishClear" data-i18n="h.wishClear">Vider cette liste</button></div>
+      <p class="muted" id="wishNote"></p>
+      <div id="wishList"></div>
+    </div>
+    <div class="card" id="c-lien-souhaits" style="text-align:center"><h2 data-i18n="h.wishLinkTitle">Lien et QR des souhaits</h2>
+      <img id="wishQr" src="/api/qr.png?to=souhaits" alt="QR" style="width:170px;border-radius:12px;background:#fff"><br>
+      <div class="inline"><input type="text" id="wishLink" readonly><button class="ghost" id="wishCopy" data-i18n="h.copyLink">Copier le lien</button></div>
+      <p class="muted" id="wishLinkNote"></p>
+    </div>
+  </div>
+
+  <div id="tab-evenements" hidden>
+    <div class="card" id="c-evenements"><h2 data-i18n="h.events">Événements</h2>
+      <div class="inline"><button id="evNew" data-i18n="h.evNew">＋ Nouvel événement</button></div>
+      <div class="evform" id="evForm" hidden>
+        <h2 id="evFormTitle" style="margin:0 0 4px;font-size:20px"></h2>
+        <label for="evf_name" data-i18n="h.evf.name">Nom</label><input type="text" id="evf_name" maxlength="60" placeholder="Ex. : Party de Noël de la famille" data-i18n-ph="h.evf.namePh">
+        <div class="inline" style="flex-wrap:wrap">
+          <div style="flex:1;min-width:150px"><label for="evf_date" data-i18n="h.evf.date">Date</label><input type="date" id="evf_date"></div>
+          <div style="flex:1;min-width:110px"><label for="evf_start" data-i18n="h.evf.start">Début</label><input type="text" id="evf_start" inputmode="numeric" maxlength="5" placeholder="18:00" autocomplete="off"></div>
+          <div style="flex:1;min-width:110px"><label for="evf_end" data-i18n="h.evf.end">Fin</label><input type="text" id="evf_end" inputmode="numeric" maxlength="5" placeholder="01:00" autocomplete="off"></div>
+        </div>
+        <label for="evf_lang" data-i18n="h.evf.lang">Langue des invités et de Vinny</label>
+        <select id="evf_lang"><option value="fr">Français</option><option value="en">English</option></select>
+        <label for="evf_place" data-i18n="h.evf.place">Lieu (optionnel)</label><input type="text" id="evf_place" maxlength="80">
+        <label for="evf_welcome" data-i18n="h.evf.welcome">Message d'accueil pour les invités (optionnel)</label><textarea id="evf_welcome" maxlength="300" placeholder="Ex. : Bienvenue ! Demande tes tounes préférées, Vinny s'en occupe." data-i18n-ph="h.evf.welcomePh"></textarea>
+        <label for="evf_thanks" data-i18n="h.evf.thanks">Message de remerciement (affiché après l'événement)</label><textarea id="evf_thanks" maxlength="300"></textarea>
+        <label for="evf_before" data-i18n="h.evf.before">Ouvrir les demandes des invités</label>
+        <select id="evf_before"><option value="0" data-i18n="h.evf.before0">À l'heure de début</option><option value="15" data-i18n="h.evf.before15">15 minutes avant</option><option value="30" data-i18n="h.evf.before30">30 minutes avant</option><option value="60" data-i18n="h.evf.before60">1 heure avant</option><option value="120" data-i18n="h.evf.before120">2 heures avant</option></select>
+        <label class="sw"><input type="checkbox" id="evf_auto"> <span data-i18n="h.evf.auto">Ouverture automatique : l'événement s'active tout seul à l'heure prévue</span></label>
+        <div id="evProgramBox"><label for="evf_program" data-i18n="h.evf.program">Programme (périodes Souper / Soirée…)</label><select id="evf_program"></select></div>
+        <div class="inline" style="justify-content:flex-end"><button class="ghost" id="evCancel" data-i18n="c.cancel">Annuler</button><button id="evSave" data-i18n="c.save">Enregistrer</button></div>
+      </div>
+      <p class="muted" id="licLine" hidden></p>
+      <div id="evList"></div>
+    </div>
+  </div>
+</div>
+
+<dialog id="remoteDlg"><form method="dialog">
+  <h2 style="margin-top:0" data-i18n="h.remoteTitle">📱 Télécommande</h2>
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <img id="remoteQr" alt="QR" width="170" height="170" style="border-radius:12px;background:#fff;flex:none">
+    <div style="flex:1;min-width:180px">
+      <div class="inline" style="margin-top:0"><input type="text" id="remoteUrl" readonly><button type="button" class="ghost" id="remoteCopy" data-i18n="c.copy">Copier</button></div>
+      <span class="muted" id="remoteNote"></span>
+    </div>
+  </div>
+  <div class="inline" style="justify-content:flex-end"><button type="button" id="remoteClose" data-i18n="c.close">Fermer</button></div>
+</form></dialog>
+<dialog id="settingsDlg"><form method="dialog" id="settingsForm">
+  <h2 data-i18n="set.title">Réglages</h2>
+  <p class="muted" data-i18n="set.intro">Ces valeurs sont gardées dans l'app (data/settings.json) et passent avant le fichier .env. Le mot de passe, le port, le secret de session et les clés Apple restent dans le .env.</p>
+  <div id="setFields"></div>
+  <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="quitApp" style="margin-right:auto" data-i18n="set.quit">⏻ Fermer DJ Vinny</button><button type="button" class="ghost" id="setCancel" data-i18n="c.close">Fermer</button><button type="button" id="setSave" data-i18n="c.save">Enregistrer</button></div>
+</form></dialog>
+<script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
+<script src="/anim.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+setLang(hostLang());
+const api = async (url, method = 'POST', body) => {
+  const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) location.href = '/login.html';
+  if (!r.ok) { toast(j.error || t('c.error')); throw new Error(j.error); }
+  return j;
+};
+let wishSel = null, evData = null, evEditing = null, autoPhOff = false, failStreak = 0, cfg = { provider: 'spotify' }, state = null, music = null, started = false, advancing = false, endedUid = null, playlists = [], phaseBusy = false;
+const artUrl = a => (a && a.url ? a.url.replace('{w}', 300).replace('{h}', 300) : '');
+
+// ---------- Rendu ----------
+function render() {
+  applyTheme(state.theme);
+  document.body.className = state.phase ? state.phase.intensity : '';
+  $('phaseBadge').innerHTML = state.phase ? `<span class="phase-badge">${esc(state.phase.name)}</span>` : '';
+  renderTop();
+  const n = state.nowPlaying;
+  $('player').classList.toggle('playing', !!n && music && music.isPlaying);
+  $('title').textContent = n ? n.title : '—'; $('artist').textContent = n ? n.artist : '';
+  $('src').textContent = n && ['guest', 'host', 'auto'].includes(n.source) ? t('h.src.' + n.source) : '';
+  $('cover').style.backgroundImage = n && n.artwork ? `url('${n.artwork}')` : '';
+  $('qcount').textContent = `(${state.queue.length})`;
+  $('queue').innerHTML = state.queue.map((s, i) => `<li class="row slide-in" draggable="true" data-uid="${esc(s.uid)}">
+    <img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)} · ${t('c.src.' + ({ guest: 'guest', line: 'line', auto: 'auto' }[s.source] || 'host'))}</span></div>
+    <button class="mini" data-act="top" title="${t('h.top')}">⏫</button><button class="mini" data-act="up">▲</button><button class="mini" data-act="down">▼</button><button class="mini" data-act="del">✕</button></li>`).join('')
+    || '<p class="muted">' + t('c.queueEmpty') + '</p>';
+  $('reqOpen').checked = state.requestsOpen; if (state.autoPhases && !autoPhOff) { autoPhOff = true; api('/api/settings', 'POST', { autoPhases: false }); } // le changement de période à l'heure est retiré : tout se fait à la main
+  renderPhases();
+  renderApStatus();
+  $('announce').checked = state.announce; $('autoFx').checked = state.autoFx;
+  $('lineEvery').value = String(state.line.every); $('endCut').value = String(state.endCut); $('fadeSec').value = String(state.fade || 0); $('transSound').value = state.transSound || ''; $('calloutEvery').value = String(state.calloutEvery); $('learn').checked = state.learn;
+  const tr = state.nowPlaying && state.trims[state.nowPlaying.songId];
+  $('trimNote').textContent = tr ? t('h.trimNote', { start: tr.start ?? '—', end: tr.end ?? '—' }) : '';
+  $('ttsNote').textContent = t(state.tts ? 'h.ttsOn' : 'h.ttsOff');
+  const q0 = state.queue[0]; // pré-génère l'annonce du prochain titre pour éviter l'attente
+  if (started && state.tts && state.announce && q0 && (q0.source === 'guest' || q0.source === 'line')) annUrl(q0).catch(() => {});
+  applyTrackGain();
+  const g = state.nowPlaying && state.gains && state.gains[state.nowPlaying.songId];
+  $('volNote').textContent = !state.nowPlaying ? '' : g ? t('c.trackVol', { db: (g > 0 ? '+' : '') + g.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }) : t('h.volNormal');
+  maybeAutoplay();
+}
+
+// ---------- Jingles sonores (Tone.js, synthétisés dans le navigateur, gratuits) ----------
+const JINGLES = {
+  ding: { ms: 1300, run(t) {
+    const s = new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.7, sustain: 0, release: 0.5 } }).toDestination();
+    s.triggerAttackRelease('E6', '8n', t); s.triggerAttackRelease('B6', '8n', t + 0.12); return [s]; } },
+  carillon: { ms: 2600, run(t) {
+    const s = new Tone.FMSynth({ harmonicity: 3.01, modulationIndex: 8, envelope: { attack: 0.005, decay: 1.2, sustain: 0, release: 1 }, volume: -8 }).toDestination();
+    ['C5', 'E5', 'G5', 'C6'].forEach((n, i) => s.triggerAttackRelease(n, '4n', t + i * 0.22)); return [s]; } },
+  fanfare: { ms: 2600, run(t) {
+    const s = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.4, release: 0.6 }, volume: -14 }).toDestination();
+    s.triggerAttackRelease('G4', '8n', t); s.triggerAttackRelease('C5', '8n', t + 0.2); s.triggerAttackRelease('E5', '8n', t + 0.4);
+    s.triggerAttackRelease(['C5', 'E5', 'G5', 'C6'], '2n', t + 0.7); return [s]; } },
+  riser: { ms: 3600, run(t) {
+    const nz = new Tone.Noise('white'), f = new Tone.Filter(200, 'lowpass').toDestination(); nz.volume.value = -20; nz.connect(f);
+    f.frequency.setValueAtTime(200, t); f.frequency.exponentialRampToValueAtTime(9000, t + 1.6); nz.start(t).stop(t + 1.7);
+    const k = new Tone.MembraneSynth({ volume: -4 }).toDestination(); [1.6, 2.0, 2.4, 2.8].forEach(d => k.triggerAttackRelease('C1', '8n', t + d));
+    const p = new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'square' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.2, release: 0.4 }, volume: -16 }).toDestination();
+    p.triggerAttackRelease(['C4', 'E4', 'G4', 'C5'], '4n', t + 1.6); p.triggerAttackRelease(['C4', 'F4', 'A4', 'C5'], '4n', t + 2.4); return [nz, f, k, p]; } },
+};
+// Baisse temporaire de la musique (annonce, jingle). Plusieurs baisses peuvent se chevaucher, et un fondu peut tourner en même temps :
+// le volume « voulu » est gardé dans duckSaved et remis une seule fois, à la fin de la dernière baisse (sinon la musique restait coincée très bas).
+let duckN = 0, duckSaved = 1;
+function duckStart(level) {
+  if (!music) return false;
+  if (duckN === 0) { if (!music.isPlaying) return false; duckSaved = music.volume; }
+  duckN++; music.volume = Math.min(duckSaved, level); return true;
+}
+function duckEnd() { if (--duckN <= 0) { duckN = 0; if (music) music.volume = duckSaved; } }
+const setVol = v => { if (duckN > 0) duckSaved = v; else music.volume = v; }; // volume voulu : appliqué après la baisse en cours s'il y en a une
+async function playSynth(name) {
+  const j = JINGLES[name]; if (!j || typeof Tone === 'undefined') return;
+  await Tone.start();
+  const duck = duckStart(0.25); // baisse la musique pendant le jingle
+  busyN++;
+  try {
+    const nodes = j.run(Tone.now() + 0.05);
+    await new Promise(done => setTimeout(done, j.ms));
+    nodes.forEach(n => n.dispose());
+  } finally { busyN--; if (duck) duckEnd(); }
+}
+// Sons enregistrés (dossier sounds/, voir sounds.json) ; la synthèse Tone.js ne sert plus que de secours
+let SOUNDS = {};
+fetch('/sounds/sounds.json').then(r => (r.ok ? r.json() : {})).then(j => { SOUNDS = j; }).catch(() => {});
+async function playJingle(name) {
+  const files = SOUNDS[name];
+  if (!files || !files.length) return playSynth(name);
+  const duck = duckStart(0.25); // baisse la musique pendant le son
+  busyN++;
+  try {
+    const a = new Audio('/sounds/' + files[Math.floor(Math.random() * files.length)]);
+    await new Promise(done => { a.onended = done; a.onerror = done; a.play().catch(done); setTimeout(done, 15000); });
+  } finally { busyN--; if (duck) duckEnd(); }
+}
+$('jingles').onclick = e => { const b = e.target.closest('button[data-j]'); if (b) playJingle(b.dataset.j); };
+
+// ---------- Voix & jingles ----------
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ko) => setTimeout(() => ko(new Error(t('h.timeout'))), ms))]);
+let busyN = 0, busyUntil = 0; // sons de l'app en cours (annonce, jingle) : le garde-fou de silence ne doit pas les confondre avec un arrêt
+const audioEl = new Audio();
+async function playUrl(url, level = 0.2) {
+  const duck = duckStart(level); // baisse la musique pendant l'annonce
+  busyN++;
+  try {
+    audioEl.src = url;
+    await new Promise(done => { audioEl.onended = done; audioEl.onerror = done; audioEl.play().catch(done); setTimeout(done, 30000); });
+  } finally { busyN--; if (duck) duckEnd(); }
+}
+async function speak(text) {
+  if (!text || !state || !state.ttsLive) return toast(t('h.noLive'));
+  try { await playUrl((await api('/api/tts', 'POST', { text })).url); } catch (e) { console.error(e); }
+}
+// Annonce « collage » : phrases fixes en cache + seulement titre/artiste et prénom générés (voir /api/announce)
+const annCache = new Map();
+function annUrl(s) {
+  if (!annCache.has(s.uid)) {
+    const p = api('/api/announce', 'POST', { title: s.title, artist: s.artist, name: s.byName, source: s.source }).then(r => r.url);
+    p.catch(() => annCache.delete(s.uid)); annCache.set(s.uid, p);
+  }
+  return annCache.get(s.uid);
+}
+async function announceSong(s) {
+  if (!state || !state.tts) return;
+  try { await playUrl(await withTimeout(annUrl(s), 12000)); } catch (e) { console.error(e); annCache.delete(s.uid); } // annonce trop lente ou en échec : on lance la musique sans elle
+}
+$('sayGo').onclick = () => speak($('say').value);
+$('btnNext').onclick = () => {
+  const s = state.queue[0];
+  if (!s) return toast(t('c.queueEmpty')); announceSong(s);
+};
+$('btnJingle').onclick = () => {
+  const p = state.phase;
+  if (!p || !p.jingle) return toast(t('h.noJingle')); state.ttsLive ? speak(p.jingle) : sayMoment('phase')();
+};
+$('btnConf').onclick = () => api('/api/fx', 'POST', { type: 'confetti' });
+$('btnParty').onclick = () => api('/api/fx', 'POST', { type: 'party' });
+$('autoFx').onchange = e => api('/api/settings', 'POST', { autoFx: e.target.checked });
+$('announce').onchange = e => api('/api/settings', 'POST', { announce: e.target.checked });
+
+// ---------- Lecture ----------
+// Fondu de volume (le lecteur Spotify ne joue qu'un titre à la fois : pas de chevauchement, mais un fondu sortant puis entrant)
+function fadeTo(target, sec, ease) { // ease : départ lent puis montée rapide (sensation de « build » pour l'ouverture de la piste)
+  return new Promise(done => {
+    const from = duckN > 0 ? duckSaved : music.volume, t0 = Date.now(), tm = setInterval(() => {
+      const k = Math.min(1, (Date.now() - t0) / (sec * 1000)); setVol(from + (target - from) * (ease ? k * k : k));
+      if (k >= 1) { clearInterval(tm); done(); }
+    }, 100);
+  });
+}
+function playTransition() { // beat (Mixkit, dossier sounds/) joué dans le creux entre deux titres, à 55 % du volume de la musique
+  const keys = state.transSound === 'beats' ? Object.keys(SOUNDS).filter(k => k.startsWith('beat_')) : [state.transSound];
+  const key = keys[Math.floor(Math.random() * keys.length)], files = SOUNDS[key]; if (!files || !files.length) return;
+  const base = (music && music.baseVol) || 0.7, vol = 0.55 * base, a = new Audio('/sounds/' + files[0]); a.volume = vol;
+  const ms = Math.max(3000, ((state.fade || 0) * 2 + 1.5) * 1000), t0 = Date.now(); // durée du creux : fondu sortant + fondu entrant
+  busyUntil = Date.now() + ms + 1000;
+  a.play().then(() => { const tm = setInterval(() => { // descente douce sur la dernière seconde
+    const left = ms - (Date.now() - t0); if (left <= 0) { clearInterval(tm); a.pause(); } else if (left < 1000) a.volume = vol * (left / 1000);
+  }, 100); }).catch(() => {});
+}
+const GLOBAL_BASE = 0.7; // volume de base du lecteur : la marge jusqu'à 100 % permet de monter les titres trop faibles (~+3 dB)
+const trackBase = songId => Math.min(1, Math.max(0.05, GLOBAL_BASE * Math.pow(10, ((state && state.gains && state.gains[songId]) || 0) / 20)));
+function applyTrackGain() { // réglage « Trop fort / Trop faible » appliqué tout de suite au titre en cours
+  const n = state && state.nowPlaying; if (!music || !n || music.baseVol === undefined) return;
+  const b = trackBase(n.songId), old = music.baseVol;
+  if (Math.abs(b - old) < 0.001) return;
+  music.baseVol = b; if (Math.abs((duckN > 0 ? duckSaved : music.volume) - old) < 0.03) setVol(b); // pas pendant un fondu ou une annonce
+}
+// o.at : départ (s) au lieu du début mémorisé ; o.fade / o.ease : fondu d'entrée propre à ce lancement (chanson d'ouverture)
+async function startTrack(n, o = {}) {
+  music.baseVol = trackBase(n.songId);
+  music.startAt = Date.now(); music.sawPlaying = false; music.userPaused = false; // suivi du démarrage pour le garde-fou
+  const fade = o.fade != null ? o.fade : state.fade || 0, t = state.trims[n.songId]; // début mémorisé : on saute l'intro silencieuse
+  const at = o.at != null ? o.at : (t && t.start) || 0;
+  setVol(fade > 0 ? 0 : music.baseVol); // le titre démarre à zéro puis monte (ou directement au volume de base)
+  await music.setQueue(music.startsAt ? { song: n.songId, at } : { song: n.songId }); await music.play();
+  if (fade > 0) fadeTo(music.baseVol, fade, o.ease);
+  if (at > 0 && music.seek && !music.startsAt) setTimeout(() => music.seek(at * 1000).catch(() => {}), 700); // Spotify part déjà au bon endroit
+}
+// Ouverture de la piste : le titre choisi part à son passage, monte en fondu, Vinny parle par-dessus à mi-fondu (musique peu baissée, l'énergie reste)
+async function startOpener(n) {
+  const ann = state.announce && state.tts ? withTimeout(api('/api/announce', 'POST', { source: 'phase' }), 12000) : null; // préparée pendant le fondu
+  if (ann) ann.catch(() => {});
+  await startTrack(n, { at: n.opener.at, fade: n.opener.fade, ease: true });
+  if (!ann) return;
+  await new Promise(ok => setTimeout(ok, n.opener.fade * 500));
+  try { await playUrl((await ann).url, 0.4); } catch (e) { console.error(e); }
+  if (state.autoFx) api('/api/fx', 'POST', { type: 'confetti' }).catch(() => {});
+}
+async function playNext(why) {
+  why = typeof why === 'string' ? why : 'end';
+  if (advancing || !music) return;
+  advancing = true; advStart = Date.now();
+  try {
+    const peek = state.queue[0], announced = peek && (peek.source === 'guest' || peek.source === 'line'); // une annonce remplit déjà le creux
+    if (state.transSound && !announced && why !== 'start' && why !== 'phase') playTransition();
+    if ((why === 'skip' || why === 'camera') && state.fade > 0 && music.isPlaying) await fadeTo(0, state.fade);
+    if (why === 'phase' && music.isPlaying) await fadeTo(0, 4); // le souper s'éteint doucement avant l'ouverture de la piste
+    const { nowPlaying: n, callout } = await api('/api/next', 'POST', { why });
+    endedUid = null;
+    if (why === 'start' && n && state.announce && state.tts) { // début de soirée : mot d'ouverture de Vinny avant la première toune
+      try { const { url } = await withTimeout(api('/api/announce', 'POST', { source: 'open' }), 12000); await playUrl(url); } catch (e) { console.error(e); }
+    }
+    if (callout && state.announce && state.tts) await speakCallout();
+    if (n && (n.source === 'guest' || n.source === 'line')) {
+      if (state.autoFx) await playJingle(n.source === 'line' ? 'fanfare' : 'ding');
+      if (state.announce) await announceSong(n);
+    }
+    if (n && n.opener) await startOpener(n); else if (n) await startTrack(n); else { await music.stop(); }
+    failStreak = 0;
+  } catch (e) {
+    console.error(e); failStreak++;
+    toast(t('h.playFail', { msg: e.message })); jlog('lecture_impossible', e.message);
+    setTimeout(() => playNext('end'), Math.min(15000, 1500 * failStreak));
+  } finally { advancing = false; advStart = 0; }
+}
+function maybeAutoplay() {
+  if (started && !advancing && state && !state.nowPlaying && (state.queue.length || state.pool.count)) playNext();
+}
+
+const jlog = (kind, detail) => api('/api/clientlog', 'POST', { kind, detail: String(detail) }).catch(() => {});
+let advStart = 0, endTickFn = null, idleSince = 0;
+// Garde-fou universel : la soirée est démarrée, l'hôte n'a pas mis en pause, et pourtant rien ne joue depuis plus de 10 s
+// (ni musique, ni annonce, ni jingle, ni passage au titre suivant en cours) -> on repart avec le titre suivant.
+function idleCheck() {
+  const now = Date.now();
+  const busy = !started || !music || !state || advancing || busyN > 0 || now < busyUntil || music.isPlaying || music.userPaused
+    || (music.startAt && now - music.startAt < 20000) || !(state.nowPlaying || state.queue.length || state.pool.count);
+  if (busy) { idleSince = 0; return; }
+  if (!idleSince) { idleSince = now; return; }
+  if (now - idleSince > 10000) {
+    idleSince = now; jlog('watchdog', 'silence de plus de 10 s : relance de la musique'); toast(t('h.silence'));
+    endedUid = null; playNext('end');
+  }
+}
+// Minuterie dans un Worker : les minuteries d'un onglet caché ou recouvert sont ralenties par le navigateur (jusqu'à 1 fois par minute),
+// ce qui retardait ou ratait la détection de fin de titre. Les messages d'un Worker ne sont pas ralentis.
+try {
+  const tickWorker = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},250)'], { type: 'text/javascript' })));
+  tickWorker.onmessage = () => {
+    if (advancing && advStart && Date.now() - advStart > 60000) { jlog('watchdog', 'passage au titre suivant resté bloqué plus de 60 s : débloqué'); advancing = false; advStart = 0; }
+    if (endTickFn) endTickFn();
+    idleCheck();
+  };
+} catch (e) { console.error('Worker indisponible', e); setInterval(() => { if (endTickFn) endTickFn(); }, 250); }
+function handleEnded() {
+  if (state && state.nowPlaying && endedUid !== state.nowPlaying.uid) { endedUid = state.nowPlaying.uid; playNext(); }
+}
+
+// --- Apple Music (MusicKit JS) ---
+async function initApple() {
+  if (!window.MusicKit) await new Promise(ok => {
+    document.addEventListener('musickitloaded', ok, { once: true });
+    const s = document.createElement('script'); s.src = 'https://js-cdn.music.apple.com/musickit/v3/musickit.js'; document.head.appendChild(s);
+  });
+  const { token, storefront } = await api('/api/dev-token', 'GET');
+  await MusicKit.configure({ developerToken: token, app: { name: 'DJ Vinny', build: '1.0' }, storefrontId: storefront });
+  music = MusicKit.getInstance();
+  music.addEventListener('playbackStateDidChange', ({ state: s }) => {
+    const P = MusicKit.PlaybackStates;
+    if (s === P.ended || s === P.completed) handleEnded();
+    if (state) $('player').classList.toggle('playing', music.isPlaying);
+  });
+  music.addEventListener('playbackProgressDidChange', ({ progress }) => { $('prog').style.width = Math.round(progress * 100) + '%'; });
+  await music.authorize();
+}
+
+// --- Spotify (Authorization Code + PKCE, Web Playback SDK) : nécessite Premium ---
+const rand = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, x => 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'[x % 66]).join(''); };
+const b64url = u8 => btoa(String.fromCharCode(...u8)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const SP = {
+  load() { try { return JSON.parse(localStorage.getItem('sp_auth')) || {}; } catch { return {}; } },
+  redirect: () => location.origin + '/host',
+  async login() {
+    if (!window.crypto || !crypto.subtle) throw new Error(t('h.insecure', { port: location.port || 80 }));
+    const verifier = rand(64); localStorage.setItem('sp_verifier', verifier);
+    const challenge = b64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+    location.href = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({
+      client_id: cfg.spotifyClientId, response_type: 'code', redirect_uri: SP.redirect(), code_challenge_method: 'S256', code_challenge: challenge,
+      scope: 'streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state playlist-read-private playlist-read-collaborative',
+    });
+  },
+  async token(body) {
+    const r = await fetch('https://accounts.spotify.com/api/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.spotifyClientId, ...body }) });
+    if (!r.ok) { localStorage.removeItem('sp_auth'); throw new Error(t('h.spRefused', { status: r.status })); }
+    const j = await r.json();
+    const a = { access: j.access_token, refresh: j.refresh_token || SP.load().refresh, exp: Date.now() + j.expires_in * 1000 - 60000 };
+    localStorage.setItem('sp_auth', JSON.stringify(a)); return a;
+  },
+  async access() {
+    let a = SP.load(); if (!a.access) throw new Error(t('h.spOff'));
+    if (Date.now() > a.exp) a = await SP.token({ grant_type: 'refresh_token', refresh_token: a.refresh });
+    return a.access;
+  },
+  async callback() {
+    const code = new URLSearchParams(location.search).get('code'); if (!code) return;
+    history.replaceState({}, '', '/host');
+    await SP.token({ grant_type: 'authorization_code', code, redirect_uri: SP.redirect(), code_verifier: localStorage.getItem('sp_verifier') });
+  },
+  async get(path) {
+    const r = await fetch('https://api.spotify.com' + path, { headers: { Authorization: 'Bearer ' + await SP.access() } });
+    if (!r.ok) throw new Error('Spotify ' + r.status); return r.json();
+  },
+  async pushToken() { await api('/api/spotify/token', 'POST', { token: await SP.access() }); },
+};
+let spTimer = null;
+async function shareSpotify() { // envoie l'accès Spotify au serveur, puis le renouvelle toutes les 20 min (une seule minuterie)
+  await SP.pushToken();
+  if (!spTimer) spTimer = setInterval(() => SP.pushToken().catch(console.error), 20 * 60e3);
+}
+let sdkReady = null;
+function preloadSpotifySdk() {
+  sdkReady = new Promise(ok => { window.onSpotifyWebPlaybackSDKReady = ok; });
+  const s = document.createElement('script'); s.src = 'https://sdk.scdn.co/spotify-player.js'; document.head.appendChild(s);
+}
+async function initSpotify() {
+  if (!SP.load().access) return SP.login(); // redirection vers Spotify, retour sur /host
+  await sdkReady;
+  const player = new Spotify.Player({ name: 'DJ Vinny', volume: 0.7, getOAuthToken: cb => SP.access().then(cb) });
+  player.activateElement(); // doit être appelé pendant le clic (autoplay)
+  const m = music = {
+    player, deviceId: null, playing: false, vol: 0.7, uri: null, pos: 0, dur: 0, at: 0, lastPos: 0,
+    get isPlaying() { return this.playing; },
+    get volume() { return this.vol; }, set volume(v) { this.vol = v; player.setVolume(v); },
+    baseVol: 0.7, resetVolume() { this.volume = this.baseVol; }, seek(ms) { return player.seek(ms); },
+    posSec() { return (this.pos + (this.playing ? Date.now() - this.at : 0)) / 1000; },
+    startsAt: true, // le titre démarre directement à la position voulue (position_ms), sans entendre l'intro
+    async setQueue({ song, at }) { this.uri = 'spotify:track:' + song; this.atMs = Math.round((at || 0) * 1000); },
+    async play() {
+      if (!this.uri) { this.userPaused = false; return player.resume(); }
+      const uri = this.uri, body = { uris: [uri], ...(this.atMs > 0 ? { position_ms: this.atMs } : {}) }; this.uri = null;
+      let r;
+      for (const wait of [0, 600, 1500, 3000]) { // 502/503/429 : erreurs temporaires, on réessaie
+        if (wait) await new Promise(ok => setTimeout(ok, wait));
+        r = await fetch('https://api.spotify.com/v1/me/player/play?device_id=' + this.deviceId, { method: 'PUT', headers: { Authorization: 'Bearer ' + await SP.access(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (r.ok || ![429, 500, 502, 503, 504].includes(r.status)) break;
+      }
+      if (!r.ok) throw new Error(t('h.spPlay', { status: r.status }));
+    },
+    pause() { this.userPaused = true; return player.pause(); }, stop() { this.userPaused = true; return player.pause(); },
+  };
+  const ready = new Promise((ok, ko) => {
+    player.addListener('ready', ({ device_id }) => { m.deviceId = device_id; ok(); });
+    for (const ev of ['initialization_error', 'authentication_error', 'account_error']) player.addListener(ev, ({ message }) => ko(new Error(ev === 'account_error' ? t('h.premium') : message)));
+  });
+  player.addListener('not_ready', () => { jlog('not_ready', 'lecteur Spotify déconnecté : reconnexion'); player.connect(); });
+  player.addListener('playback_error', ({ message }) => { jlog('playback_error', message); toast(t('h.spError', { msg: message })); m.startAt = 0; handleEnded(); });
+  player.addListener('player_state_changed', s => {
+    if (!s) return;
+    m.playing = !s.paused; m.pos = s.position; m.dur = s.duration; m.at = Date.now();
+    const cur = s.track_window.current_track, prevHas = s.track_window.previous_tracks.some(t => t.id === cur.id);
+    // fin de morceau : en pause à 0:00 alors que le titre est déjà dans l'historique (ou était à moins de 3 s de la fin)
+    const nowN = state && state.nowPlaying;
+    if (!s.paused) m.sawPlaying = true;
+    if (s.paused && s.position === 0 && m.sawPlaying && nowN && cur.id === nowN.songId && Date.now() - (m.startAt || 0) > 5000) handleEnded(); // fin naturelle du titre en cours
+    else if (s.paused && s.position === 0 && (prevHas || (m.lastPos > 0 && m.dur - m.lastPos < 3000))) handleEnded();
+    m.lastPos = s.position;
+    $('player').classList.toggle('playing', m.playing);
+  });
+  endTickFn = () => {
+    const n = state && state.nowPlaying; if (!n || !started || advancing) return;
+    const now = Date.now(), pos = m.posSec();
+    // garde-fous : un titre qui ne démarre jamais, un lecteur resté à l'arrêt sans que l'hôte l'ait mis en pause, une durée dépassée
+    if (!m.sawPlaying && !m.userPaused && m.startAt && now - m.startAt > 25000) { jlog('watchdog', 'le titre ne démarre pas : ' + n.title); toast(t('h.noStart')); m.startAt = 0; handleEnded(); return; }
+    if (m.sawPlaying && !m.playing && !m.userPaused && now - m.at > 6000) { jlog('watchdog', 'lecteur à l’arrêt (fin non détectée) : ' + n.title); handleEnded(); return; }
+    if (m.playing && m.dur && pos > m.dur / 1000 + 8) { jlog('watchdog', 'durée dépassée : ' + n.title); handleEnded(); return; }
+    // fin anticipée : repère mémorisé du titre, sinon les N dernières secondes (toutes périodes)
+    if (!m.dur || !m.playing) return;
+    const dur = m.dur / 1000, trim = state.trims[n.songId] || {};
+    const cutAt = trim.end > 0 ? trim.end : (state.endCut > 0 ? dur - state.endCut : null); // le réglage vaut pour toutes les périodes, souper compris
+    if (!cutAt || cutAt >= dur - 0.5) return;
+    if (pos >= cutAt) { m.volume = 0; handleEnded(); }
+    else if (pos >= cutAt - (state.fade || 1.2)) m.volume = m.baseVol * Math.max(0, (cutAt - pos) / (state.fade || 1.2)); // fondu de sortie (1,2 s par défaut)
+  };
+  setInterval(() => {
+    if (!m.dur) return;
+    const cur = Math.min(m.dur, m.pos + (m.playing ? Date.now() - m.at : 0)), mm = ms => Math.floor(ms / 60000) + ':' + String(Math.floor(ms / 1000) % 60).padStart(2, '0');
+    $('prog').style.width = cur / m.dur * 100 + '%'; $('seekTime').textContent = mm(cur) + ' / ' + mm(m.dur);
+  }, 500);
+  await player.connect(); await ready;
+  await shareSpotify();
+}
+
+// Connecter Spotify sans démarrer la soirée : recherche, listes, chanson d'ouverture et télécommande fonctionnent, aucune musique ne part
+$('spConnect').hidden = true;
+$('spConnect').onclick = async () => {
+  if (!SP.load().access) return SP.login().catch(e => { $('startErr').textContent = e.message; });
+  try { await shareSpotify(); $('spConnect').textContent = t('h.spConnected'); $('spConnect').disabled = true; $('startErr').textContent = ''; }
+  catch (e) { $('startErr').textContent = e.message; }
+};
+$('start').onclick = async () => {
+  try {
+    if (cfg.provider === 'spotify') await initSpotify(); else { if (!music) await initApple(); }
+    if (!music) return; // redirection Spotify en cours
+    started = true; $('startBox').hidden = true; $('playBox').hidden = false;
+    await loadPlaylists();
+    // page rechargée en pleine soirée : on reprend le titre en cours ; sinon on lance la soirée (avec le mot d'ouverture)
+    if (state.nowPlaying) await startTrack(state.nowPlaying);
+    else {
+      // une soirée commence toujours en Souper (une Soirée laissée active par un essai ne doit pas ouvrir la piste) ; sans jingle : le mot d'ouverture suffit
+      if (!state.phase || state.phase.intensity !== 'calm') {
+        const p = state.phases.find(x => x.intensity === 'calm') || await api('/api/phases/ensure', 'POST', { intensity: 'calm' });
+        await api('/api/phases/' + p.id + '/activate');
+      }
+      playNext('start');
+    }
+  } catch (e) { $('startErr').textContent = e.message || t('h.connFail'); }
+};
+(async () => {
+  cfg = await (await fetch('/api/config')).json();
+  const spotify = cfg.provider === 'spotify';
+  $('startText').textContent = spotify
+    ? t('h.startSpotify', { url: SP.redirect() }) + (location.hostname === '127.0.0.1' ? '' : '  ' + t('h.use127', { port: location.port || 80 }))
+    : t('h.startApple');
+  if (!spotify) return;
+  if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('start').disabled = true; return; }
+  preloadSpotifySdk();
+  try { await SP.callback(); } catch (e) { $('startErr').textContent = e.message; }
+  $('spConnect').hidden = false;
+  if (SP.load().access) $('spConnect').click(); // déjà autorisé : l'accès est partagé avec le serveur sans démarrer la soirée
+})();
+$('pp').onclick = () => (music.isPlaying ? music.pause() : music.play());
+// clic sur la barre : saute à cet endroit du titre (Spotify). Utile pour passer à la fin d'un morceau
+$('seekBar').onclick = async e => {
+  if (!music || !music.seek || !music.dur) return;
+  const r = $('seekBar').getBoundingClientRect(), ms = Math.round(Math.min(0.985, Math.max(0, (e.clientX - r.left) / r.width)) * music.dur);
+  try { await music.seek(ms); music.pos = ms; music.at = Date.now(); $('prog').style.width = ms / music.dur * 100 + '%'; } catch (err) { toast(t('h.seekFail', { msg: err.message })); }
+};
+$('skip').onclick = () => playNext('skip');
+$('fadeSec').onchange = e => api('/api/settings', 'POST', { fade: Number(e.target.value) });
+$('transSound').onchange = e => api('/api/settings', 'POST', { transSound: e.target.value });
+$('endCut').onchange = e => api('/api/settings', 'POST', { endCut: Number(e.target.value) });
+const trimHere = key => async () => {
+  const n = state.nowPlaying; if (!n || !music || !music.posSec) return toast(t('h.trimOnlySpotify'));
+  const pos = Math.round(music.posSec() * 10) / 10;
+  await api('/api/trim', 'POST', { songId: n.songId, [key]: pos }); toast(t(key === 'start' ? 'h.trimStartSaved' : 'h.trimEndSaved', { pos }));
+};
+$('trimStart').onclick = trimHere('start'); $('trimEnd').onclick = trimHere('end');
+$('trimClear').onclick = async () => { if (state.nowPlaying) { await api('/api/trim', 'POST', { songId: state.nowPlaying.songId, clear: true }); toast(t('h.trimCleared')); } };
+
+// ---------- Playlists (importées comme listes de l'autopilote) ----------
+async function loadPlaylists() {
+  playlists = []; let offset = 0;
+  if (cfg.provider === 'spotify') {
+    for (;;) {
+      const r = await SP.get(`/v1/me/playlists?limit=50&offset=${offset}`);
+      playlists.push(...(r.items || []).filter(Boolean).map(p => ({ id: p.id, name: p.name })));
+      if (!r.next || !(r.items || []).length) break; offset += 50;
+    }
+  } else for (;;) {
+    const r = await music.api.music('v1/me/library/playlists', { limit: 100, offset });
+    const items = r.data.data || [];
+    playlists.push(...items.map(p => ({ id: p.id, name: p.attributes.name })));
+    if (!r.data.next || !items.length) break; offset += 100;
+  }
+  $('impPl').innerHTML = playlists.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('') || '<option>' + t('h.noPlaylist') + '</option>';
+  if (playlists[0]) $('impName').placeholder = playlists[0].name;
+}
+async function fetchTracks(playlistId) {
+  const out = []; let offset = 0;
+  if (cfg.provider === 'spotify') { // endpoint /items depuis février 2026 (anciennement /tracks)
+    for (;;) {
+      const r = await SP.get(`/v1/playlists/${playlistId}/items?limit=100&offset=${offset}`);
+      for (const it of r.items || []) {
+        const t = it && (it.item || it.track);
+        if (!t || t.type !== 'track' || t.is_local || !t.id) continue;
+        out.push({ songId: t.id, title: t.name, artist: (t.artists || []).map(a => a.name).join(', '), artwork: ((t.album && t.album.images) || [])[1]?.url || '' });
+      }
+      if (!r.next || !(r.items || []).length) break; offset += 100;
+    }
+    return out;
+  }
+  for (;;) {
+    const r = await music.api.music(`v1/me/library/playlists/${playlistId}/tracks`, { limit: 100, offset });
+    const items = r.data.data || [];
+    for (const it of items) {
+      const pp = it.attributes.playParams || {}; const id = pp.catalogId || pp.id;
+      if (id) out.push({ songId: id, title: it.attributes.name, artist: it.attributes.artistName, artwork: artUrl(it.attributes.artwork) });
+    }
+    if (!r.data.next || !items.length) break; offset += 100;
+  }
+  return out;
+}
+// ---------- Périodes ----------
+// Chansons d'ouverture de la piste : électro sans voix (ou presque), connues des 40+, avec une montée qui se prête au fondu.
+// Le passage est indicatif : le trouver à l'oreille (barre de lecture), puis « Prendre le titre et la position en cours ». Conseil : h.op.<n> (locales).
+const OPENERS = [
+  ['Right Here, Right Now', 'Fatboy Slim'], ['Pjanoo', 'Eric Prydz'], ['9 PM (Till I Come)', 'ATB'], ['Sandstorm', 'Darude'], ['Levels', 'Avicii'],
+  ['Insomnia', 'Faithless'], ['Kernkraft 400', 'Zombie Nation'], ['Children', 'Robert Miles'], ['Animals', 'Martin Garrix'], ['Greyhound', 'Swedish House Mafia'],
+];
+let opResults = {};
+let phSig = '';
+function renderPhases() {
+  const lists = state.lists || [];
+  const sig = JSON.stringify([state.phases, state.phase && state.phase.id, lists.map(l => [l.id, l.name])]);
+  if (sig === phSig) return; phSig = sig;
+  if (document.activeElement && $('phases').contains(document.activeElement)) { phSig = ''; return; } // on ne réécrit pas pendant la saisie
+  const opts = id => lists.map(l => '<option value="' + esc(l.id) + '"' + (l.id === id ? ' selected' : '') + '>' + esc(l.name) + ' (' + l.count + ')</option>').join('');
+  $('phases').innerHTML = state.phases.map(p => '<div class="phbox' + (state.phase && state.phase.id === p.id ? ' active' : '') + '" data-id="' + esc(p.id) + '">'
+    + '<div class="inline"><input type="text" data-f="name" value="' + esc(p.name) + '" maxlength="40" style="min-width:110px">'
+    + '<select data-f="intensity"><option value="calm"' + (p.intensity === 'calm' ? ' selected' : '') + '>' + t('h.ph.calm') + '</option><option value="party"' + (p.intensity === 'party' ? ' selected' : '') + '>' + t('h.ph.party') + '</option></select>'
+    + '<input type="color" data-f="color" value="' + esc(p.color || '#FFD23F') + '" title="' + t('h.ph.color') + '"></div>'
+    + '<div class="inline"><span class="muted">' + t('h.ph.list') + '</span><select data-f="listId">' + opts(p.listId) + '</select></div>'
+    + '<label class="sw"><input type="checkbox" data-f="requestsOpen"' + (p.requestsOpen ? ' checked' : '') + '> ' + t('c.reqOpen') + '</label>'
+    + '<details class="dt"><summary>' + t('h.ph.jingle') + '</summary>'
+    + '<input type="text" data-f="jingle" maxlength="300" value="' + esc(p.jingle || '') + '" placeholder="' + esc(t('h.ph.jinglePh')) + '"></details>'
+    + (p.intensity === 'party' ? '<details class="dt"><summary>' + t('h.ph.opener') + (p.open ? esc(p.open.title + ' — ' + p.open.artist) : t('h.ph.openerDefault')) + '</summary>'
+      + '<p class="muted">' + t('h.ph.openerInfo') + '</p>'
+      + '<div class="inline"><button class="mini" data-ph="openHere">' + t('h.ph.openHere') + '</button>'
+      + '<span class="muted">' + t('h.ph.startAt') + '</span><input type="number" data-f="openAt" min="0" max="900" step="0.5" value="' + (p.openAt || 0) + '" style="width:80px"><span class="muted">s</span>'
+      + '<select data-f="openFade">' + [6, 8, 10, 12, 15, 20].map(s => '<option value="' + s + '"' + ((p.openFade || 10) === s ? ' selected' : '') + '>' + t('h.ph.fade', { s }) + '</option>').join('') + '</select>'
+      + (p.open ? '<button class="mini" data-ph="openClear">' + t('h.ph.remove') + '</button>' : '') + '</div>'
+      + '<input type="text" data-opsearch placeholder="' + esc(t('h.ph.searchPh')) + '"><div class="opres"></div>'
+      + '<div class="inline"><span class="muted">' + t('h.ph.ideas') + '</span>' + OPENERS.map(([title, a], i) => '<button class="mini" data-opidea="' + esc(title + ' ' + a) + '" title="' + esc(t('h.op.' + i)) + '">' + esc(title) + '</button>').join('') + '</div></details>' : '')
+    + '<div class="inline"><button class="mini" data-ph="go">' + t('h.ph.go') + '</button><button class="mini" data-ph="say">' + t('h.ph.listen') + '</button><button class="mini" data-ph="del">' + t('c.delete') + '</button></div></div>').join('') || '<p class="muted">' + t('c.noPeriods') + '</p>';
+}
+$('phases').addEventListener('change', async e => {
+  const box = e.target.closest('.phbox'), f = e.target.dataset.f; if (!box || !f) return;
+  const v = e.target.type === 'checkbox' ? e.target.checked : f === 'openAt' || f === 'openFade' ? Number(e.target.value) : e.target.value;
+  try { await api('/api/phases/' + box.dataset.id, 'PUT', { [f]: v }); phSig = ''; } catch {}
+});
+let opT;
+async function opSearch(input) {
+  const q = input.value.trim(), out = input.parentElement.querySelector('.opres'); if (q.length < 2) { out.innerHTML = ''; return; }
+  const list = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
+  (list.map ? list : []).forEach(s => { opResults[s.songId] = s; });
+  out.innerHTML = (list.map ? list : []).map(s => `<div class="row"><img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)}</span></div><button class="mini" data-opadd="${esc(s.songId)}">${t('h.choose')}</button></div>`).join('') || '<p class="muted">' + t('h.noResultsSp') + '</p>';
+}
+$('phases').addEventListener('input', e => { if (e.target.dataset.opsearch === undefined) return; clearTimeout(opT); opT = setTimeout(() => opSearch(e.target), 350); });
+const addPhase = kind => async () => { await api('/api/phases', 'POST', { intensity: kind, preset: true }); phSig = ''; toast(t('h.phAdded')); }; // nom et phrase par défaut : langue de l'événement (serveur)
+$('phAddCalm').onclick = addPhase('calm'); $('phAddParty').onclick = addPhase('party');
+async function launchPhase(id) {
+  if (phaseBusy) return; phaseBusy = true;
+  try {
+    const p = state.phases.find(x => x.id === id), opener = !!(started && music && p && p.intensity === 'party'); // ouverture de la piste : seulement si la soirée joue déjà
+    const r = await api(`/api/phases/${id}/activate`, 'POST', { opener });
+    if (r.opener) { await playNext('phase'); return; } // fondu de la vraie chanson + phrase de Vinny (startOpener)
+    if (state.autoFx) await playJingle(r.intensity === 'party' ? 'riser' : 'carillon');
+    if (r.jingle && state.announce) await speak(r.jingle);
+  } finally { phaseBusy = false; }
+}
+$('phases').onclick = async e => {
+  const b = e.target.closest('button[data-ph]'); if (!b) return;
+  const id = b.closest('.phbox').dataset.id;
+  if (b.dataset.ph === 'del') { if (confirm(t('h.phDelQ'))) { await api('/api/phases/' + id, 'DELETE'); phSig = ''; } }
+  else if (b.dataset.ph === 'say') { const p = state.phases.find(x => x.id === id); if (p && p.jingle) speak(p.jingle); else toast(t('h.noPhaseLine')); }
+  else if (b.dataset.ph === 'openHere') {
+    const n = state.nowPlaying; if (!n || !music || !music.posSec) return toast(t('h.openHereFirst'));
+    const at = Math.round(music.posSec() * 2) / 2;
+    await api('/api/phases/' + id, 'PUT', { open: plainSong(n), openAt: at }); phSig = ''; b.blur(); toast(t('h.openerSet', { title: n.title, at }));
+  } else if (b.dataset.ph === 'openClear') { await api('/api/phases/' + id, 'PUT', { open: null }); phSig = ''; b.blur(); }
+  else if (b.dataset.ph === 'go') await launchPhase(id);
+};
+const plainSong = s => ({ songId: s.songId, title: s.title, artist: s.artist, artwork: s.artwork || '' });
+$('phases').addEventListener('click', async e => {
+  const idea = e.target.closest('button[data-opidea]'), add = e.target.closest('button[data-opadd]'); if (!idea && !add) return;
+  const box = e.target.closest('.phbox');
+  if (idea) { const inp = box.querySelector('[data-opsearch]'); inp.value = idea.dataset.opidea; return opSearch(inp); }
+  const s = opResults[add.dataset.opadd]; if (!s) return;
+  await api('/api/phases/' + box.dataset.id, 'PUT', { open: plainSong(s), openAt: 0 }); phSig = ''; add.blur();
+  toast(t('h.openerSetHint', { title: s.title }));
+});
+
+
+// ---------- File d'attente ----------
+$('qrRotate').onclick = async () => { if (!confirm(t('h.rotateQ'))) return; await api('/api/event/rotate'); toast(t('h.rotated')); };
+$('reqOpen').onchange = e => api('/api/settings', 'POST', { requestsOpen: e.target.checked });
+$('clear').onclick = () => confirm(t('h.clearQ')) && api('/api/queue/clear');
+const reorder = uids => api('/api/queue/reorder', 'POST', { uids });
+$('queue').onclick = async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const uid = b.closest('li').dataset.uid, ids = state.queue.map(s => s.uid), i = ids.indexOf(uid);
+  if (b.dataset.act === 'del') return api('/api/queue/' + uid, 'DELETE');
+  ids.splice(i, 1);
+  ids.splice(b.dataset.act === 'top' ? 0 : b.dataset.act === 'up' ? Math.max(0, i - 1) : i + 1, 0, uid);
+  reorder(ids);
+};
+let dragUid = null;
+$('queue').addEventListener('dragstart', e => { const li = e.target.closest('li'); if (li) dragUid = li.dataset.uid; });
+$('queue').addEventListener('dragover', e => { e.preventDefault(); const li = e.target.closest('li'); document.querySelectorAll('.q li.over').forEach(x => x.classList.remove('over')); if (li) li.classList.add('over'); });
+$('queue').addEventListener('drop', e => {
+  e.preventDefault(); const li = e.target.closest('li'); if (!li || !dragUid || li.dataset.uid === dragUid) return;
+  const ids = state.queue.map(s => s.uid).filter(u => u !== dragUid);
+  ids.splice(ids.indexOf(li.dataset.uid), 0, dragUid); dragUid = null; reorder(ids);
+});
+let t1;
+$('addq').oninput = e => {
+  clearTimeout(t1);
+  t1 = setTimeout(async () => {
+    const q = e.target.value.trim(); if (q.length < 2) { $('addres').innerHTML = ''; return; }
+    const list = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
+    $('addres').innerHTML = (list.map ? list : []).map(s => `<div class="row"><img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)}</span></div>
+      <button class="mini" data-add="${esc(s.songId)}" data-top="1">⏫</button><button class="mini" data-add="${esc(s.songId)}">＋</button></div>`).join('');
+  }, 350);
+};
+$('addres').onclick = async e => {
+  const b = e.target.closest('button[data-add]'); if (!b) return;
+  await api('/api/queue/add', 'POST', { songId: b.dataset.add, top: !!b.dataset.top }); toast(t('h.added'));
+};
+$('logout').onclick = async () => { await api('/logout'); location.href = '/login.html'; };
+
+// ---------- Rappel du QR (demandes spéciales) ----------
+async function speakCallout() {
+  try {
+    if (state.autoFx) await playJingle('ding');
+    const { url } = await api('/api/announce', 'POST', { source: 'callout' });
+    await playUrl(url);
+  } catch (e) { console.error(e); }
+}
+const sayMoment = src => async () => { if (!state.tts) return toast(t('h.noVoice')); try { const { url } = await api('/api/announce', 'POST', { source: src }); await playUrl(url); } catch (e) { console.error(e); } };
+$('vOpen').onclick = sayMoment('open'); $('vClose').onclick = sayMoment('close');
+$('calloutEvery').onchange = e => api('/api/settings', 'POST', { calloutEvery: Number(e.target.value) });
+$('calloutNow').onclick = async () => { await api('/api/fx', 'POST', { type: 'callout' }); if (state.tts) await speakCallout(); };
+$('learn').onchange = e => api('/api/settings', 'POST', { learn: e.target.checked });
+
+// ---------- Caméra : activité sur la piste (suggestion, tout reste local) ----------
+const cam = { stream: null, video: null, canvas: document.createElement('canvas'), prev: null, ema: 0, hist: [], timer: null, songUid: null, songStart: 0, lastSkip: 0 };
+const CW = 80, CH = 45;
+$('camStart').onclick = async () => {
+  try {
+    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 180 }, audio: false });
+    cam.video = document.createElement('video'); cam.video.srcObject = cam.stream; cam.video.muted = true; await cam.video.play();
+    cam.canvas.width = CW; cam.canvas.height = CH; cam.prev = null; cam.hist = [];
+    cam.timer = setInterval(camTick, 250);
+    $('camStart').hidden = true; $('camStop').hidden = false; $('camBox').hidden = false;
+  } catch (e) { toast(t('h.camFail', { msg: e.message })); }
+};
+function camStop() {
+  clearInterval(cam.timer); if (cam.stream) cam.stream.getTracks().forEach(t => t.stop());
+  cam.stream = null; $('camStart').hidden = false; $('camStop').hidden = true; $('camBox').hidden = true;
+}
+$('camStop').onclick = camStop;
+function camTick() {
+  const ctx = cam.canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(cam.video, 0, 0, CW, CH);
+  const d = ctx.getImageData(0, 0, CW, CH).data, gray = new Float32Array(CW * CH);
+  for (let i = 0, p = 0; i < d.length; i += 4, p++) gray[p] = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
+  let moving = 0;
+  if (cam.prev) {
+    let shift = 0; for (let p = 0; p < gray.length; p++) shift += gray[p] - cam.prev[p];
+    shift /= gray.length; // changement d'éclairage global (jeux de lumière) : on le retire pour ne pas le prendre pour du mouvement
+    for (let p = 0; p < gray.length; p++) if (Math.abs(gray[p] - cam.prev[p] - shift) > 18) moving++;
+  }
+  cam.prev = gray;
+  cam.ema = cam.ema * 0.8 + Math.min(100, (moving / gray.length) * 400) * 0.2;
+  cam.sum = (cam.sum || 0) + cam.ema; cam.cnt = (cam.cnt || 0) + 1;
+  if (cam.cnt >= 60) { // toutes les 15 s : un seul nombre envoyé au journal (aucune image)
+    const lvl = cam.sum / cam.cnt; cam.sum = cam.cnt = 0;
+    api('/api/motion', 'POST', { level: lvl, avg90: cam.hist.length ? cam.hist.reduce((a, b) => a + b, 0) / cam.hist.length : lvl }).catch(() => {});
+  }
+  cam.hist.push(cam.ema); if (cam.hist.length > 360) cam.hist.shift(); // 90 s à 4 images par seconde
+  const avg = cam.hist.reduce((a, b) => a + b, 0) / cam.hist.length, thr = Number($('camThr').value);
+  const calm = cam.hist.length >= 240 && avg < thr; // au moins 60 s de mesure
+  $('camBar').style.width = Math.min(100, cam.ema * 2) + '%';
+  $('camNote').textContent = t('h.camNote', { a: cam.ema.toFixed(1), avg: avg.toFixed(1), thr }) + (calm ? t('h.camCalm') : '');
+  camDecide(calm);
+}
+function camDecide(calm) {
+  const n = state && state.nowPlaying, now = Date.now();
+  if (n && cam.songUid !== n.uid) { cam.songUid = n.uid; cam.songStart = now; }
+  const dinner = state && state.phase && state.phase.intensity === 'calm';
+  const suggest = calm && started && n && !dinner && now - cam.songStart > 60e3;
+  $('camAlert').hidden = $('camSkip').hidden = !suggest;
+  if (suggest) $('camAlert').textContent = t('h.camSuggest');
+  if (suggest && $('camAuto').checked && now - cam.lastSkip > 180e3) { cam.lastSkip = now; cam.hist = []; playNext('camera'); }
+}
+$('camSkip').onclick = () => { cam.lastSkip = Date.now(); cam.hist = []; playNext('camera'); };
+
+// ---------- Mémoire des soirées et souhaits ----------
+const rate = vote => async () => {
+  const n = state.nowPlaying; if (!n) return toast(t('c.nothingPlaying'));
+  await api('/api/rate', 'POST', { songId: n.songId, vote });
+  toast(t(vote > 0 ? 'c.ratedUp' : 'h.ratedDown')); loadMemory();
+};
+const gain = step => async () => { const n = state.nowPlaying; if (!n) return toast(t('c.nothingPlaying')); await api('/api/gain', 'POST', { songId: n.songId, step }); };
+$('volDown').onclick = gain(-1); $('volUp').onclick = gain(1);
+$('rateUp').onclick = rate(1);
+$('rateDown').onclick = async () => { await rate(-1)(); if (started) playNext('skip'); }; // promesse de Vinny : si ça vide la piste, on change vite
+async function loadMemory() {
+  const list = await api('/api/ratings', 'GET');
+  const row = r => `<div class="row"><div class="t"><b>${esc(r.title)}</b><span class="muted">${esc(r.artist)}</span></div><span class="tag">${r.up} ✓ · ${r.down} ✗</span></div>`;
+  const best = list.filter(r => r.up - r.down > 0), worst = list.filter(r => r.up - r.down < 0).reverse();
+  $('memList').innerHTML = (best.length ? '<p class="muted"><b>' + t('h.memBest') + '</b></p>' + best.slice(0, 10).map(row).join('') : '')
+    + (worst.length ? '<p class="muted"><b>' + t('h.memWorst') + '</b></p>' + worst.slice(0, 5).map(row).join('') : '');
+  $('memNote').hidden = list.length > 0;
+}
+loadMemory().catch(console.error); loadWishes().catch(console.error); setInterval(() => loadWishes().catch(() => {}), 30000);
+
+// ---------- Liste commentée et danse en ligne ----------
+// ---------- DJ Vinny autopilote : listes (40+ intégrées, playlists importées) et danse en ligne ----------
+let cur = null, apCustom = null;
+const STATUS = { ok: '✓', uncertain: '?', missing: '✗', pending: '…' }; // origine du titre (qc, fr, en) : h.origin.<code>
+async function loadCurated() { cur = await api('/api/curated', 'GET'); renderCurated(); }
+const entryRow = e => '<div class="row" style="opacity:' + (e.off ? .4 : 1) + '"><div class="t"><b>' + esc(e.title) + '</b><span class="muted">' + esc(e.artist) + ' · ' + t('h.origin.' + e.lang) + '</span>'
+  + (e.status === 'uncertain' ? '<span class="muted">' + t('h.found', { x: esc(e.found) }) + '</span>' : '') + '</div>' + (e.propose ? '<span class="tag">' + t('h.proposed') + '</span>' : '')
+  + '<span class="tag">' + STATUS[e.status] + '</span><button class="mini" data-off="' + esc(e.key) + '" title="' + t(e.off ? 'h.validateTrack' : 'h.removeTrack') + '">' + (e.off ? '+' : '✕') + '</button></div>';
+function renderApStatus() {
+  const a = state.activeList, ph = state.phase;
+  $('apStatus').textContent = (ph ? t('h.ap.phase', { name: ph.name }) : t('h.ap.noPhase')) + t('h.ap.picks', { list: a ? a.name : '?', n: a ? a.count : 0 }) + (a && !a.count ? t('h.ap.empty') : '.') + (state.prepare ? ' ' + t('h.ap.preparing') : '');
+  if (document.activeElement !== $('autoCount')) $('autoCount').value = state.autoCount;
+  const sig = JSON.stringify((state.lists || []).map(l => [l.id, l.name, l.count]));
+  if (sig !== apListSig) { apListSig = sig; fillApSelect(); }
+}
+let apListSig = '';
+function fillApSelect() {
+  const sel = $('apSel'), keep = sel.value || 'builtin:dance';
+  sel.innerHTML = (state.lists || []).map(l => '<option value="' + esc(l.id) + '">' + esc(l.name) + ' (' + l.count + ')</option>').join('');
+  sel.value = (state.lists || []).some(l => l.id === keep) ? keep : 'builtin:dance';
+  renderCurated();
+}
+async function renderCurated() {
+  if (!cur || !state) return;
+  const id = $('apSel').value || 'builtin:dance', builtin = id.startsWith('builtin:'), group = id === 'builtin:souper' ? 'souper' : 'dance';
+  const c = cur.counts;
+  $('apTools').hidden = !builtin; $('apAddBox').hidden = builtin; $('apDel').hidden = builtin;
+  if (builtin) {
+    const mine = cur.entries.filter(e => e.group === group), n = mine.filter(e => !e.off && e.status !== 'pending' && e.status !== 'missing').length;
+    $('apSum').textContent = t('h.ap.sumBuiltin', { n, total: mine.length, ok: c.ok, unc: c.uncertain, miss: c.missing, pend: c.pending });
+    $('apItems').innerHTML = mine.map(entryRow).join('');
+  } else {
+    try { apCustom = await api('/api/lists/' + id, 'GET'); } catch { apCustom = null; }
+    if (!apCustom) { $('apItems').innerHTML = ''; return; }
+    const n = apCustom.tracks.filter(t => !t.off).length;
+    $('apSum').textContent = t('h.ap.sumCustom', { n, total: apCustom.tracks.length });
+    $('apItems').innerHTML = apCustom.tracks.map(x => '<div class="row" style="opacity:' + (x.off ? .4 : 1) + '"><img src="' + esc(x.artwork) + '" alt=""><div class="t"><b>' + esc(x.title) + '</b><span class="muted">' + esc(x.artist) + '</span></div><button class="mini" data-tog="' + esc(x.songId) + '" title="' + t(x.off ? 'h.restoreTrack' : 'h.removeTrack') + '">' + (x.off ? '+' : '✕') + '</button></div>').join('');
+  }
+  const line = cur.entries.filter(e => e.group === 'ligne');
+  $('lineList').innerHTML = line.map(entryRow).join('');
+  $('lineNote').textContent = t('h.lineNote', { n: state.line.count, total: line.length }) + (state.line.count ? '.' : t('h.lineNoteEmpty'));
+}
+$('apSel').onchange = () => renderCurated();
+$('autoCount').onchange = e => api('/api/settings', 'POST', { autoCount: Number(e.target.value) });
+$('curResolve').onclick = async () => { toast(t('h.searching')); cur = await api('/api/curated/resolve'); renderCurated(); toast(t('h.searchDone')); };
+$('curSafe').onclick = async () => { const id = $('apSel').value, g = id === 'builtin:souper' ? 'souper' : 'dance', v = await api('/api/curated/validate', 'POST', { group: g }); cur = v; renderCurated(); toast(t('h.validated', { n: v.validated })); };
+const onToggle = async e => { const b = e.target.closest('button[data-off]'); if (b) { cur = await api('/api/curated/toggle', 'POST', { key: b.dataset.off }); renderCurated(); } };
+$('apItems').onclick = async e => {
+  const t = e.target.closest('button[data-tog]');
+  if (t) { await api('/api/lists/' + $('apSel').value + '/toggle', 'POST', { songId: t.dataset.tog }); return; }
+  onToggle(e);
+};
+$('lineList').onclick = onToggle;
+$('apDel').onclick = async () => { const id = $('apSel').value; if (id.startsWith('builtin:') || !confirm(t('h.apDelQ'))) return; await api('/api/lists/' + id, 'DELETE'); $('apSel').value = 'builtin:dance'; };
+let tAp;
+$('apAdd').oninput = e => {
+  clearTimeout(tAp);
+  tAp = setTimeout(async () => {
+    const q = e.target.value.trim(); if (q.length < 2) { $('apAddRes').innerHTML = ''; return; }
+    const list = await (await fetch('/api/search?q=' + encodeURIComponent(q))).json();
+    $('apAddRes').innerHTML = (list.map ? list : []).map(s => '<div class="row"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span class="muted">' + esc(s.artist) + '</span></div><button class="mini" data-addl="' + esc(s.songId) + '">＋</button></div>').join('');
+  }, 350);
+};
+$('apAddRes').onclick = async e => { const b = e.target.closest('button[data-addl]'); if (!b) return; await api('/api/lists/' + $('apSel').value + '/add', 'POST', { songId: b.dataset.addl }); toast(t('h.addedToList')); };
+$('impGo').onclick = async () => {
+  const pl = playlists.find(p => p.id === $('impPl').value);
+  if (!pl) return toast(t('h.impNeedStart'));
+  toast(t('h.impReading'));
+  const tracks = await fetchTracks(pl.id);
+  const r = await api('/api/lists/import', 'POST', { name: $('impName').value.trim() || pl.name, tracks });
+  $('impName').value = ''; toast(t('h.imported', { n: r.count }));
+};
+$('lineNow').onclick = async () => { await api('/api/linedance'); toast(t('h.lineAdded')); };
+loadCurated().catch(console.error);
+
+// ---------- Souper / Soirée en un clic, onglets, souhaits, événements ----------
+let prevPrep = false;
+function renderTop() {
+  $('eventBadge').innerHTML = state.event ? '<span class="phase-badge" title="' + t('h.activeEvent') + '">📅 ' + esc(state.event.name) + '</span>' : '';
+  const cur = state.phase && state.phase.intensity;
+  $('modeCalm').classList.toggle('on', cur === 'calm'); $('modeParty').classList.toggle('on', cur === 'party');
+  if (prevPrep && !state.prepare) loadCurated().catch(() => {}); // les listes viennent d'être préparées : on les relit
+  prevPrep = !!state.prepare;
+}
+const modeGo = kind => async () => {
+  if (state.phase && state.phase.intensity === kind) return toast(t('c.already.' + kind));
+  let p = (state.phases || []).find(x => x.intensity === kind);
+  if (!p) p = await api('/api/phases/ensure', 'POST', { intensity: kind }); // la période par défaut est créée si elle manque
+  await launchPhase(p.id);
+};
+$('modeCalm').onclick = modeGo('calm'); $('modeParty').onclick = modeGo('party');
+
+const TABS = ['soiree', 'souhaits', 'evenements'];
+function showTab(t) {
+  if (!TABS.includes(t)) t = 'soiree';
+  TABS.forEach(k => { $('tab-' + k).hidden = k !== t; });
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  try { localStorage.djTab = t; } catch {}
+  if (t === 'souhaits') { loadWishes().catch(() => {}); loadLinks(); }
+  if (t === 'evenements') loadEvents().catch(() => {});
+}
+$('tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); };
+
+// Souhaits
+const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? t('h.ago.now') : m < 60 ? t('h.ago.min', { n: m }) : m < 1440 ? t('h.ago.h', { n: Math.round(m / 60) }) : t('h.ago.d', { n: Math.round(m / 1440) }); };
+const wishEvId = () => (wishSel && wishSel !== 'all' && wishSel !== 'none' ? wishSel : '');
+function fillWishEv() {
+  const evs = (evData && evData.events) || [];
+  const opts = evs.map(e => ({ v: e.id, t: e.name + ' · ' + e.date })).concat([{ v: 'none', t: t('h.noEvent') }, { v: 'all', t: t('h.allEvents') }]);
+  if (wishSel === null || !opts.some(o => o.v === wishSel)) wishSel = (evData && evData.activeId) || (evs.find(e => e.status !== 'ended') || {}).id || 'none';
+  $('wishEv').innerHTML = opts.map(o => '<option value="' + esc(o.v) + '"' + (o.v === wishSel ? ' selected' : '') + '>' + esc(o.t) + '</option>').join('');
+}
+async function loadWishes() {
+  if (!evData) await loadEvents();
+  const w = await api('/api/wishes' + (wishSel ? '?ev=' + encodeURIComponent(wishSel) : ''), 'GET');
+  const n = w.total, g = w.groups.length;
+  $('wishCount').textContent = n ? '(' + n + ')' : ''; $('wishBadge').textContent = n ? ' (' + n + ')' : '';
+  $('wishNote').textContent = n ? t(n > 1 ? 'h.wishesIn.n' : 'h.wishesIn.1', { n }) + ', ' + t(g > 1 ? 'h.songs.n' : 'h.songs.1', { n: g }) + '. ' + t('h.wishHelp') : t('h.noWishes');
+  if (document.activeElement && $('wishList').contains(document.activeElement)) return;
+  $('wishList').innerHTML = w.groups.map(x => '<div class="wg" data-ids="' + esc(x.ids.join(',')) + '" data-text="' + esc(x.text) + '"><div class="row"><div class="t"><b>' + esc(x.text) + '</b><span class="muted">'
+    + (x.names.length ? esc(x.names.join(', ')) + ' · ' : '') + ago(x.last) + '</span></div><span class="tag">×' + x.count + '</span></div>'
+    + '<div class="inline"><button class="mini" data-wa="search">' + t('h.wSearch') + '</button><button class="mini" data-wa="done">' + t('h.wDone') + '</button></div><div class="wres"></div></div>').join('');
+}
+$('wishList').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const g = b.closest('.wg');
+  if (b.dataset.wa === 'done') { await api('/api/wishes/done', 'POST', { ids: g.dataset.ids.split(',') }); return loadWishes(); }
+  if (b.dataset.wa === 'search') {
+    const box = g.querySelector('.wres'); box.innerHTML = '<p class="muted">' + t('h.searchingShort') + '</p>';
+    try {
+      const r = await fetch('/api/search?q=' + encodeURIComponent(g.dataset.text)), list = await r.json();
+      box.innerHTML = r.ok && list.length ? list.map(s => '<div class="row"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span class="muted">' + esc(s.artist) + '</span></div>'
+        + '<button class="mini" data-wq="' + esc(s.songId) + '" title="' + t('h.addToQueue') + '">' + t('h.plusQueue') + '</button><button class="mini" data-wq="' + esc(s.songId) + '" data-top="1" title="' + t('h.putFirst') + '">⏫</button></div>').join('')
+        : '<p class="muted">' + esc(r.ok ? t('h.noSpResult') : list.error || t('c.error')) + '</p>';
+    } catch { box.innerHTML = '<p class="muted">' + t('h.searchFail') + '</p>'; }
+    return;
+  }
+  if (b.dataset.wq) { await api('/api/queue/add', 'POST', { songId: b.dataset.wq, top: !!b.dataset.top }); toast(t(b.dataset.top ? 'h.addedFirst' : 'h.addedQueue')); }
+};
+$('wishClear').onclick = async () => { if (confirm(t('h.wishClearQ'))) { await api('/api/wishes/clear', 'POST', { ev: wishSel || undefined }); loadWishes(); } };
+$('wishEv').onchange = () => { wishSel = $('wishEv').value; loadWishes(); loadLinks(); };
+
+// Événements
+const fmtEv = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return e.date; } };
+let lic = null;
+async function loadEvents() {
+  evData = await api('/api/evts', 'GET'); lic = await api('/api/licence', 'GET').catch(() => null);
+  const l = $('licLine'); l.hidden = !(lic && lic.on);
+  if (!l.hidden) l.textContent = lic.error ? t('h.lic.err', { msg: lic.error }) : t('h.lic.on', { domain: lic.domain, achat: lic.free ? lic.free.achat : 0, abo: lic.free ? lic.free.abonnement : 0 });
+  renderEvents(); fillWishEv();
+}
+function evCard(e) {
+  const act = evData.activeId === e.id, pl = (k, n) => t(k + (n === 1 || (n === 0 && LANG === 'fr') ? '.1' : '.n'), { n }); // 0 : singulier en français, pluriel en anglais
+  const btns = [];
+  if (e.status !== 'ended' && !act) btns.push(['activate', t('h.ea.activate')]);
+  if (e.status === 'ended') btns.push(['start', t('h.ea.reopen')]); else if (!(act && e.status === 'live')) btns.push(['start', t('h.ea.start')]);
+  if (e.status === 'live' || (act && e.status !== 'ended')) btns.push(['end', t('h.ea.end')]);
+  const li = lic && lic.on && lic.events[e.id], attached = !!li && li.pass === 'attachee';
+  if (lic && lic.on && e.status !== 'ended') btns.push(attached ? (e.status === 'upcoming' ? ['unpass', t('h.lic.remove')] : null) : ['pass', t('h.lic.use')]);
+  btns.push(['links', t('h.ea.links')], ['edit', t('h.ea.edit')], ['dup', t('h.ea.dup')], ['del', t('c.delete')]);
+  return '<div class="evcard' + (act ? ' act' : '') + '" data-id="' + esc(e.id) + '"><div class="inline" style="justify-content:space-between;margin-top:0"><h3>' + esc(e.name) + '</h3><span><span class="tag">' + (e.lang || 'fr').toUpperCase() + '</span> <span class="tag">' + t('h.stat.' + e.status) + '</span>' + (act ? ' <span class="tag">' + t('h.active') + '</span>' : '') + (attached ? ' <span class="tag" title="' + esc(t('h.lic.voice', { n: li.voice })) + '">' + t('h.lic.pass') + '</span>' : '') + '</span></div>'
+    + '<div class="muted">' + esc(fmtEv(e)) + ' · ' + esc(e.start) + ' → ' + esc(e.end) + (e.place ? ' · ' + esc(e.place) : '') + '</div>'
+    + '<div class="muted">' + pl('h.evWishes', e.wishCount) + ' · ' + pl('h.evPhases', e.phaseCount) + ' · ' + (e.openBeforeMin ? t('h.evOpens', { min: e.openBeforeMin, time: timeMinus(e.start, e.openBeforeMin) }) : t('h.evOpensStart')) + (e.auto === false ? ' · ' + t('h.evManual') : '') + '</div>'
+    + (e.welcome ? '<div class="muted">« ' + esc(e.welcome) + ' »</div>' : '')
+    + '<div class="inline">' + btns.filter(Boolean).map(b => '<button class="mini" style="padding:0 14px" data-ea="' + b[0] + '">' + b[1] + '</button>').join('') + '</div><div class="evlinks" hidden></div></div>';
+}
+function renderEvents() {
+  const ev = evData.events, up = ev.filter(e => e.status !== 'ended'), past = ev.filter(e => e.status === 'ended').reverse();
+  $('evList').innerHTML = (up.length ? '<h3 class="evsec">' + t('h.evUpcoming') + '</h3>' + up.map(evCard).join('') : '<p class="muted">' + t('h.evNone') + '</p>')
+    + (past.length ? '<h3 class="evsec">' + t('h.evPast') + '</h3>' + past.map(evCard).join('') : '');
+}
+const evF = id => $('evf_' + id);
+function openEvForm(e) {
+  evEditing = e ? e.id : null; $('evForm').hidden = false; $('evFormTitle').textContent = t(e ? 'h.evEdit' : 'h.evNewTitle');
+  evF('name').value = e ? e.name : ''; evF('date').value = e ? e.date : ''; evF('start').value = e ? e.start : '19:00'; evF('end').value = e ? e.end : '01:00';
+  evF('lang').value = e ? e.lang || 'fr' : LANG; evF('lang').dataset.prev = evF('lang').value;
+  evF('place').value = e ? e.place : ''; evF('welcome').value = e ? e.welcome : ''; evF('thanks').value = e ? e.thanks : tIn(evF('lang').value, 'ev.thanksDefault');
+  evF('before').value = String(e ? e.openBeforeMin : 30); evF('auto').checked = e ? e.auto !== false : true;
+  $('evProgramBox').hidden = !!e;
+  evF('program').innerHTML = '<option value="current">' + t('h.prog.current') + '</option><option value="default">' + t('h.prog.default') + '</option>'
+    + ((evData && evData.events) || []).map(x => '<option value="copy:' + esc(x.id) + '">' + t('h.prog.copy', { name: esc(x.name) }) + '</option>').join('');
+  $('evForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); evF('name').focus();
+}
+$('evNew').onclick = () => openEvForm(null);
+// langue changée : le message de remerciement par défaut suit (un message écrit par l'hôte reste)
+evF('lang').onchange = () => { const prev = evF('lang').dataset.prev; if (evF('thanks').value === tIn(prev, 'ev.thanksDefault')) evF('thanks').value = tIn(evF('lang').value, 'ev.thanksDefault'); evF('lang').dataset.prev = evF('lang').value; };
+$('evCancel').onclick = () => { $('evForm').hidden = true; evEditing = null; };
+// Heures tapées au clavier, pavé numérique compris (le champ « heure » du navigateur le refusait) : 1800, 18, 18h30, 6:30 -> HH:MM
+const timeMinus = (t, min) => { const x = (+t.slice(0, 2) * 60 + +t.slice(3) - min + 1440) % 1440; return String(Math.floor(x / 60)).padStart(2, '0') + ':' + String(x % 60).padStart(2, '0'); };
+const normTime = v => {
+  const d = String(v || '').replace(/\D/g, ''); if (!d || d.length > 4) return '';
+  const h = +(d.length <= 2 ? d : d.slice(0, -2)), m = d.length <= 2 ? 0 : +d.slice(-2);
+  return h < 24 && m < 60 ? String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') : '';
+};
+for (const k of ['start', 'end']) evF(k).addEventListener('blur', e => { const t = normTime(e.target.value); if (t) e.target.value = t; });
+$('evSave').onclick = async () => {
+  const start = normTime(evF('start').value), end = normTime(evF('end').value);
+  if ((evF('start').value && !start) || (evF('end').value && !end)) return toast(t('h.badTime'));
+  const body = { name: evF('name').value, date: evF('date').value, start, end, lang: evF('lang').value, place: evF('place').value, welcome: evF('welcome').value, thanks: evF('thanks').value, openBeforeMin: Number(evF('before').value), auto: evF('auto').checked };
+  if (!body.name.trim() || !body.date || !body.start || !body.end) return toast(t('h.evRequired'));
+  if (evEditing) await api('/api/evts/' + evEditing, 'PUT', body);
+  else { const p = evF('program').value; if (p === 'default') body.program = 'default'; else if (p.startsWith('copy:')) body.copyFrom = p.slice(5); await api('/api/evts', 'POST', body); }
+  $('evForm').hidden = true; evEditing = null; toast(t('h.evSaved')); loadEvents();
+};
+// Modèle de courriel (modifiable avant de copier), dans la langue de l'événement : première ligne = objet, le reste = message
+function wishMail(e, url) {
+  const lang = e.lang || 'fr', day = new Date(e.date + 'T12:00:00').toLocaleDateString(lang === 'en' ? 'en-CA' : 'fr-CA', { weekday: 'long', day: 'numeric', month: 'long' });
+  return tIn(lang, 'h.mail', { name: e.name, day, place: e.place ? tIn(lang, 'h.mailPlace', { place: e.place }) : '', url });
+}
+async function toggleLinks(card, e, force) {
+  const box = card.querySelector('.evlinks');
+  if (!box.hidden && !force) { box.hidden = true; return; }
+  const l = await api('/api/links?ev=' + encodeURIComponent(e.id), 'GET'), v = Date.now(), im = (q, label) => '<div style="text-align:center"><img src="/api/qr.png?' + q + '&v=' + v + '" alt="' + label + '" style="width:150px;border-radius:12px;background:#fff"><div class="muted">' + label + '</div></div>';
+  box.innerHTML = '<div class="inline" style="flex-wrap:wrap;justify-content:center">' + im('ev=' + encodeURIComponent(e.id), t('h.qrParty')) + im('to=souhaits&ev=' + encodeURIComponent(e.id), t('h.qrWishes')) + '</div>'
+    + '<div class="inline"><input type="text" readonly value="' + esc(l.guests) + '"><button class="ghost" data-copy="' + esc(l.guests) + '">' + t('h.copyPartyLink') + '</button></div>'
+    + '<div class="inline"><input type="text" readonly value="' + esc(l.wishes) + '"><button class="ghost" data-copy="' + esc(l.wishes) + '">' + t('h.copyWishLink') + '</button></div>'
+    + '<details class="dt"><summary>' + t('h.mailTitle') + '</summary><textarea class="evmail" rows="11" style="width:100%;margin-top:6px;font:15px/1.4 Figtree,sans-serif;padding:10px;border-radius:12px">' + esc(wishMail(e, l.wishes)) + '</textarea>'
+    + '<div class="inline"><button class="ghost" data-copymail>' + t('h.copyMail') + '</button><button class="ghost" data-mailto>' + t('h.openMail') + '</button></div></details>'
+    + '<div class="inline"><button class="mini" style="padding:0 14px" data-ea="rotate">' + t('h.newCode') + '</button></div>'
+    + (l.public ? '' : '<p class="muted">' + t('h.localOnly') + '</p>');
+  box.hidden = false;
+}
+$('evList').onclick = async ev => {
+  const mail = ev.target.closest('[data-copymail],[data-mailto]');
+  if (mail) {
+    const txt = mail.closest('.evlinks').querySelector('.evmail').value, m = /^(?:Objet|Subject) ?: ?(.*)\n+/.exec(txt);
+    if (mail.dataset.mailto !== undefined) { ev.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent(m ? m[1] : '') + '&body=' + encodeURIComponent(m ? txt.slice(m[0].length) : txt); return; }
+    try { await navigator.clipboard.writeText(txt); toast(t('h.mailCopied')); } catch { toast(t('h.copyFailText')); } return;
+  }
+  const c = ev.target.closest('button[data-copy]');
+  if (c) { try { await navigator.clipboard.writeText(c.dataset.copy); toast(t('h.linkCopied')); } catch { toast(t('h.copyFailLink')); } return; }
+  const b = ev.target.closest('button[data-ea]'); if (!b) return;
+  const card = b.closest('.evcard'), id = card.dataset.id, e = evData.events.find(x => x.id === id), a = b.dataset.ea;
+  if (a === 'activate') { await api('/api/evts/' + id + '/activate'); toast(t('h.evActivated')); }
+  else if (a === 'start') { if (!confirm(t('h.evStartQ', { name: e.name }))) return; await api('/api/evts/' + id + '/start'); toast(t('h.evStarted')); }
+  else if (a === 'end') { if (!confirm(t('h.evEndQ', { name: e.name }))) return; await api('/api/evts/' + id + '/end'); toast(t('h.evEnded')); }
+  else if (a === 'edit') return openEvForm(e);
+  else if (a === 'dup') { const d = prompt(t('h.evDupQ'), e.date); if (!d) return; await api('/api/evts/' + id + '/duplicate', 'POST', { date: d.trim() }); toast(t('h.evDuped')); }
+  else if (a === 'del') { if (!confirm(t('h.evDelQ', { name: e.name }))) return; await api('/api/evts/' + id, 'DELETE'); toast(t('h.evDeleted')); }
+  else if (a === 'pass') { if (!confirm(t('h.lic.useQ', { name: e.name }))) return; await api('/api/licence/attacher', 'POST', { ev: id }); toast(t('h.lic.used')); }
+  else if (a === 'unpass') { if (!confirm(t('h.lic.removeQ', { name: e.name }))) return; await api('/api/licence/detacher', 'POST', { ev: id }); toast(t('h.lic.removed')); }
+  else if (a === 'links') return toggleLinks(card, e);
+  else if (a === 'rotate') { if (!confirm(t('h.evRotateQ'))) return; await api('/api/event/rotate', 'POST', { ev: id }); toast(t('h.evRotated')); return toggleLinks(card, e, true); }
+  await loadEvents();
+};
+try { showTab(localStorage.djTab || 'soiree'); } catch { showTab('soiree'); }
+
+// ---------- Temps réel ----------
+const es = new EventSource('/api/events?role=dash');
+async function loadLinks() {
+  try {
+    const l = await api('/api/links' + (wishEvId() ? '?ev=' + encodeURIComponent(wishEvId()) : ''), 'GET'); $('wishQr').src = '/api/qr.png?to=souhaits' + (wishEvId() ? '&ev=' + encodeURIComponent(wishEvId()) : '') + '&v=' + Date.now(); $('wishLink').value = l.wishes; $('wishLink').dataset.guests = l.guests;
+    $('wishLinkNote').textContent = t(l.public ? 'h.wishLinkPublic' : 'h.wishLinkLocal');
+  } catch {}
+}
+$('wishCopy').onclick = async () => { try { await navigator.clipboard.writeText($('wishLink').value); toast(t('h.linkCopied')); } catch { $('wishLink').select(); toast(t('h.selectedCtrlC')); } };
+let qrRev = null;
+const syncQr = st => { if (st.qrRev === qrRev) return; qrRev = st.qrRev; loadLinks(); document.querySelectorAll('img[src^="/api/qr.png"]').forEach(i => { const u = new URL(i.getAttribute('src'), location.href); u.searchParams.set('v', qrRev); i.src = u.pathname + u.search; }); };
+es.onmessage = e => { state = JSON.parse(e.data); syncQr(state); render(); };
+// commandes de la télécommande (/remote) : le son se joue ici, sur l'ordinateur de la soirée
+// le dashboard dit à la télécommande où il en est (connecté à Spotify ? soirée démarrée ? page déjà touchée par un clic ?)
+const reportStatus = () => fetch('/api/remote/ack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+  started, ready: cfg.provider !== 'spotify' || !!(typeof SP !== 'undefined' && SP.load().access), active: !!(navigator.userActivation && navigator.userActivation.hasBeenActive) }) }).catch(() => {});
+setInterval(reportStatus, 4000); setTimeout(reportStatus, 1500);
+es.addEventListener('cmd', async e => {
+  const c = JSON.parse(e.data);
+  try {
+    if (c.cmd === 'start') { if (!started && !$('start').disabled && (cfg.provider !== 'spotify' || SP.load().access)) $('start').click(); }
+    else if (c.cmd === 'next') { if (started) playNext('skip'); else toast(t('h.startFirst')); }
+    else if (c.cmd === 'pause') { if (music) music.isPlaying ? music.pause() : music.play(); }
+    else if (c.cmd === 'say') await speak(c.text);
+    else if (c.cmd === 'jingle') await playJingle(c.name);
+    else if (c.cmd === 'moment') await sayMoment(c.src)();
+    else if (c.cmd === 'phase') await launchPhase(c.id);
+    else if (c.cmd === 'callout') { await api('/api/fx', 'POST', { type: 'callout' }); if (state.tts) await speakCallout(); }
+  } catch (err) { console.error(err); }
+});
+es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
+let serverClosed = false;
+shutdownBanner(es, () => { serverClosed = true; if (music && music.isPlaying) music.pause(); }); // serveur fermé : la musique du navigateur s'arrête aussi
+// La musique joue dans cet onglet : une fois la soirée démarrée, le navigateur demande confirmation avant de le fermer ou de le quitter
+addEventListener('beforeunload', e => { if (started && !serverClosed) { e.preventDefault(); e.returnValue = ''; } });
+// Tunnel vers le VPS (adresse publique) : affiché seulement s'il est configuré (⚙ Réglages)
+async function tunnelBadge() {
+  try {
+    const r = await api('/api/tunnel', 'GET'), b = $('tunnelBadge'); b.hidden = !r.on;
+    if (r.on) b.innerHTML = '<span class="phase-badge" title="' + esc(r.address || t('h.tunnel.tip')) + '">' + t('h.tunnel.' + r.state) + '</span>';
+  } catch {}
+}
+tunnelBadge(); setInterval(tunnelBadge, 15000);
+// ---------- Réglages (remplacent le .env pour tout sauf le démarrage) ----------
+let setView = [], setReset = new Set();
+const dlg = $('settingsDlg');
+function paintSettings() {
+  $('setFields').innerHTML = setView.map(f => {
+    const src = '<span class="src">' + t(setReset.has(f.key) ? 'set.willReset' : 'set.src.' + f.source) + '</span>';
+    const ctl = f.type.startsWith('select:') ? '<select data-k="' + f.key + '">' + f.type.slice(7).split(',').map(o => '<option' + (o === f.value ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>'
+      : f.type === 'secret' ? '<input type="password" autocomplete="new-password" data-k="' + f.key + '" placeholder="' + t(f.set && !setReset.has(f.key) ? 'set.secretSet' : 'set.secretUnset') + '">'
+      : '<input type="' + (f.type.startsWith('number') ? 'number' : 'text') + '" data-k="' + f.key + '" value="' + esc(f.value || '') + '" placeholder="' + esc(f.def) + '">';
+    return '<div class="sf"><label>' + esc(t('set.' + f.key)) + src + '</label><div class="inline">' + ctl + '<button type="button" class="mini" data-reset="' + f.key + '" title="' + t('set.resetTip') + '">↺</button></div><span class="muted">' + esc(t('set.' + f.key + '.help')) + '</span></div>';
+  }).join('');
+}
+$('openSettings').onclick = async () => {
+  setView = await api('/api/app-settings', 'GET'); setReset = new Set(); paintSettings(); dlg.showModal();
+};
+$('btnRemote').onclick = async () => { // télécommande : adresse + QR (même Wi-Fi que l'ordinateur ; installable en HTTPS)
+  $('remoteDlg').showModal();
+  try {
+    const l = await api('/api/links', 'GET'); $('remoteUrl').value = l.remote; $('remoteQr').src = '/api/qr.png?to=remote&v=' + Date.now();
+    $('remoteNote').textContent = t('h.remoteNote') + (l.public ? '' : ' ' + t('h.remoteLocal'));
+  } catch {}
+};
+$('remoteClose').onclick = () => $('remoteDlg').close();
+$('btnScreen').onclick = () => { // même nom de fenêtre = l'écran déjà ouvert est rechargé (relancé) au lieu d'en ouvrir un deuxième
+  const w = window.open('/ecran.html', 'dj-ecran'); if (w) { w.focus(); toast(t('h.screenOpened')); } else toast(t('h.popupBlocked'));
+};
+$('remoteCopy').onclick = async () => { try { await navigator.clipboard.writeText($('remoteUrl').value); toast(t('h.addrCopied')); } catch { $('remoteUrl').select(); toast(t('h.selectedCtrlC')); } };
+$('setCancel').onclick = () => dlg.close();
+$('quitApp').onclick = async () => { if (!confirm(t('set.quitQ'))) return; serverClosed = true; dlg.close(); await api('/api/shutdown').catch(() => {}); };
+$('setFields').onclick = e => { const b = e.target.closest('button[data-reset]'); if (!b) return; setReset.add(b.dataset.reset); const i = $('setFields').querySelector('[data-k="' + b.dataset.reset + '"]'); if (i) i.value = ''; paintSettings(); };
+$('setSave').onclick = async () => {
+  const body = {};
+  for (const f of setView) {
+    const el = $('setFields').querySelector('[data-k="' + f.key + '"]');
+    if (setReset.has(f.key)) body[f.key] = null;
+    else if (f.type === 'secret') { if (el.value) body[f.key] = el.value; }
+    else if (el.value.trim() !== String(f.value || '')) body[f.key] = el.value.trim();
+  }
+  if (!Object.keys(body).length) return dlg.close();
+  try { await api('/api/app-settings', 'POST', body); } catch { return; }
+  dlg.close(); toast(t(/MUSIC_PROVIDER|SPOTIFY_CLIENT_ID|STOREFRONT/.test(Object.keys(body).join()) ? 'set.savedReload' : 'set.saved'));
+};
+</script>
+<script>
+// ---------- Disposition du dashboard : menu collant, cartes repliables / déplaçables (mémorisé dans ce navigateur) ----------
+(() => {
+  // [clé de la carte (data-k), repliée par défaut] ; nom dans le menu : h.nav.<clé>
+  const DEF = [['file', 0], ['periodes', 0], ['autopilote', 1], ['ligne', 1], ['boutons', 0], ['annonces', 1], ['memoire', 1], ['camera', 1], ['qr', 1]];
+  const KEY = 'djLayout', cols = [...document.querySelectorAll('.grid > div')], cards = {};
+  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
+  const store = o => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch {} };
+  let saved = load(); saved.folded = saved.folded || {};
+  document.querySelectorAll('.grid .card[data-k]').forEach(c => { c.id = 'c-' + c.dataset.k; cards[c.dataset.k] = c; });
+  const persist = () => { saved.order = cols.map(col => [...col.children].map(c => c.dataset.k).filter(Boolean)); store(saved); };
+  if (saved.order) saved.order.forEach((ks, i) => ks.forEach(k => cols[i] && cards[k] && cols[i].appendChild(cards[k])));
+  const setFold = (c, f) => { c.classList.toggle('folded', f); saved.folded[c.dataset.k] = f; store(saved); };
+  DEF.forEach(([k, f]) => { const c = cards[k]; if (!c) return;
+    c.classList.toggle('folded', k in saved.folded ? !!saved.folded[k] : !!f);
+    const h = c.querySelector('h2'); h.insertAdjacentHTML('afterbegin', '<span class="chev">▾</span>');
+    h.insertAdjacentHTML('beforeend', '<span class="ctl"><button class="mini grip" title="' + t('h.lay.drag') + '" aria-label="' + t('h.lay.move') + '">⠿</button><button class="mini" data-mv="up" title="' + t('h.lay.up') + '">▲</button><button class="mini" data-mv="down" title="' + t('h.lay.down') + '">▼</button><button class="mini" data-mv="side" title="' + t('h.lay.side') + '">⇆</button></span>');
+  });
+  document.querySelector('.grid').addEventListener('click', e => {
+    const h = e.target.closest('.card[data-k] > h2:first-child'); if (!h) return;
+    const c = h.parentElement, b = e.target.closest('button[data-mv]');
+    if (b) {
+      const m = b.dataset.mv, col = c.parentElement;
+      if (m === 'up' && c.previousElementSibling) col.insertBefore(c, c.previousElementSibling);
+      else if (m === 'down' && c.nextElementSibling) col.insertBefore(c.nextElementSibling, c);
+      else if (m === 'side') cols[cols.indexOf(col) ? 0 : 1].appendChild(c);
+      persist(); c.scrollIntoView({ block: 'nearest' }); return;
+    }
+    if (e.target.closest('.ctl')) return;
+    setFold(c, !c.classList.contains('folded'));
+  });
+  // glisser-déposer : seule la poignée ⠿ rend la carte déplaçable (la file garde son propre glisser-déposer)
+  let drag = null;
+  document.addEventListener('mousedown', e => { const g = e.target.closest('.card .grip'); if (g) { drag = g.closest('.card'); drag.draggable = true; } });
+  document.addEventListener('mouseup', () => { if (drag) { drag.draggable = false; drag = null; } });
+  document.addEventListener('dragstart', e => { if (drag && e.target === drag) { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', drag.dataset.k); } });
+  document.addEventListener('dragend', () => { if (drag) { drag.draggable = false; drag = null; } cols.forEach(c => c.classList.remove('dropzone')); });
+  cols.forEach(col => {
+    col.addEventListener('dragover', e => { if (!drag) return; e.preventDefault(); cols.forEach(c => c.classList.toggle('dropzone', c === col)); });
+    col.addEventListener('drop', e => {
+      if (!drag) return; e.preventDefault();
+      const after = [...col.children].find(c => c !== drag && e.clientY < c.getBoundingClientRect().top + c.getBoundingClientRect().height / 2);
+      col.insertBefore(drag, after || null); persist(); cols.forEach(c => c.classList.remove('dropzone'));
+    });
+  });
+  // menu collant
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '<a href="#player">' + t('h.nav.player') + '</a>' + DEF.filter(d => cards[d[0]]).map(d => `<a href="#c-${d[0]}">${t('h.nav.' + d[0])}</a>`).join('')
+    + '<span class="sp"></span><button class="ghost" id="arrBtn" title="' + t('h.lay.arrangeTip') + '">' + t('h.lay.arrange') + '</button><button class="ghost" id="arrReset" hidden>' + t('h.lay.reset') + '</button>';
+  nav.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (a) { e.preventDefault(); const c = document.querySelector(a.getAttribute('href')); if (!c) return;
+      if (c.dataset.k && c.classList.contains('folded')) setFold(c, false);
+      c.scrollIntoView({ behavior: 'smooth', block: 'start' }); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); return; }
+    if (e.target.id === 'arrBtn') { const on = document.body.classList.toggle('arrange'); document.getElementById('arrReset').hidden = !on; }
+    if (e.target.id === 'arrReset' && confirm(t('h.lay.resetQ'))) { try { localStorage.removeItem(KEY); } catch {} location.reload(); }
+  });
+})();
+
+// ---------- Aide : une ligne sous chaque titre + bouton « i » pour le détail ----------
+function addHelp(card, short, long) {
+  const h = card && card.querySelector('h2'); if (!h || card.querySelector(':scope > .hint')) return;
+  h.insertAdjacentHTML('afterend', '<p class="hint">' + short + '</p>' + (long ? '<p class="muted info" data-gen="1">' + long + '</p>' : ''));
+  const hasInfo = long || card.querySelector(':scope > .info');
+  if (!hasInfo) return;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'ib'; b.textContent = 'i'; b.title = t('h.moreInfo'); b.setAttribute('aria-label', t('h.moreInfo'));
+  b.onclick = e => { e.stopPropagation(); card.classList.toggle('showinfo'); };
+  const ctl = h.querySelector('.ctl'); h.insertBefore(b, ctl || null);
+}
+(() => {
+  const LONG = ['file', 'ligne', 'boutons', 'annonces']; // cartes dont l'aide a aussi un texte détaillé
+  document.querySelectorAll('.grid .card[data-k]').forEach(c => { const k = c.dataset.k; if (I18N.fr['h.help.' + k]) addHelp(c, t('h.help.' + k), LONG.includes(k) ? t('h.help.' + k + '.long') : ''); });
+  addHelp(document.getElementById('c-souhaits'), t('h.help.souhaits'), t('h.help.souhaits.long'));
+  addHelp(document.getElementById('c-evenements'), t('h.help.evenements'), t('h.help.evenements.long'));
+})();
+</script></body></html>

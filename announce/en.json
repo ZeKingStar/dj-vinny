@@ -1,0 +1,139 @@
+{
+ "model": "elevenlabs/eleven-v4-turbo",
+ "voice": "liam",
+ "party": {
+  "tempo": 1,
+  "reverb": 0,
+  "ratio": 2.5,
+  "presence": 1.5,
+  "lufs": -14,
+  "voiceSettings": null,
+  "named": [
+   "[excited] Special request from {name}! {title}, by {artist}!",
+   "[excited] And now, a special request from {name}! {title}, by {artist}! [shouting] Let's dance!",
+   "[excited] {name} sent us {title}, by {artist}! [laughs] Great pick!",
+   "[excited] Heads up, everybody! {name} asked for {title}, by {artist}! [shouting] Everybody on the dance floor!",
+   "[excited] This one goes out to {name}! {title}, by {artist}!",
+   "[excited] {name}, you've got taste! {title}, by {artist}!",
+   "[excited] A request signed {name}! {title}, by {artist}! [laughs] Let's go!",
+   "[excited] Straight from {name}! {title}, by {artist}! [shouting] Get moving!",
+   "[excited] {name} didn't mess around: {title}, by {artist}!"
+  ],
+  "anon": [
+   "[excited] A special request just came in! {title}, by {artist}!",
+   "[excited] And now, by special request, {title}, by {artist}! [shouting] Let's dance!",
+   "[excited] Somebody in the room asked for {title}, by {artist}! [laughs] Thank you, mystery guest!",
+   "[excited] Special request! {title}, by {artist}! [shouting] Come on, let's dance!",
+   "[excited] This one's from a secret guest! {title}, by {artist}!"
+  ],
+  "plain": [
+   "[excited] And now, here's {title}, by {artist}!",
+   "[excited] DJ Vinny here! Up next, {title}, by {artist}!",
+   "[excited] Here we go, everybody! {title}, by {artist}!",
+   "[excited] We keep it going with {title}, by {artist}! [shouting] Let's dance!",
+   "[excited] DJ Vinny rolls right into {title}, by {artist}!",
+   "[excited] A great one for you: {title}, by {artist}!"
+  ],
+  "line": [
+   "[excited] It's line dance time! {title}, by {artist}! Everybody on the floor!",
+   "[excited] Time for a line dance! {title}, by {artist}! Line up, everybody!",
+   "[shouting] Line dance! Come take your places! {title}, by {artist}!",
+   "[excited] Put your dancing shoes on! {title}, by {artist}! Don't be shy, get in line!"
+  ],
+  "callout": [
+   "[excited] Got a special request? Scan the QR code on the screen and pick your song!",
+   "[excited] Want to hear your song? Scan the QR code!",
+   "[excited] DJ Vinny is taking requests! Scan the QR code!",
+   "[excited] Don't be shy, everybody! The QR code is on the screen, pick your song!"
+  ],
+  "open": [
+   "[excited] Good evening, everybody! DJ Vinny's in the house! [laughs] Hold on to your hats, it's about to get wild! Scan the QR code to pick your songs!",
+   "[excited] Hey, everybody! DJ Vinny is in the house! Scan the QR code and tell me what you want to hear!"
+  ],
+  "close": [
+   "[excited] That's the last song, folks! Thanks for dancing with DJ Vinny! Get home safe, and come back soon!",
+   "[excited] Thank you all, what a great night! DJ Vinny wishes you a good night!"
+  ]
+ },
+ "calm": {
+  "tempo": 1,
+  "reverb": 0,
+  "ratio": 2,
+  "presence": 1,
+  "lufs": -16,
+  "voiceSettings": null,
+  "named": [
+   "A request from {name}. {title}, by {artist}.",
+   "For {name}: {title}, by {artist}.",
+   "{name} asked for {title}, by {artist}.",
+   "This one is for {name}: {title}, by {artist}."
+  ],
+  "anon": [
+   "A special request. {title}, by {artist}.",
+   "By special request, {title}, by {artist}.",
+   "A little request that just came in: {title}, by {artist}."
+  ],
+  "plain": [
+   "And now, here's {title}, by {artist}.",
+   "To go with your meal, {title}, by {artist}.",
+   "DJ Vinny slips in {title}, by {artist}."
+  ],
+  "callout": [
+   "A special request? The QR code is on the screen.",
+   "Would you like to pick a song? Scan the QR code.",
+   "DJ Vinny is taking requests. The QR code is on the screen.",
+   "Got a tune in your head? The QR code is on the screen, it's easy."
+  ],
+  "open": [
+   "Good evening, everyone. DJ Vinny here. Enjoy your dinner, and have a great evening.",
+   "Good evening, everyone. DJ Vinny wishes you a wonderful meal."
+  ],
+  "close": [
+   "Thank you for being with us. DJ Vinny wishes you a lovely rest of the evening."
+  ]
+ },
+ "phases": {
+  "calm": {
+   "name": "Dinner",
+   "jingle": "Good evening, everyone! DJ Vinny wishes you a wonderful dinner."
+  },
+  "party": {
+   "name": "Party",
+   "jingle": "Ladies and gentlemen, the dance floor is officially open! For special requests, scan the QR code on the screen. And if a song empties the floor, don't worry: we'll switch to another one, fast! Come on, everybody, let's dance!"
+  }
+ },
+ "gratuit": {
+  "party": {
+   "anon": [
+    "[excited] A special request just came in!",
+    "[excited] And now, a special request from a guest! [shouting] Let's dance!",
+    "[excited] Someone in the room made a request! [laughs] Thank you, mystery guest!",
+    "[excited] Special request! [shouting] Come on, let's move!"
+   ],
+   "plain": [
+    "[excited] And now, here comes the next tune!",
+    "[excited] This is DJ Vinny! Let's keep it going!",
+    "[excited] Come on, everybody! [shouting] Keep dancing!",
+    "[excited] A great tune for you, right here!",
+    "[excited] DJ Vinny keeps it rolling, stay on the floor!"
+   ],
+   "line": [
+    "[excited] It's line dance time! Everybody on the floor!",
+    "[excited] Line dance time! Line up, everybody!",
+    "[shouting] Line dance! Come and find your spot!"
+   ]
+  },
+  "calm": {
+   "anon": [
+    "A special request just came in.",
+    "A little request from the room.",
+    "A special request, just for you."
+   ],
+   "plain": [
+    "And now, the next piece.",
+    "DJ Vinny slips in the next one.",
+    "The music goes on. Enjoy your meal."
+   ]
+  }
+ }
+}

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/vinny.svg?v=2"><link rel="apple-touch-icon" href="/vinny-48.png?v=2"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n="g.req.pageTitle">DJ Vinny : trouve ta toune</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css"><script src="/i18n.js?p=guest"></script></head>
+<body><div class="bg-anim"></div>
+<div class="wrap">
+  <div class="hero">
+    <i class="deco d1"></i><i class="deco d2"></i><i class="deco d3"></i><i class="deco d4"></i>
+    <p id="phase" style="margin:0" hidden></p>
+    <h1>DJ<br>Vinny</h1>
+    <p style="margin:8px 0 0;font-weight:700" data-i18n="g.req.tagline">Trouve ta toune</p>
+  </div>
+  <div class="card" id="evbox" hidden></div>
+  <div class="card" id="np"></div>
+  <div class="card" id="search">
+    <label for="name" class="muted" style="font-weight:700" data-i18n="g.req.nameLabel">Ton prénom (annoncé avec ta demande)</label>
+    <input type="text" id="name" maxlength="20" placeholder="Optionnel" data-i18n-ph="g.optional" style="margin:6px 0 14px">
+    <label for="q" class="muted" style="font-weight:700" data-i18n="g.req.songLabel">Quelle toune ?</label>
+    <input type="text" id="q" placeholder="Titre ou artiste" data-i18n-ph="c.titleOrArtist" autocomplete="off" style="margin-top:6px">
+    <p class="muted" id="closed" hidden data-i18n="g.req.closed">Les demandes sont fermées pour le moment.</p>
+    <div id="results"></div>
+  </div>
+  <div class="card" id="qcard"><h2 data-i18n="g.upNext">À suivre</h2><div id="queue"></div></div>
+</div>
+<script src="/anim.js"></script>
+<script>
+// code de la soirée (lu dans le QR, puis retiré de l'adresse)
+let ev = '';
+try { const u = new URL(location.href), e = u.searchParams.get('e'); if (e) { localStorage.djEvent = e; history.replaceState(null, '', u.pathname); } ev = localStorage.djEvent || ''; } catch {}
+// langue de l'événement (gardée d'une visite à l'autre pour éviter un changement de langue au chargement)
+try { setLang(localStorage.djEvLang || 'fr'); } catch { setLang('fr'); }
+const evLang = e => { if (!e || !e.lang) return false; try { localStorage.djEvLang = e.lang; } catch {} return setLang(e.lang); };
+let guestId = localStorage.guestId;
+if (!guestId) guestId = localStorage.guestId = 'g' + Math.random().toString(36).slice(2, 12);
+let state = null, lastNow = null;
+const nameInput = document.getElementById('name');
+try { nameInput.value = localStorage.guestName || ''; } catch {}
+nameInput.onchange = () => { localStorage.guestName = nameInput.value; };
+
+const row = (s, extra = '') => `<div class="row slide-in"><img src="${esc(s.artwork)}" alt=""><div class="t"><b>${esc(s.title)}</b><span class="muted">${esc(s.artist)}</span></div>${extra}</div>`;
+
+function render() {
+  evLang(state.event);
+  applyTheme(state.theme);
+  if (state.event) gate(state.event.status, state.event);
+  document.body.className = state.phase ? state.phase.intensity : '';
+  const n = state.nowPlaying;
+  document.getElementById('np').className = 'card' + (n ? ' playing' : '');
+  document.getElementById('np').innerHTML = n
+    ? `<div class="np"><div class="cover" style="background-image:url('${esc(n.artwork)}')"></div><div class="t"><span class="eq"><i></i><i></i><i></i><i></i></span><div><b>${esc(n.title)}</b></div><div class="muted">${esc(n.artist)}</div></div></div>`
+    : '<p class="muted">' + t('g.req.nothing') + '</p>';
+  document.getElementById('queue').innerHTML = state.queue.length
+    ? state.queue.map(s => row(s, s.by === guestId ? '<span class="tag">' + t('g.req.you') + '</span>' : '')).join('')
+    : '<p class="muted">' + t('g.req.emptyQueue') + '</p>';
+  document.getElementById('closed').hidden = state.requestsOpen;
+  const ph = document.getElementById('phase');
+  ph.hidden = !state.phase;
+  if (state.phase) ph.innerHTML = `<span class="phase-badge">${esc(state.phase.name)}</span>`;
+  document.getElementById('queue').querySelectorAll('.row').forEach((r, i) => r.insertAdjacentHTML('afterbegin', `<span class="num${i ? '' : ' first'}">${i + 1}</span>`));
+}
+
+let timer;
+document.getElementById('q').oninput = e => {
+  clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const q = e.target.value.trim();
+    const box = document.getElementById('results');
+    if (q.length < 2) { box.innerHTML = ''; return; }
+    const r = await fetch('/api/search?q=' + encodeURIComponent(q), { headers: { 'x-event': ev, 'x-lang': LANG } });
+    const list = await r.json();
+    if (!r.ok) { box.innerHTML = `<p class="muted">${esc(list.error)}</p>`; return; }
+    box.innerHTML = list.map(s => row(s, `<button data-id="${esc(s.songId)}">${t('g.req.ask')}</button>`)).join('') || '<p class="muted">' + t('c.noResults') + '</p>';
+  }, 350);
+};
+document.getElementById('results').onclick = async e => {
+  const b = e.target.closest('button[data-id]'); if (!b) return;
+  b.disabled = true;
+  const r = await fetch('/api/request', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-event': ev, 'x-lang': LANG }, body: JSON.stringify({ songId: b.dataset.id, guestId, name: document.getElementById('name').value }) });
+  const j = await r.json();
+  if (r.ok) { confetti(); toast(t('g.req.added')); b.textContent = t('g.req.addedBtn'); b.classList.add('done'); } else { toast(j.error); b.disabled = false; }
+};
+
+// Événement : à venir / terminé = on montre l'accueil ou le merci à la place de la recherche
+const fmtDay = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + e.start; } catch { return e.date; } };
+function gate(status, e) {
+  evLang(e);
+  const box = document.getElementById('evbox'), hide = status !== 'live';
+  ['np', 'search', 'qcard'].forEach(id => { document.getElementById(id).hidden = hide; });
+  box.hidden = false;
+  box.innerHTML = '<h2 style="margin:0 0 4px">' + esc(e.name) + '</h2><div class="muted">' + esc(fmtDay(e)) + (e.place ? ' · ' + esc(e.place) : '') + '</div>'
+    + (e.welcome && status !== 'ended' ? '<p style="margin:10px 0 0">' + esc(e.welcome) + '</p>' : '')
+    + (status === 'upcoming' ? '<p class="muted" style="margin-top:12px">' + t('g.req.notYet') + '</p><p><a href="/souhaits.html"><button>' + t('g.req.wishAhead') + '</button></a></p>'
+      : status === 'ended' ? '<p style="margin-top:12px;font-weight:700">' + esc(e.thanks || t('g.thanks')) + '</p>' : '');
+}
+let es = null;
+function connect() {
+  if (es) return;
+  es = new EventSource('/api/events?e=' + encodeURIComponent(ev || ''));
+  es.onmessage = e => { state = JSON.parse(e.data); render(); };
+  es.addEventListener('fx', e => onFx(JSON.parse(e.data).type));
+}
+async function boot() {
+  let j = null, code = 0;
+  try { const r = await fetch('/api/state?e=' + encodeURIComponent(ev), { headers: { 'x-event': ev, 'x-lang': LANG } }); code = r.status; j = await r.json(); } catch {}
+  if (code === 403) {
+    ['np', 'search', 'qcard'].forEach(id => { document.getElementById(id).hidden = true; });
+    const box = document.getElementById('evbox'); box.hidden = false; box.innerHTML = '<p class="muted" style="margin:0">' + t('g.badCode') + '</p>'; return;
+  }
+  if (j && j.guestMode) { gate(j.guestMode === 'live' ? 'upcoming' : j.guestMode, j.event); setTimeout(boot, j.guestMode === 'live' ? 15000 : 60000); return; }
+  if (j && j.event && j.event.status !== 'live') { gate(j.event.status, j.event); if (j.event.status === 'upcoming') setTimeout(boot, 30000); }
+  connect();
+}
+boot();
+</script></body></html>

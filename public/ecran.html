@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="icon" href="/favicon.ico?v=2" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/vinny.svg?v=2"><link rel="apple-touch-icon" href="/vinny-48.png?v=2"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-i18n="g.screen.pageTitle">DJ Vinny : écran de la soirée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<script src="/i18n.js?p=guest"></script>
+<style>
+  html, body { height: 100%; overflow: hidden; cursor: none; }
+  .screen { position: relative; z-index: 1; height: 100vh; padding: 3.5vmin 4vmin; display: grid; grid-template-rows: auto 1fr; gap: 3vmin; }
+  .top { display: flex; align-items: center; gap: 2vmin; }
+  .brand { font: 800 5vmin 'Bricolage Grotesque', sans-serif; letter-spacing: -.02em; }
+  .top .phase-badge { font-size: 2.4vmin; }
+  .grid2 { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 4vmin; min-height: 0; }
+  .now { display: flex; flex-direction: column; justify-content: center; gap: 2.4vmin; min-width: 0; }
+  .cover { width: 46vmin; height: 46vmin; border-radius: 4vmin; background: var(--accent) center/cover; position: relative; animation: pulse 1.6s ease-out infinite; box-shadow: 0 2vmin 6vmin rgba(0,0,0,.45); }
+  .cover:empty::after { content: ""; position: absolute; inset: 0; border-radius: 4vmin; background: radial-gradient(circle at center, var(--ink) 0 9%, transparent 10%), repeating-radial-gradient(circle at center, rgba(21,16,46,.28) 0 .4vmin, transparent .4vmin 1.6vmin); }
+  .now-row { display: flex; gap: 4vmin; align-items: center; }
+  .label { font: 800 2.2vmin 'Figtree', sans-serif; letter-spacing: .18em; color: var(--muted); display: flex; align-items: center; gap: 1.4vmin; }
+  .title { font: 800 7vmin/1 'Bricolage Grotesque', sans-serif; letter-spacing: -.02em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .artist { font: 600 3.6vmin 'Figtree', sans-serif; color: var(--muted); }
+  .by { display: inline-block; font: 700 2.6vmin 'Figtree', sans-serif; padding: .6vmin 2vmin; border-radius: 999px; border: .35vmin solid var(--accent); color: var(--accent); margin-top: 1vmin; }
+  .ribbon { display: inline-block; font: 800 3vmin 'Bricolage Grotesque', sans-serif; letter-spacing: .12em; background: var(--accent); color: var(--ink); padding: 1vmin 3vmin; border-radius: 999px; transform: rotate(-2deg); }
+  .eq { height: 4vmin; gap: .7vmin; } .eq i { width: 1vmin; }
+  .eq i { animation: bar .9s ease-in-out infinite alternate; } .eq i:nth-child(2) { animation-duration: .7s; } .eq i:nth-child(3) { animation-duration: 1.1s; } .eq i:nth-child(4) { animation-duration: .8s; }
+  .side { min-width: 0; display: flex; flex-direction: column; gap: 3vmin; min-height: 0; }
+  .qr { background: var(--card); border: .4vmin solid var(--line); border-radius: 3vmin; padding: 2.4vmin; display: flex; gap: 2.4vmin; align-items: center; }
+  .qr img { width: 24vmin; height: 24vmin; border-radius: 1.6vmin; background: #fff; flex: none; }
+  .qr b { font: 800 3.4vmin/1.1 'Bricolage Grotesque', sans-serif; display: block; }
+  .qr span { font: 600 2.2vmin 'Figtree', sans-serif; color: var(--muted); }
+  .qr.closed { display: none; } /* demandes fermées : le code QR disparaît */
+  .next { background: var(--card); border: .4vmin solid var(--line); border-radius: 3vmin; padding: 2.4vmin; flex: 1; min-height: 0; overflow: hidden; }
+  .next h2 { font-size: 2.2vmin; letter-spacing: .18em; margin-bottom: 1vmin; }
+  .next .n { display: flex; align-items: center; gap: 2vmin; padding: 1.2vmin 0; }
+  .next .n + .n { border-top: .3vmin solid var(--line); }
+  .next .num { width: 5vmin; height: 5vmin; font-size: 2.4vmin; }
+  .next .t b { font-size: 2.8vmin; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; } .next .t span { font-size: 2.2vmin; color: var(--muted); display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .next .who { font: 700 2vmin 'Figtree', sans-serif; color: var(--accent); }
+  .ticker { position: fixed; left: 50%; bottom: 4vmin; transform: translate(-50%, 20vmin); background: var(--accent); color: var(--ink); font: 800 3.4vmin 'Bricolage Grotesque', sans-serif; padding: 1.6vmin 4vmin; border-radius: 999px; z-index: 5; transition: transform .5s cubic-bezier(.2,1.2,.4,1); white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+  .ticker.show { transform: translate(-50%, 0); }
+  .callout { position: fixed; inset: 0; z-index: 8; background: rgba(21,16,46,.94); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 4vmin; text-align: center; }
+  .callout.show { display: flex; animation: pop2 .5s ease-out; }
+  .callout h1 { font-size: 11vmin; margin: 0; }
+  .callout img { width: 46vmin; height: 46vmin; background: #fff; border-radius: 3vmin; animation: pulse 1.6s ease-out infinite; }
+  .callout p { font: 700 4vmin 'Figtree', sans-serif; color: var(--muted); margin: 0; }
+  @keyframes pop2 { from { opacity: 0; transform: scale(.94); } }
+  .float { position: fixed; z-index: 0; border-radius: 50%; opacity: .5; pointer-events: none; animation: bob 7s ease-in-out infinite alternate; }
+  @keyframes bob { to { transform: translate(3vmin, -4vmin) rotate(25deg); } }
+  body.party .float { animation-duration: 2.6s; }
+  html.burst .float { animation-duration: 1.4s; }
+  /* Ambiance : égaliseur factice en bas, faisceaux lumineux, Vinny qui danse au rythme du faux battement (--beat) */
+  :root { --beat: 0; }
+  #eqbars { position: fixed; left: 0; right: 0; bottom: 0; width: 100vw; height: 22vmin; z-index: 0; pointer-events: none; }
+  .beam { position: fixed; top: -4vmin; width: 34vmin; height: 135vmin; z-index: 0; pointer-events: none; transform-origin: 50% 0; opacity: 0; transition: opacity 1.6s;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--c) 60%, transparent), transparent 82%); clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%); animation: swing 5.5s ease-in-out infinite alternate; }
+  body.party .beam, html.burst .beam { opacity: .30; } html.burst .beam { animation-duration: 2.4s; opacity: .45; }
+  @keyframes swing { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+  .vlogo { width: 7vmin; height: 7vmin; transform: translateY(calc(var(--beat) * -1vmin)) rotate(calc((var(--beat) - .5) * 8deg)) scale(calc(1 + var(--beat) * .08)); transform-origin: 50% 90%; }
+  .cover { transform: scale(calc(1 + var(--beat) * .025)); }
+  .now-row.enter .cover { animation: coverIn .7s cubic-bezier(.2,1.3,.4,1), pulse 1.6s ease-out infinite; }
+  .now-row.enter .title { animation: titleIn .6s ease-out; } .now-row.enter .artist { animation: titleIn .8s ease-out; }
+  @keyframes coverIn { from { transform: scale(.6) rotate(-8deg); opacity: 0; } }
+  @keyframes titleIn { from { transform: translateX(-4vmin); opacity: 0; } }
+  .next .n { animation: titleIn .5s ease-out backwards; } .next .n:nth-child(2) { animation-delay: .06s; } .next .n:nth-child(3) { animation-delay: .12s; } .next .n:nth-child(4) { animation-delay: .18s; } .next .n:nth-child(5) { animation-delay: .24s; }
+  /* Mode Soirée : canevas des lasers, boule disco et symboles de casino (dessiné seulement en période dansante) */
+  #fx { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1.2s; }
+  body.party #fx { opacity: 1; }
+  body.party .title, body.party .artist { text-shadow: 0 .3vmin 1.6vmin rgba(21,16,46,.85), 0 0 .4vmin rgba(21,16,46,.6); }
+  html.drop .now-row { animation: punch .9s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes punch { 18% { transform: scale(1.05) rotate(-.6deg); } }
+  /* Repli si les images par seconde chutent : on fige les halos flous, puis on retire les faisceaux */
+  html.fx-lite .bg-anim::before, html.fx-lite .bg-anim::after { animation: none; }
+  html.fx-off .beam, html.fx-off #fx { display: none; }
+  #fxinfo { position: fixed; left: 1.5vmin; bottom: 1.5vmin; z-index: 9; display: none; font: 700 1.8vmin 'Figtree', sans-serif; background: rgba(21,16,46,.8); padding: .6vmin 1.4vmin; border-radius: 999px; }
+  html.fx-info #fxinfo { display: block; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .screen { overflow: auto; height: auto; } html, body { overflow: auto; } }
+</style></head>
+<body><div class="bg-anim"></div>
+<i class="beam" style="left:8%;--c:var(--accent)"></i><i class="beam" style="left:42%;--c:var(--accent2);animation-delay:-2s"></i><i class="beam" style="left:76%;--c:var(--mint);animation-delay:-4s"></i>
+<canvas id="fx"></canvas>
+<canvas id="eqbars"></canvas>
+<i class="float" style="width:3vmin;height:3vmin;background:var(--accent);top:12%;left:46%"></i>
+<i class="float" style="width:2vmin;height:5vmin;border-radius:.6vmin;background:var(--accent2);top:70%;left:50%;animation-delay:-2s"></i>
+<i class="float" style="width:2.4vmin;height:2.4vmin;background:var(--mint);top:30%;left:92%;animation-delay:-4s"></i>
+<i class="float" style="width:4vmin;height:4vmin;border:.7vmin solid var(--accent2);top:85%;left:8%;animation-delay:-1s;background:none"></i>
+<i class="float" style="width:2vmin;height:2vmin;background:var(--violet);top:8%;left:70%;animation-delay:-3s"></i>
+
+<div class="screen">
+  <div class="top"><img class="vlogo" src="/vinny.svg" alt=""><span class="brand">DJ Vinny</span><span id="phase"></span><span style="flex:1"></span><span class="muted" id="clock" style="font-size:2.6vmin"></span></div>
+  <div class="grid2">
+    <div class="now" id="now"></div>
+    <div class="side">
+      <div class="qr"><img src="/api/qr.png" alt="QR"><div><b data-i18n="g.screen.qrTitle">Demande ta chanson !</b><span data-i18n="g.screen.qrSub">Scanne le code avec ton téléphone</span></div></div>
+      <div class="next"><h2 data-i18n="g.screen.next">À SUIVRE</h2><div id="next"></div></div>
+    </div>
+  </div>
+</div>
+<div class="ticker" id="ticker"></div>
+<div id="fxinfo"></div>
+<div class="callout" id="callout"><h1 data-i18n="g.screen.calloutTitle">Une demande spéciale ?</h1><img src="/api/qr.png" alt="QR"><p data-i18n="g.screen.calloutSub">Scanne le code et choisis ta chanson</p></div>
+
+<script src="/anim.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let state = null, seen = null, tickTimer, callTimer, shownUid = null, lastPh;
+setLang('fr');
+function render() {
+  setLang(state.event ? state.event.lang : 'fr'); // langue de l'événement actif
+  applyTheme(state.theme);
+  const ph = state.phase ? state.phase.intensity : '';
+  document.body.className = ph;
+  if (lastPh !== undefined && ph === 'party' && lastPh !== 'party') setTimeout(() => drop(true), 400); // on entre en soirée dansante : gros drop
+  lastPh = ph;
+  $('phase').innerHTML = state.phase ? `<span class="phase-badge">${esc(state.phase.name)}</span>` : '';
+  document.querySelector('.qr').classList.toggle('closed', !state.requestsOpen);
+  if (!state.requestsOpen) $('callout').classList.remove('show');
+  const n = state.nowPlaying, isNew = !!n && n.uid !== shownUid;
+  if (isNew) { shownUid = n.uid; songChanged(); }
+  $('now').innerHTML = n
+    ? `<div class="now-row${isNew ? ' enter' : ''}"><div class="cover" style="${n.artwork ? `background-image:url('${esc(n.artwork)}')` : ''}"></div>
+        <div style="min-width:0"><div class="label"><span class="eq"><i></i><i></i><i></i><i></i></span>${t('g.screen.playing')}</div>
+        <div class="title">${esc(n.title)}</div><div class="artist">${esc(n.artist)}</div>
+        ${n.source === 'guest' ? `<div class="by">${n.byName ? t('g.screen.by', { name: esc(n.byName) }) : t('g.screen.special')}</div>` : ''}
+        ${n.source === 'line' ? '<div style="margin-top:2vmin"><span class="ribbon">' + t('g.screen.lineDance') + '</span></div>' : ''}</div></div>`
+    : '<div class="title" style="color:var(--muted)">' + t('g.screen.soon') + '</div>';
+  $('next').innerHTML = state.queue.slice(0, 5).map((s, i) => `<div class="n"><span class="num${i ? '' : ' first'}">${i + 1}</span><div class="t"><b>${esc(s.title)}</b><span>${esc(s.artist)}</span></div>${s.source === 'guest' ? `<span class="who">${esc(s.byName || t('c.guest'))}</span>` : ''}</div>`).join('')
+    || '<p class="muted" style="font-size:2.4vmin">' + t('g.screen.noRequests') + '</p>';
+  // nouvelle demande d'invité : bandeau de quelques secondes
+  const uids = new Set(state.queue.map(q => q.uid));
+  if (seen) for (const q of state.queue) if (!seen.has(q.uid) && q.source === 'guest') { ticker(q.byName ? t('g.screen.tickerNamed', { name: esc(q.byName), title: esc(q.title) }) : t('g.screen.ticker', { title: esc(q.title) })); if (!document.body.classList.contains('calm')) confetti(30); }
+  seen = uids;
+}
+function ticker(html) {
+  const t = $('ticker'); t.innerHTML = html; t.classList.add('show');
+  clearTimeout(tickTimer); tickTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
+function showCallout() {
+  if (!state || !state.requestsOpen) return; // pas de rappel du QR quand les demandes sont fermées
+  $('callout').classList.add('show'); confetti(30);
+  clearTimeout(callTimer); callTimer = setTimeout(() => $('callout').classList.remove('show'), 14000);
+}
+setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }); }, 1000);
+document.addEventListener('keydown', e => { if (e.key === 'f' || e.key === 'F') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); });
+const es = new EventSource('/api/events');
+let qrRev = null;
+const syncQr = st => { if (st.qrRev === qrRev) return; qrRev = st.qrRev; document.querySelectorAll('img[src^="/api/qr.png"]').forEach(i => { const u = new URL(i.getAttribute('src'), location.href); u.searchParams.set('v', qrRev); i.src = u.pathname + u.search; }); };
+es.onmessage = e => { state = JSON.parse(e.data); syncQr(state); render(); };
+es.addEventListener('fx', e => { const t = JSON.parse(e.data).type; if (t === 'callout') showCallout(); else { onFx(t); if (t === 'party' || t === 'confetti') drop(true); } });
+</script>
+<script>
+// ---------- Ambiance : faux égaliseur (aucun lien avec le vrai son), faux battement, confettis ----------
+const calmMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const eq = $('eqbars'), g = eq.getContext('2d'), NB = 56, lvl = new Float32Array(NB), tgt = new Float32Array(NB), peak = new Float32Array(NB);
+let beat = 0, beatN = 0, beatAt = 0, nextKick = 0, lastTgt = 0, lastFrame = 0, lastNow = 0, cols = ['#FFD23F', '#FF4F7B'], lastCols = 0;
+function energy() {
+  if (!state || !state.nowPlaying) return 0.06;
+  if (document.documentElement.classList.contains('burst')) return 1;
+  return document.body.classList.contains('party') ? 0.8 : document.body.classList.contains('calm') ? 0.32 : 0.55;
+}
+function sizeEq() { const r = Math.min(devicePixelRatio || 1, 1.5); eq.width = innerWidth * r; eq.height = eq.clientHeight * r; }
+addEventListener('resize', sizeEq); sizeEq();
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (document.hidden) return;
+  const raw = now - (lastNow || now), dt = Math.min(raw, 100); lastNow = now; meter(now, raw);
+  const e = energy(), party = document.body.classList.contains('party'), bpm = e > 0.7 ? 124 : e > 0.4 ? 104 : 72;
+  if (now > nextKick) {
+    // en soirée, battement régulier à 124 BPM pour caler les lasers; ailleurs, léger flottement comme avant
+    const p = 60000 / bpm;
+    nextKick = party && now - nextKick < p ? nextKick + p : now + p * (party ? 1 : 0.97 + Math.random() * 0.06);
+    beat = 1; beatN++; beatAt = now;
+    for (let i = 0; i < 14; i++) tgt[i] = Math.min(1, tgt[i] + e * (0.5 + Math.random() * 0.4));
+    if (party) fxKick(now, e);
+  }
+  beat *= Math.pow(0.86, dt / 33);
+  if (party || now - lastFrame >= 33) document.documentElement.style.setProperty('--beat', (beat * (e > 0.1 ? 1 : 0)).toFixed(3));
+  // Soirée : canevas plein écran à pleine cadence; on continue 1,4 s après la fin pour le fondu
+  if (party) partyLast = now;
+  if (fxLevel > 0 && now - partyLast < 1400) drawFx(now, dt / 1000, e);
+  else if (fxDirty) { c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, FW, FH); fxDirty = false; P.length = 0; rings.length = 0; }
+  if (now - lastFrame < 33) return; // égaliseur à ~30 images/s : léger pour un petit portable
+  lastFrame = now;
+  if (now - lastTgt > 110) { lastTgt = now; for (let i = 0; i < NB; i++) tgt[i] = e * (0.12 + Math.random() * 0.88) * (1 - (i / NB) * 0.55); }
+  if (now - lastCols > 2000) { lastCols = now; const cs = getComputedStyle(document.body); cols = [cs.getPropertyValue('--accent2').trim() || '#FF4F7B', cs.getPropertyValue('--accent').trim() || '#FFD23F']; }
+  const W = eq.width, H = eq.height, bw = W / NB; g.clearRect(0, 0, W, H);
+  const gr = g.createLinearGradient(0, H, 0, 0); gr.addColorStop(0, cols[0]); gr.addColorStop(1, cols[1]); g.fillStyle = gr; g.globalAlpha = 0.55;
+  for (let i = 0; i < NB; i++) {
+    lvl[i] += (tgt[i] - lvl[i]) * (tgt[i] > lvl[i] ? 0.5 : 0.16); tgt[i] *= 0.93;
+    peak[i] = Math.max(lvl[i], peak[i] - 0.012);
+    const h = Math.max(H * 0.015, lvl[i] * H * 0.96);
+    g.beginPath(); g.roundRect ? g.roundRect(i * bw + bw * 0.14, H - h, bw * 0.72, h, bw * 0.2) : g.rect(i * bw + bw * 0.14, H - h, bw * 0.72, h); g.fill();
+  }
+  g.globalAlpha = 0.9; g.fillStyle = cols[1];
+  for (let i = 0; i < NB; i++) g.fillRect(i * bw + bw * 0.14, H - peak[i] * H * 0.96 - H * 0.03, bw * 0.72, H * 0.015);
+}
+
+// ---------- Mode Soirée : lasers, boule disco, symboles de casino, anneaux et « drop » (Canvas 2D, sans filtre) ----------
+const fx = $('fx'), c2 = fx.getContext('2d'), SUITS = ['♠', '♥', '♦', '♣', '★'], TAU = Math.PI * 2;
+const fxParam = new URLSearchParams(location.search).get('fx'); // ?fx=0|1|2 force un niveau d'animation
+let fxLevel = fxParam === null ? 2 : Math.max(0, Math.min(2, parseInt(fxParam, 10) || 0)), fxForced = fxParam !== null;
+let FW = 0, FH = 0, U = 1, partyLast = -1e9, fxDirty = false, flash = 0, dropUntil = 0, ballRot = 0;
+const P = [], rings = [], spots = [], sprites = new Map();
+function sizeFx() {
+  const s = fxLevel === 2 ? Math.min(devicePixelRatio || 1, 1) : 0.6; // réduit : 60 % de la résolution, l'étirement ne se voit pas
+  FW = fx.width = Math.round(innerWidth * s); FH = fx.height = Math.round(innerHeight * s); U = Math.min(FW, FH) / 100; // U = 1vmin
+  sprites.clear(); P.length = 0; rings.length = 0; spots.length = 0;
+  for (let i = 0; i < (fxLevel === 2 ? 44 : 22); i++) spots.push({ u: Math.random(), y: 0.12 + Math.random() * 0.8, r: 0.4 + Math.random() * 0.7, c: i % 3 });
+}
+addEventListener('resize', sizeFx); sizeFx();
+// symboles pré-dessinés une fois par couleur : drawImage coûte bien moins cher que fillText à chaque image
+function sprite(k, col) {
+  const key = k + col; let s = sprites.get(key); if (s) return s;
+  const n = Math.ceil(6 * U); s = document.createElement('canvas'); s.width = s.height = n;
+  const x = s.getContext('2d'); x.fillStyle = col; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = `${Math.round(n * 0.8)}px 'Segoe UI Symbol', 'DejaVu Sans', sans-serif`; x.fillText(SUITS[k] + '︎', n / 2, n / 2);
+  sprites.set(key, s); return s;
+}
+function particle(burst, x, y) {
+  const a = Math.random() * TAU, v = (40 + Math.random() * 80) * U;
+  return burst
+    ? { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30 * U, s: (2 + Math.random() * 2.6) * U, k: Math.random() * 5 | 0, c: Math.random() * 4 | 0, rot: 0, vr: (Math.random() - 0.5) * 8, ph: 0, life: 2 + Math.random(), burst }
+    : { x: Math.random() * FW, y: Math.random() * FH, vx: 0, vy: -(4 + Math.random() * 8) * U, s: (1.6 + Math.random() * 2.4) * U, k: Math.random() * 5 | 0, c: Math.random() * 4 | 0, rot: Math.random() * TAU, vr: (Math.random() - 0.5) * 1.5, ph: Math.random() * TAU, life: 1, burst };
+}
+function ring(x, y, r, v, w, a, c) { rings.push({ x, y, r, v, w, a, c, max: Math.hypot(FW, FH) * 0.6 }); }
+function coverCenter() {
+  const cv = document.querySelector('.cover'); if (!cv) return [FW / 2, FH / 2, 0];
+  const b = cv.getBoundingClientRect(), k = FW / innerWidth; return [(b.left + b.width / 2) * k, (b.top + b.height / 2) * k, b.width * 0.5 * k];
+}
+// à chaque temps : une onde sort de la pochette (aux 2 temps), et pendant le drop, un coup de stroboscope
+function fxKick(now, e) {
+  if (fxLevel === 0) return;
+  if (e > 0.5 && beatN % 2 === 0) { const [x, y, r] = coverCenter(); ring(x, y, r, 55 * U, 0.5 * U, 0.45, beatN >> 1); }
+  if (now < dropUntil) flash = Math.max(flash, 0.14);
+}
+// le drop : éclair, ondes de choc, explosion de symboles, lasers déchaînés pendant 8 temps. big = false : version légère (nouvelle chanson)
+function drop(big) {
+  if (calmMotion || fxLevel === 0 || !document.body.classList.contains('party')) return;
+  const now = performance.now(), [x, y] = coverCenter(), n = (big ? 70 : 24) * (fxLevel === 2 ? 1 : 0.45);
+  flash = big ? 0.5 : 0.22;
+  if (big) dropUntil = now + 8 * 60000 / 124;
+  for (let i = 0; i < (big ? 3 : 2); i++) ring(FW / 2, FH / 2, i * 7 * U, (120 + i * 35) * U, (1.5 - i * 0.35) * U, 0.7, i);
+  for (let i = 0; i < n; i++) P.push(particle(true, x, y));
+  if (!big) return;
+  const h = document.documentElement; h.classList.remove('drop'); void h.offsetWidth; h.classList.add('drop');
+  setTimeout(() => h.classList.remove('drop'), 900);
+}
+function lasers(now, e, pal, dropping) {
+  if (e < 0.5) return;
+  const t = now / 1000, L = Math.hypot(FW, FH), half = 60000 / 124 / 2;
+  const k = dropping ? 2.4 : document.documentElement.classList.contains('burst') ? 1.5 : 1;
+  const pat = dropping ? 0 : (beatN >> 3) % 3; // le motif change aux 8 temps : éventail, ciseaux, stroboscope
+  if ((pat === 2 || dropping) && (now - beatAt) % half > half * 0.35) return; // stroboscope : allumé 35 % de chaque demi-temps
+  const amp = (0.55 + 0.45 * beat) * (dropping ? 1.3 : 1);
+  c2.lineCap = 'round';
+  for (const [ex, ey, m] of [[0, FH, 1], [FW, FH, -1]]) {
+    c2.strokeStyle = pal[((beatN >> 2) + (m > 0 ? 0 : 1)) % 3];
+    c2.beginPath();
+    const nb = pat === 0 ? 5 : pat === 1 ? 3 : 7;
+    for (let i = 0; i < nb; i++) {
+      let a;
+      if (pat === 0) a = -Math.PI / 4 + (i - 2) * 0.13 + Math.sin(t * 0.9 * k) * 0.35;
+      else if (pat === 1) a = -Math.PI / 4 + (i - 1) * 0.22 + Math.sin(t * 1.6 * k + (m > 0 ? 0 : Math.PI)) * 0.55;
+      else a = -Math.PI / 2 + 0.15 + i * (Math.PI / 2 - 0.3) / 6;
+      const dx = Math.cos(a) * m; // miroir pour le coin droit
+      c2.moveTo(ex, ey); c2.lineTo(ex + dx * L, ey + Math.sin(a) * L);
+    }
+    if (fxLevel === 2) { c2.globalAlpha = 0.07 * amp; c2.lineWidth = 1.4 * U; c2.stroke(); } // halo large au lieu d'un flou
+    c2.globalAlpha = 0.45 * amp; c2.lineWidth = 0.28 * U; c2.stroke();
+    c2.globalAlpha = 0.6 * amp; c2.fillStyle = c2.strokeStyle; c2.beginPath(); c2.arc(ex, ey, (1.4 + beat * 1.2) * U, 0, TAU); c2.fill();
+  }
+}
+function disco(now, e, pal) {
+  const r = 4.2 * U, bx = FW * 0.5, by = 3.6 * U + r;
+  // reflets qui balaient la salle (regroupés par couleur : un seul fill par couleur)
+  for (let c = 0; c < 3; c++) {
+    c2.fillStyle = c ? pal[c - 1] : '#FFF6E5'; c2.globalAlpha = (0.14 + 0.24 * beat) * (0.4 + e * 0.6); c2.beginPath();
+    for (const s of spots) if (s.c === c) {
+      const x = (((s.u + ballRot * (0.04 + 0.03 * s.r)) % 1) + 1) % 1 * FW, y = s.y * FH, rr = s.r * U * (1 + 0.3 * beat);
+      c2.moveTo(x + rr, y); c2.arc(x, y, rr, 0, TAU);
+    }
+    c2.fill();
+  }
+  c2.globalCompositeOperation = 'source-over'; c2.globalAlpha = 1;
+  c2.strokeStyle = 'rgba(255,246,229,.35)'; c2.lineWidth = 0.2 * U; c2.beginPath(); c2.moveTo(bx, 0); c2.lineTo(bx, by - r); c2.stroke();
+  c2.save(); c2.beginPath(); c2.arc(bx, by, r, 0, TAU); c2.clip();
+  c2.fillStyle = '#221A47'; c2.fillRect(bx - r, by - r, 2 * r, 2 * r);
+  const rows = 9;
+  for (let j = 0; j < rows; j++) {
+    const l0 = -Math.PI / 2 + j * Math.PI / rows, y0 = by + r * Math.sin(l0), y1 = by + r * Math.sin(l0 + Math.PI / rows), cl = Math.cos(l0 + Math.PI / rows / 2), nc = Math.max(4, Math.round(16 * cl));
+    for (let i = 0; i < nc; i++) {
+      const a0 = ballRot + i * TAU / nc, a1 = a0 + TAU / nc, mid = (a0 + a1) / 2, face = Math.cos(mid);
+      if (face <= 0) continue;
+      const x0 = bx + r * cl * Math.sin(a0), x1 = bx + r * cl * Math.sin(a1);
+      const v = Math.sin(i * 7.1 + j * 3.3 + now / 180) > 0.92 ? 255 : Math.round(70 + 130 * face * cl);
+      c2.fillStyle = `rgb(${v},${v},${Math.min(255, v + 25)})`;
+      c2.fillRect(Math.min(x0, x1) + 0.5, y0 + 0.5, Math.abs(x1 - x0) - 1, y1 - y0 - 1);
+    }
+  }
+  const sh = c2.createRadialGradient(bx - r * 0.35, by - r * 0.4, 0, bx, by, r);
+  sh.addColorStop(0, 'rgba(255,255,255,.35)'); sh.addColorStop(0.5, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(21,16,46,.5)');
+  c2.fillStyle = sh; c2.fillRect(bx - r, by - r, 2 * r, 2 * r); c2.restore();
+  // étincelle sur le temps
+  const gx = bx - r * 0.4, gy = by - r * 0.45, gs = (0.6 + beat * 2.6) * U;
+  c2.globalCompositeOperation = 'lighter'; c2.fillStyle = '#FFF6E5'; c2.globalAlpha = 0.5 + beat * 0.5; c2.beginPath();
+  c2.moveTo(gx, gy - gs); c2.lineTo(gx + gs * 0.15, gy - gs * 0.15); c2.lineTo(gx + gs, gy); c2.lineTo(gx + gs * 0.15, gy + gs * 0.15);
+  c2.lineTo(gx, gy + gs); c2.lineTo(gx - gs * 0.15, gy + gs * 0.15); c2.lineTo(gx - gs, gy); c2.lineTo(gx - gs * 0.15, gy - gs * 0.15); c2.fill();
+}
+function drawFx(now, sec, e) {
+  fxDirty = true;
+  const pal = [cols[1], cols[0], '#38E1B0', '#FFF6E5'], dropping = now < dropUntil;
+  ballRot += sec * (0.3 + e * 0.5) * (dropping ? 2.2 : 1);
+  c2.setTransform(1, 0, 0, 1, 0, 0); c2.globalCompositeOperation = 'source-over'; c2.globalAlpha = 1; c2.clearRect(0, 0, FW, FH);
+  c2.globalCompositeOperation = 'lighter'; // les lumières s'additionnent, comme de vrais faisceaux
+  lasers(now, e, pal, dropping);
+  disco(now, e, pal);
+  // ondes
+  c2.globalCompositeOperation = 'lighter';
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const o = rings[i]; o.r += o.v * sec; const a = o.a * (1 - o.r / o.max);
+    if (a <= 0) { rings.splice(i, 1); continue; }
+    c2.globalAlpha = a; c2.strokeStyle = pal[o.c % 3]; c2.lineWidth = o.w; c2.beginPath(); c2.arc(o.x, o.y, o.r, 0, TAU); c2.stroke();
+  }
+  // symboles de casino : montée lente qui pulse au battement, plus l'explosion du drop
+  c2.globalCompositeOperation = 'source-over';
+  let amb = 0;
+  for (let i = P.length - 1; i >= 0; i--) {
+    const p = P[i];
+    if (p.burst) { p.vy += 70 * U * sec; p.life -= sec; if (p.life <= 0 || p.y > FH + 8 * U) { P.splice(i, 1); continue; } }
+    else { amb++; if (p.y < -6 * U) { p.y = FH + 4 * U; p.x = Math.random() * FW; } }
+    p.x += p.vx * sec; p.y += p.vy * sec; p.rot += p.vr * sec;
+    const sz = p.s * (1 + beat * (p.burst ? 0.2 : 0.45));
+    c2.globalAlpha = p.burst ? Math.min(1, p.life) * 0.9 : (0.22 + beat * 0.3) * (0.5 + e * 0.5);
+    c2.setTransform(1, 0, 0, 1, p.x + (p.burst ? 0 : Math.sin(now / 900 + p.ph) * 2 * U), p.y); c2.rotate(p.rot);
+    c2.drawImage(sprite(p.k, pal[p.c]), -sz / 2, -sz / 2, sz, sz);
+  }
+  c2.setTransform(1, 0, 0, 1, 0, 0);
+  for (let i = amb, n = fxLevel === 2 ? 40 : 18; i < n; i++) P.push(particle(false));
+  if (flash > 0.01) { c2.globalCompositeOperation = 'lighter'; c2.globalAlpha = flash; c2.fillStyle = pal[0]; c2.fillRect(0, 0, FW, FH); flash *= Math.exp(-sec / 0.16); }
+  c2.globalCompositeOperation = 'source-over'; c2.globalAlpha = 1;
+}
+
+// ---------- Mesure des images par seconde : repli automatique « animations réduites » ----------
+// fenêtres de 2 s; 3 fenêtres lentes de suite pendant que la soirée dessine → on baisse d'un niveau (pas de remontée automatique : recharger la page ou touche A)
+const fxName = l => t('g.screen.fx' + l); // animations minimales, réduites, complètes
+let fpsN = 0, fpsT = 0, fps = 0, fpsMax = 0, slow = 0;
+function meter(now, raw) {
+  if (raw > 250 || !fpsT) { fpsN = 0; fpsT = now; return; } // onglet en pause ou premier passage : on ignore
+  fpsN++;
+  if (now - fpsT < 2000) return;
+  fps = fpsN * 1000 / (now - fpsT); fpsN = 0; fpsT = now; fpsMax = Math.max(fpsMax, fps);
+  const ref = Math.min(60, Math.max(50, fpsMax)); // écran 50 ou 60 Hz; au-delà, on vise quand même 60
+  // complet → réduit sous 80 % de la cadence; réduit → minimal seulement sous 40 % (un plafond à 30 i/s, ex. économie d'énergie, garde les lasers)
+  if (!fxForced && fxLevel > 0 && now - partyLast < 100 && fps < ref * (fxLevel === 2 ? 0.8 : 0.4)) { if (++slow >= 3) { slow = 0; setLevel(fxLevel - 1, 'auto'); } }
+  else slow = 0;
+  fxInfo();
+}
+function setLevel(l, why) {
+  fxLevel = Math.max(0, Math.min(2, l)); const h = document.documentElement;
+  h.classList.toggle('fx-lite', fxLevel < 2); h.classList.toggle('fx-off', fxLevel === 0);
+  sizeFx(); fxDirty = false;
+  console.info(`DJ Vinny : ${fxName(fxLevel)} (${why}, ${Math.round(fps)} i/s)`); fxInfo();
+}
+function fxInfo() { $('fxinfo').textContent = `${Math.round(fps)} ${t('g.screen.fps')} · ${fxName(fxLevel)}${fxForced ? ' ' + t('g.screen.manual') : ''}`; }
+if (fxLevel < 2) setLevel(fxLevel, 'manuel');
+// touche I : afficher les i/s; touche A : changer le niveau d'animation à la main
+document.addEventListener('keydown', e => {
+  if (e.key === 'i' || e.key === 'I') document.documentElement.classList.toggle('fx-info');
+  if (e.key === 'a' || e.key === 'A') { fxForced = true; setLevel((fxLevel + 2) % 3, 'manuel'); }
+});
+if (!calmMotion) requestAnimationFrame(frame);
+// confettis : à chaque nouveau titre en soirée dansante (avec un mini drop), et un petit nuage de temps en temps
+function songChanged() { if (!calmMotion && document.body.classList.contains('party')) setTimeout(() => { confetti(26); drop(false); }, 600); }
+setInterval(() => { if (!calmMotion && state && state.nowPlaying && document.body.classList.contains('party')) confetti(12); }, 40000);
+</script></body></html>
