@@ -29,7 +29,7 @@ button:disabled{opacity:.6;cursor:default}
   <h2>1. Mot de passe de l’hôte</h2>
   <p style="margin:0;color:var(--muted)">Il protège votre tableau de bord. Les invités n’en ont pas besoin.</p>
   <label for="pw">Mot de passe</label>
-  <input id="pw" type="password" autocomplete="new-password" autofocus>
+  <div class="row"><input id="pw" type="password" autocomplete="new-password" autofocus><button type="button" class="alt" id="show" aria-pressed="false">Afficher</button></div>
 
   <h2 style="margin-top:26px">2. Votre application Spotify</h2>
   <ol>
@@ -51,6 +51,10 @@ document.getElementById('uri').value = uri;
 document.getElementById('copy').onclick = async e => {
   try { await navigator.clipboard.writeText(uri); } catch { document.getElementById('uri').select(); document.execCommand('copy'); }
   e.target.textContent = 'Copié'; setTimeout(() => { e.target.textContent = 'Copier'; }, 1500);
+};
+document.getElementById('show').onclick = e => {
+  const visible = pw.type === 'password'; pw.type = visible ? 'text' : 'password';
+  e.target.textContent = visible ? 'Masquer' : 'Afficher'; e.target.setAttribute('aria-pressed', visible);
 };
 const err = document.getElementById('err'), go = document.getElementById('go');
 document.getElementById('f').onsubmit = async e => {
