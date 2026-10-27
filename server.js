@@ -17,29 +17,26 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   PUBLIC_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   MAX_PENDING_PER_GUEST: ['number:1:20', '3', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
   REQ_PER_PERIOD: ['number:1:50', '2', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
-  OPENROUTER_API_KEY: ['secret', '', v => /^[\w.-]{10,200}$/.test(v)],
   TTS_MODEL: ['text', 'elevenlabs/eleven-v3', v => /^[\w./:-]{1,80}$/.test(v)],
-  VINNY_VOICE: ['text', 'liam', v => /^[\w -]{1,40}$/.test(v)],
   TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   TUNNEL: ['text', '', v => v === '' || /^[\w.-]+@[\w.-]+:\d{2,5}$/.test(v)],
 };
-let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, OPENROUTER_API_KEY, TTS_MODEL, TTS_VOICE, VINNY_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_ENABLED, SPOTIFY, LICENCE_KEY, CONVEX_URL, TUNNEL;
+let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, TTS_MODEL, TTS_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_LIVE, SPOTIFY, LICENCE_KEY, CONVEX_URL, TUNNEL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
   const g = settingValue;
   PUBLIC_URL = g('PUBLIC_URL').replace(/\/$/, ''); STOREFRONT = g('STOREFRONT').toLowerCase();
   MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2);
-  OPENROUTER_API_KEY = /^sk-[\w-]{16,}$/.test(g('OPENROUTER_API_KEY')) ? g('OPENROUTER_API_KEY') : ''; // le modèle « sk-or-... » de env.example n'est pas une clé : voix désactivée plutôt que des erreurs 401
-  TTS_MODEL = g('TTS_MODEL'); TTS_VOICE = process.env.TTS_VOICE || 'george'; VINNY_VOICE = g('VINNY_VOICE'); // TTS_VOICE (.env) : seulement pour un serveur de voix local
+  TTS_MODEL = g('TTS_MODEL'); TTS_VOICE = process.env.TTS_VOICE || 'george'; // TTS_VOICE (.env) : seulement pour un serveur de voix local
   MUSIC_PROVIDER = g('MUSIC_PROVIDER'); SPOTIFY_CLIENT_ID = g('SPOTIFY_CLIENT_ID'); TTS_BASE_URL = g('TTS_BASE_URL');
-  // Voix : OpenRouter par défaut ; TTS_BASE_URL pointe vers un serveur compatible OpenAI /v1/audio/speech
+  // Version gratuite : clips prégénérés (voix/). Voix en direct : serveur local TTS_BASE_URL (compatible OpenAI /v1/audio/speech) ou passe payante (Convex).
   TTS_LOCAL = !!TTS_BASE_URL;
-  TTS_BASE = (TTS_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
+  TTS_BASE = TTS_BASE_URL.replace(/\/$/, '');
   LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = g('CONVEX_URL').replace(/\/$/, ''); TUNNEL = g('TUNNEL');
-  TTS_ENABLED = TTS_LOCAL || !!OPENROUTER_API_KEY || !!(LICENCE_KEY && CONVEX_URL);
+  TTS_LIVE = TTS_LOCAL || !!(LICENCE_KEY && CONVEX_URL);
   SPOTIFY = MUSIC_PROVIDER === 'spotify';
 }
 // Adresses du PC sur le réseau local (sans les cartes VPN / WSL / virtuelles), pour le QR des invités
@@ -167,7 +164,7 @@ const publicState = () => ({
   theme: (() => { const p = state.phases.find(x => x.id === state.activePhaseId); return p && p.color ? { accent: p.color } : null; })(),
   lists: listsView(), activeList: activeListInfo(), autoCount: state.autoCount,
   phases: state.phases, autoPhases: state.autoPhases,
-  announce: state.announce, tts: TTS_ENABLED, autoFx: state.autoFx,
+  announce: state.announce, tts: TTS_LIVE || hasClips(), ttsLive: TTS_LIVE, autoFx: state.autoFx,
   provider: SPOTIFY ? 'spotify' : 'apple',
   phase: state.phases.find(p => p.id === state.activePhaseId) || null,
   pool: { name: state.poolName, count: state.pool.length },
@@ -745,7 +742,7 @@ app.get('/api/soirees/:day', requireHost, (req, res) => {
 function settingsView() {
   return Object.entries(SETTING_DEFS).map(([key, [type, def]]) => ({
     key, type, def, source: settingSource(key),
-    ...(type === 'secret' ? { set: key === 'OPENROUTER_API_KEY' ? !!OPENROUTER_API_KEY : !!settingValue(key) } : { value: settingValue(key) }),
+    ...(type === 'secret' ? { set: !!settingValue(key) } : { value: settingValue(key) }),
   }));
 }
 app.get('/api/app-settings', requireHost, (req, res) => res.json(settingsView()));
@@ -1065,47 +1062,46 @@ app.post('/api/licence/detacher', requireHost, wrap(async (req, res) => {
   const ev = licEv(req); await convex('/detacher-passe', { evId: ev.id }); await licSync(); res.json({ ok: true });
 }));
 
-// ---------- Voix & jingles (ElevenLabs via OpenRouter) ----------
+// ---------- Voix & jingles ----------
+// Gratuit : clips prégénérés dans voix/<langue>/ (phrases sans titre ni prénom, voir voix/generer.js).
+// Voix en direct (titre, artiste, prénom) : passe payante (Convex) ou serveur de voix local (TTS_BASE_URL).
 const TTS_DIR = path.join(DATA_DIR, 'tts');
+const VOIX_DIR = path.join(__dirname, 'voix');
 const sha = parts => crypto.createHash('sha1').update(parts.join('|')).digest('hex').slice(0, 24);
+const clipsOf = lang => { try { return fs.readdirSync(path.join(VOIX_DIR, lang)).filter(f => f.endsWith('.mp3')); } catch { return []; } };
+const hasClips = () => clipsOf('fr').length > 0 || clipsOf('en').length > 0;
+// Premier clip trouvé parmi les catégories (ex. party-anon-2.mp3), tiré au hasard
+const clipFor = (lang, intensity, cats) => {
+  const files = clipsOf(lang);
+  for (const cat of cats) { const m = files.filter(f => f.startsWith(`${intensity}-${cat}-`)); if (m.length) return `/voix/${lang}/${m[Math.floor(Math.random() * m.length)]}`; }
+  return null;
+};
 
 // Synthèse d'un morceau de texte, avec cache disque : un même texte n'est facturé qu'une fois.
-// o : model, voice, prev/next (contexte de prosodie ElevenLabs), voiceSettings
+// o : voiceSettings, prev/next (contexte de prosodie ElevenLabs), lang
+const voiceLive = () => TTS_LOCAL || voiceViaPass();
 async function synth(text, o = {}) {
-  if (!TTS_ENABLED) throw E('err.ttsOff', 400);
   if (voiceViaPass() && text.length <= 400) { // voix incluse avec la passe : Convex choisit le modèle et la voix
     const lang = okLang(o.lang || evLang()), hash = sha(['convex', text, lang, JSON.stringify(o.voiceSettings || null)]), file = path.join(TTS_DIR, hash + '.mp3');
     if (!fs.existsSync(file)) {
       try {
         const mp3 = await convex('/voix', { evId: activeEvent().id, texte: text, lang, prev: o.prev, next: o.next, voiceSettings: o.voiceSettings || undefined }, true);
         fs.mkdirSync(TTS_DIR, { recursive: true }); fs.writeFileSync(file, mp3);
-      } catch (e) { if (!OPENROUTER_API_KEY && !TTS_LOCAL) throw e; console.warn('Voix incluse indisponible, repli :', e.key); return synthOpenRouter(text, o); }
+      } catch (e) { if (!TTS_LOCAL) throw e; console.warn('Voix incluse indisponible, repli :', e.key); return synthLocal(text, o); }
       licSync(); // met à jour les caractères restants
     }
     return { hash, file };
   }
-  if (!TTS_LOCAL && !OPENROUTER_API_KEY) throw E('err.ttsNeedPass', 402);
-  return synthOpenRouter(text, o);
+  if (!TTS_LOCAL) throw E('err.ttsNeedPass', 402);
+  return synthLocal(text, o);
 }
-async function synthOpenRouter(text, o) {
-  const model = TTS_LOCAL ? TTS_MODEL : (o.model || TTS_MODEL);
-  const voice = TTS_LOCAL ? TTS_VOICE : VINNY_VOICE;
+async function synthLocal(text, o) {
   const lang = okLang(o.lang || evLang());
-  const el = TTS_LOCAL ? {} : { language_code: lang }; // force la langue (sinon « François » peut être lu à l'anglaise)
-  if (o.prev) el.previous_text = o.prev;
-  if (o.next) el.next_text = o.next;
-  if (o.voiceSettings) el.voice_settings = o.voiceSettings;
-  const provider = !TTS_LOCAL && Object.keys(el).length ? { options: { elevenlabs: el } } : null;
-  const hash = sha([TTS_BASE, model, voice, text, JSON.stringify(provider), ...(TTS_LOCAL ? [lang] : [])]); // la langue est déjà dans provider (ElevenLabs)
+  const hash = sha([TTS_BASE, TTS_MODEL, TTS_VOICE, text, lang]);
   const file = path.join(TTS_DIR, hash + '.mp3');
   if (!fs.existsSync(file)) {
-    const headers = { 'Content-Type': 'application/json' };
-    if (!TTS_LOCAL) headers.Authorization = 'Bearer ' + OPENROUTER_API_KEY;
-    const body = { model, input: text, voice, response_format: 'mp3' };
-    if (TTS_LOCAL) body.language = lang;
-    if (provider) body.provider = provider;
     let r;
-    try { r = await fetch(TTS_BASE + '/audio/speech', { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) }); }
+    try { r = await fetch(TTS_BASE + '/audio/speech', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: TTS_MODEL, input: text, voice: TTS_VOICE, response_format: 'mp3', language: lang }), signal: AbortSignal.timeout(20000) }); }
     catch { throw E('err.ttsUnreachable', 502, { url: TTS_BASE }); }
     if (!r.ok) throw new Error('TTS ' + r.status);
     fs.mkdirSync(TTS_DIR, { recursive: true });
@@ -1140,9 +1136,16 @@ app.post('/api/announce', requireHost, wrap(async (req, res) => {
   const name = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   // prénom -> « demande spéciale de X » ; demande sans prénom -> « en demande spéciale » ; autre titre -> annonce simple
   const tpls = phaseLine ? [phaseLine] : moment && c[moment] ? c[moment] : isCallout ? c.callout : req.body.source === 'line' && c.line ? c.line : name ? c.named : req.body.source === 'guest' ? c.anon : c.plain;
+  if (!voiceLive()) { // gratuit : clip générique prégénéré (sans titre ni prénom)
+    const intensity = phase && phase.intensity === 'calm' ? 'calm' : 'party', src = req.body.source;
+    const cats = phaseLine ? ['phase'] : moment ? [moment] : isCallout ? ['callout'] : src === 'line' ? ['line', 'plain'] : src === 'guest' ? ['anon', 'plain'] : ['plain', 'anon'];
+    const url = clipFor(lang, intensity, cats) || clipFor(lang, intensity === 'calm' ? 'party' : 'calm', cats);
+    if (!url) throw E('err.ttsNeedPass', 402);
+    return res.json({ url, text: '' });
+  }
   const text = fill(pick(tpls), { title, artist, name });
   console.log('Annonce :', text);
-  const { file } = await synth(text, { model: cfg.model, voice: c.voice || cfg.voice, voiceSettings: c.voiceSettings || null, lang });
+  const { file } = await synth(text, { voiceSettings: c.voiceSettings || null, lang });
 
   const key = sha(['v2', file, c.tempo, c.reverb, c.ratio, c.presence, c.lufs]);
   const out = path.join(TTS_DIR, key + '.mp3');
@@ -1162,6 +1165,10 @@ app.post('/api/announce', requireHost, wrap(async (req, res) => {
   }
   res.json({ url: `/api/tts/${key}.mp3`, text });
 }));
+app.get('/voix/:lang/:name', requireHost, (req, res) => {
+  if (!/^[a-z]{2}$/.test(req.params.lang) || !/^[\w-]+\.mp3$/.test(req.params.name)) return res.sendStatus(404);
+  res.sendFile(path.join(VOIX_DIR, req.params.lang, req.params.name), err => err && !res.headersSent && res.sendStatus(404));
+});
 // Sons enregistrés : réservés à l'hôte (ne pas servir les fichiers aux invités)
 app.get('/sounds/:name', requireHost, (req, res) => {
   if (!/^[\w.-]+\.(mp3|json)$/.test(req.params.name)) return res.sendStatus(404);

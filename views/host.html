@@ -356,7 +356,7 @@ async function playUrl(url, level = 0.2) {
   } finally { busyN--; if (duck) duckEnd(); }
 }
 async function speak(text) {
-  if (!text || !state || !state.tts) return;
+  if (!text || !state || !state.ttsLive) return toast(t('h.noLive'));
   try { await playUrl((await api('/api/tts', 'POST', { text })).url); } catch (e) { console.error(e); }
 }
 // Annonce « collage » : phrases fixes en cache + seulement titre/artiste et prénom générés (voir /api/announce)
@@ -379,7 +379,7 @@ $('btnNext').onclick = () => {
 };
 $('btnJingle').onclick = () => {
   const p = state.phase;
-  if (!p || !p.jingle) return toast(t('h.noJingle')); speak(p.jingle);
+  if (!p || !p.jingle) return toast(t('h.noJingle')); state.ttsLive ? speak(p.jingle) : sayMoment('phase')();
 };
 $('btnConf').onclick = () => api('/api/fx', 'POST', { type: 'confetti' });
 $('btnParty').onclick = () => api('/api/fx', 'POST', { type: 'party' });

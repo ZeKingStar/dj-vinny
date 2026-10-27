@@ -101,5 +101,39 @@
    "name": "Party",
    "jingle": "Ladies and gentlemen, the dance floor is officially open! For special requests, scan the QR code on the screen. And if a song empties the floor, don't worry: we'll switch to another one, fast! Come on, everybody, let's dance!"
   }
+ },
+ "gratuit": {
+  "party": {
+   "anon": [
+    "[excited] A special request just came in!",
+    "[excited] And now, a special request from a guest! [shouting] Let's dance!",
+    "[excited] Someone in the room made a request! [laughs] Thank you, mystery guest!",
+    "[excited] Special request! [shouting] Come on, let's move!"
+   ],
+   "plain": [
+    "[excited] And now, here comes the next tune!",
+    "[excited] This is DJ Vinny! Let's keep it going!",
+    "[excited] Come on, everybody! [shouting] Keep dancing!",
+    "[excited] A great tune for you, right here!",
+    "[excited] DJ Vinny keeps it rolling, stay on the floor!"
+   ],
+   "line": [
+    "[excited] It's line dance time! Everybody on the floor!",
+    "[excited] Line dance time! Line up, everybody!",
+    "[shouting] Line dance! Come and find your spot!"
+   ]
+  },
+  "calm": {
+   "anon": [
+    "A special request just came in.",
+    "A little request from the room.",
+    "A special request, just for you."
+   ],
+   "plain": [
+    "And now, the next piece.",
+    "DJ Vinny slips in the next one.",
+    "The music goes on. Enjoy your meal."
+   ]
+  }
  }
 }
