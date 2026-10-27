@@ -17,18 +17,19 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   PUBLIC_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   MAX_PENDING_PER_GUEST: ['number:1:20', '3', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
   REQ_PER_PERIOD: ['number:1:50', '2', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
+  LOCK_MINUTES: ['number:0:240', '0', v => /^\d+$/.test(v) && v <= 240],
   TTS_MODEL: ['text', 'elevenlabs/eleven-v3', v => /^[\w./:-]{1,80}$/.test(v)],
   TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
 };
-let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, TTS_MODEL, TTS_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_LIVE, SPOTIFY, LICENCE_KEY, CONVEX_URL;
+let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, LOCK_MIN, TTS_MODEL, TTS_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_LIVE, SPOTIFY, LICENCE_KEY, CONVEX_URL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
   const g = settingValue;
   PUBLIC_URL = g('PUBLIC_URL').replace(/\/$/, ''); STOREFRONT = g('STOREFRONT').toLowerCase();
-  MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2);
+  MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2); LOCK_MIN = Math.min(240, Number(g('LOCK_MINUTES')) || 0);
   TTS_MODEL = g('TTS_MODEL'); TTS_VOICE = process.env.TTS_VOICE || 'george'; // TTS_VOICE (.env) : seulement pour un serveur de voix local
   MUSIC_PROVIDER = g('MUSIC_PROVIDER'); SPOTIFY_CLIENT_ID = g('SPOTIFY_CLIENT_ID'); TTS_BASE_URL = g('TTS_BASE_URL');
   // Version gratuite : clips prégénérés (voix/). Voix en direct : serveur local TTS_BASE_URL (compatible OpenAI /v1/audio/speech) ou passe payante (Convex).
@@ -163,7 +164,7 @@ const publicState = () => ({
   theme: (() => { const p = state.phases.find(x => x.id === state.activePhaseId); return p && p.color ? { accent: p.color } : null; })(),
   lists: listsView(), activeList: activeListInfo(), autoCount: state.autoCount,
   phases: state.phases, autoPhases: state.autoPhases,
-  announce: state.announce, tts: TTS_LIVE || hasClips(), ttsLive: TTS_LIVE, autoFx: state.autoFx,
+  lockMin: LOCK_MIN, announce: state.announce, tts: TTS_LIVE || hasClips(), ttsLive: TTS_LIVE, autoFx: state.autoFx,
   provider: SPOTIFY ? 'spotify' : 'apple',
   phase: state.phases.find(p => p.id === state.activePhaseId) || null,
   pool: { name: state.poolName, count: state.pool.length },
@@ -341,6 +342,12 @@ app.post('/login', (req, res) => {
   if (!safeEq(req.body.password || '', HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
   const secure = req.secure || (PUBLIC_URL || '').startsWith('https') ? '; Secure' : '';
   res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
+  res.json({ ok: true });
+});
+// Déverrouillage du dashboard : revérifie le mot de passe de l'hôte (ne change pas la session)
+app.post('/api/verify', requireHost, (req, res) => {
+  if (limited('verify:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
+  if (!safeEq(String(req.body.password || ''), HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
   res.json({ ok: true });
 });
 app.post('/logout', (req, res) => {
