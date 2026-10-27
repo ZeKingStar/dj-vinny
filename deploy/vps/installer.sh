@@ -8,7 +8,7 @@
 set -u
 if [ "$(id -u)" -ne 0 ]; then echo "Lance-moi avec sudo : sudo bash installer.sh"; exit 1; fi
 ICI="$(cd "$(dirname "$0")" && pwd)"
-for f in djvinny-sync.py djvinny-sync.service djvinny-sync.timer; do [ -f "$ICI/$f" ] || { echo "Fichier manquant : $ICI/$f"; exit 1; }; done
+for f in djvinny-sync.py djvinny-sync.service djvinny-sync.timer djvinny-site.conf; do [ -f "$ICI/$f" ] || { echo "Fichier manquant : $ICI/$f"; exit 1; }; done
 [ -f /etc/nginx/djvinny-proxy.conf ] && [ -f /etc/nginx/conf.d/djvinny-limits.conf ] || { echo "djvinny-proxy.conf / djvinny-limits.conf absents : lancer d'abord appliquer.sh"; exit 1; }
 
 SAUV=/root/djvinny-sauvegarde-$(date +%Y%m%d-%H%M%S)
@@ -50,6 +50,13 @@ MANQUE=""
 [ -n "${CONVEX_SITE_URL:-}" ] || MANQUE="$MANQUE CONVEX_SITE_URL"
 [ -f "/etc/letsencrypt/live/${DOMAINE:-djvinny.ca}/fullchain.pem" ] || MANQUE="$MANQUE certificat-*.${DOMAINE:-djvinny.ca}"
 if [ -z "$MANQUE" ]; then
+  # Page de vente de djvinny.ca (dossier site/ copié à côté de ce script) ; nginx -t avant de recharger, sinon retrait
+  if [ -f "$ICI/site/index.html" ]; then
+    install -d -m 755 /var/www/djvinny.ca && cp -r "$ICI/site/." /var/www/djvinny.ca/
+    install -m 644 "$ICI/djvinny-site.conf" /etc/nginx/sites-enabled/djvinny-site.conf
+    if nginx -t 2>/dev/null; then systemctl reload nginx && echo "Page djvinny.ca en ligne"
+    else rm -f /etc/nginx/sites-enabled/djvinny-site.conf; echo "ÉCHEC de nginx -t : page djvinny.ca retirée, nginx inchangé"; fi
+  fi
   systemctl enable --now djvinny-sync.timer && echo "Minuterie activée"
 else
   echo "Minuterie NON activée, il manque :$MANQUE (voir README.md, puis relancer ce script)"

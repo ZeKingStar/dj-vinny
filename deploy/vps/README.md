@@ -4,6 +4,8 @@ Chaque client payant a `<client>.djvinny.ca`. Son serveur DJ Vinny (sur son PC) 
 
 Rien ici ne touche à `djvinny.korvia.ca` (montage actuel de Pat).
 
+`djvinny.ca` lui-même sert la page de vente bilingue (`site/`, bloc `djvinny-site.conf`, `www` redirigé). Installée par `installer.sh` en même temps que la minuterie, une fois le certificat obtenu. Les boutons Télécharger et Acheter restent grisés (« Bientôt ») tant que `LIENS` est vide dans `site/index.html` (étapes 9 et 4). Dans le DNS, `www` doit pointer vers le VPS (A ou CNAME vers `djvinny.ca`).
+
 ## Installation (une fois, avec l'accord de Pat)
 
 Raccourci : copier le dossier `deploy/vps/` sur le VPS puis `sudo bash installer.sh`. Il fait les étapes 1, 2 et 4 avec sauvegarde, `sshd -t` et remise de l'ancienne config en cas d'échec, crée `/etc/djvinny-sync.env` avec un jeton, et n'active la minuterie que lorsque `CONVEX_SITE_URL` et le certificat existent. Les étapes 3 (certificat) et 5 (variables Convex) restent à faire.

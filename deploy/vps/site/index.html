@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DJ Vinny</title>
+<meta name="description" content="Tes invités choisissent la musique, Vinny l'annonce. / Your guests pick the music, Vinny calls it out.">
+<link rel="icon" type="image/svg+xml" href="/vinny.svg">
+<link rel="alternate" hreflang="fr" href="https://djvinny.ca/?lang=fr"><link rel="alternate" hreflang="en" href="https://djvinny.ca/?lang=en">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Même look que l'app : indigo nuit + crème, accents jaune / rose */
+:root { --bg: #15102E; --card: #221A47; --chip: #2D2358; --line: #3A2F6B; --muted: #B3A9D9; --text: #FFF6E5; --ink: #15102E; --yellow: #FFD23F; --pink: #FF4F7B; --mint: #38E1B0; --violet: #7A5CFF; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 17px/1.5 'Figtree', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
+.bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.bg::before, .bg::after { content: ""; position: absolute; width: 70vmax; height: 70vmax; border-radius: 50%; filter: blur(90px); opacity: .2; background: var(--violet); animation: drift 18s ease-in-out infinite alternate; }
+.bg::before { top: -30vmax; left: -20vmax; }
+.bg::after { bottom: -35vmax; right: -25vmax; background: var(--pink); animation-duration: 24s; animation-direction: alternate-reverse; }
+@keyframes drift { to { transform: translate(18vmax, 12vmax) scale(1.25); } }
+@media (prefers-reduced-motion: reduce) { .bg::before, .bg::after { animation: none; } }
+
+header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
+.brand { display: flex; align-items: center; gap: 10px; font: 800 20px 'Bricolage Grotesque', sans-serif; text-decoration: none; }
+.brand img { width: 40px; height: 40px; }
+.lang { display: flex; gap: 4px; background: var(--chip); border: 2px solid var(--line); border-radius: 999px; padding: 3px; }
+.lang button { font: 700 14px 'Figtree', sans-serif; min-width: 44px; min-height: 36px; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; }
+.lang button[aria-pressed=true] { background: var(--yellow); color: var(--ink); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 999px; font: 700 17px 'Figtree', sans-serif; text-decoration: none; background: var(--yellow); color: var(--ink); box-shadow: 0 3px 0 rgba(0,0,0,.35); border: 0; cursor: pointer; }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
+.btn.ghost { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
+.btn.pink { background: var(--pink); }
+.btn[aria-disabled=true] { opacity: .55; pointer-events: none; box-shadow: none; }
+
+.hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 32px; align-items: center; padding: 48px 0 64px; }
+.hero h1 { font-size: clamp(44px, 7vw, 84px); line-height: .95; }
+.hero h1 em { font-style: normal; color: var(--yellow); }
+.hero p { font-size: 20px; color: var(--muted); max-width: 34em; margin: 20px 0 28px; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.vinny { position: relative; justify-self: center; width: min(320px, 70vw); }
+.vinny img { width: 100%; transform: rotate(-4deg); filter: drop-shadow(0 18px 40px rgba(0,0,0,.45)); }
+.vinny i { position: absolute; display: block; }
+.vinny .d1 { top: -6%; right: 4%; width: 26px; height: 26px; border-radius: 50%; background: var(--yellow); }
+.vinny .d2 { bottom: 8%; left: -6%; width: 14px; height: 34px; border-radius: 4px; background: var(--pink); transform: rotate(28deg); }
+.vinny .d3 { top: 18%; left: -8%; width: 14px; height: 14px; border-radius: 50%; background: var(--mint); }
+.vinny .d4 { bottom: -4%; right: 10%; width: 36px; height: 36px; border-radius: 50%; border: 5px solid var(--pink); }
+
+.ribbon { background: var(--yellow); color: var(--ink); font: 800 14px 'Bricolage Grotesque', sans-serif; letter-spacing: .14em; white-space: nowrap; overflow: hidden; padding: 9px 0; transform: rotate(-1.5deg); margin: 0 -16px; position: relative; z-index: 1; }
+.ribbon span { display: inline-block; animation: defile 30s linear infinite; }
+@keyframes defile { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .ribbon span { animation: none; } }
+
+section { padding: 72px 0 0; }
+section > h2 { font-size: clamp(30px, 4.5vw, 44px); margin-bottom: 28px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; list-style: none; padding: 0; margin: 0; counter-reset: s; }
+.steps li { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 24px; counter-increment: s; }
+.steps li::before { content: counter(s); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--yellow); color: var(--ink); font: 800 20px 'Bricolage Grotesque', sans-serif; margin-bottom: 14px; }
+.steps li:nth-child(2)::before { background: var(--pink); }
+.steps li:nth-child(3)::before { background: var(--mint); }
+.steps h3 { font-size: 22px; margin-bottom: 6px; }
+.steps p { margin: 0; color: var(--muted); }
+
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+.plan { display: flex; flex-direction: column; background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 28px 24px; }
+.plan.top { border-color: var(--pink); box-shadow: 0 0 0 4px rgba(255,79,123,.18); }
+.plan h3 { font-size: 24px; }
+.price { font: 800 44px/1 'Bricolage Grotesque', sans-serif; margin: 14px 0 4px; }
+.price small { font: 600 16px 'Figtree', sans-serif; color: var(--muted); }
+.plan ul { list-style: none; padding: 0; margin: 18px 0 24px; flex: 1; }
+.plan li { padding: 7px 0 7px 28px; position: relative; }
+.plan li::before { content: ""; position: absolute; left: 2px; top: 14px; width: 12px; height: 7px; border-left: 3px solid var(--mint); border-bottom: 3px solid var(--mint); transform: rotate(-45deg); }
+.plan li.plus { color: var(--muted); font-weight: 700; padding-left: 0; }
+.plan li.plus::before { display: none; }
+.plan .btn { width: 100%; }
+.need { color: var(--muted); text-align: center; margin: 20px 0 0; }
+
+footer { margin-top: 88px; padding: 28px 0 36px; border-top: 2px solid var(--line); color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+footer p { margin: 0; max-width: 46em; }
+
+@media (max-width: 820px) {
+  .hero { grid-template-columns: 1fr; padding: 24px 0 48px; text-align: left; }
+  .vinny { grid-row: 1; width: 160px; justify-self: start; }
+  .steps, .plans { grid-template-columns: 1fr; }
+  section { padding-top: 56px; }
+}
+</style></head>
+<body><div class="bg"></div>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/"><img src="/vinny.svg" alt="">DJ Vinny</a>
+    <div class="lang" role="group" aria-label="Langue / Language">
+      <button type="button" data-l="fr" aria-pressed="true">FR</button><button type="button" data-l="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1 data-t="h1">Tes invités choisissent la musique. <em>Vinny l'annonce.</em></h1>
+      <p data-t="lead">DJ Vinny tourne sur ton PC avec ton Spotify Premium. Les invités scannent un QR, demandent leurs tounes sur leur cellulaire, et Vinny les annonce au micro.</p>
+      <div class="ctas">
+        <a class="btn" href="#forfaits" data-t="ctaPlans">Voir les forfaits</a>
+        <a class="btn ghost" data-dl data-t="ctaFree">Télécharger gratuitement</a>
+      </div>
+    </div>
+    <div class="vinny" aria-hidden="true"><i class="d1"></i><i class="d2"></i><i class="d3"></i><i class="d4"></i><img src="/vinny.svg" alt=""></div>
+  </div>
+</div>
+
+<div class="ribbon" aria-hidden="true"><span data-t="ribbon"></span></div>
+
+<div class="wrap">
+  <section id="comment">
+    <h2 data-t="howTitle">Comment ça marche</h2>
+    <ol class="steps">
+      <li><h3 data-t="s1t">Installe</h3><p data-t="s1">DJ Vinny sur ton PC, branché sur ton compte Spotify Premium.</p></li>
+      <li><h3 data-t="s2t">Affiche le QR</h3><p data-t="s2">Les invités cherchent leurs tounes et les ajoutent à la file, sans application à installer.</p></li>
+      <li><h3 data-t="s3t">Vinny anime</h3><p data-t="s3">Entre les chansons, Vinny annonce qui a demandé quoi.</p></li>
+    </ol>
+  </section>
+
+  <section id="forfaits">
+    <h2 data-t="plansTitle">Forfaits</h2>
+    <div class="plans">
+      <div class="plan">
+        <h3 data-t="p0">Gratuit</h3>
+        <div class="price" data-t="p0price">0 $</div>
+        <ul>
+          <li data-t="p0a">L'app complète sur ton PC</li>
+          <li data-t="p0b">Demandes des invités sur ton Wi-Fi</li>
+          <li data-t="p0c">Écran de soirée et télécommande</li>
+          <li data-t="p0d">Voix de Vinny avec ta propre clé</li>
+        </ul>
+        <a class="btn ghost" data-dl data-t="p0btn">Télécharger</a>
+      </div>
+      <div class="plan top">
+        <h3 data-t="p1">Soirée</h3>
+        <div class="price" data-t="p1price">10 $ <small>/ soirée</small></div>
+        <ul>
+          <li class="plus" data-t="plus">Tout le gratuit, plus :</li>
+          <li data-t="p1a">Ton adresse : ton-nom.djvinny.ca, même sans Wi-Fi</li>
+          <li data-t="p1b">Souhaits d'avance, même PC éteint</li>
+          <li data-t="p1c">Invitations par courriel et QR imprimable</li>
+          <li data-t="p1d">Voix de Vinny incluse</li>
+        </ul>
+        <a class="btn pink" data-buy="soiree" data-t="p1btn">Acheter une soirée</a>
+      </div>
+      <div class="plan">
+        <h3 data-t="p2">Abonnement</h3>
+        <div class="price" data-t="p2price">20 $ <small>/ mois</small></div>
+        <ul>
+          <li class="plus" data-t="plusSub">Comme la soirée, plus :</li>
+          <li data-t="p2a">4 soirées par mois</li>
+          <li data-t="p2b">Annulable en tout temps</li>
+        </ul>
+        <a class="btn" data-buy="abonnement" data-t="p2btn">S'abonner</a>
+      </div>
+    </div>
+    <p class="need" data-t="need">Exige un PC Windows et un compte Spotify Premium.</p>
+  </section>
+
+  <footer>
+    <span>© <span id="an"></span> Pop &amp; Show</span>
+    <p data-t="legal">La musique joue avec ton propre compte Spotify. Les droits de diffusion en public (SOCAN, Ré:Sonne) relèvent de l'organisateur ou de la salle.</p>
+  </footer>
+</div>
+
+<script>
+// Liens à activer quand ils existeront : version publique sur GitHub (étape 9), portail Clerk + Stripe (étape 4).
+const LIENS = { telecharger: '', acheter: '' }; // ex. 'https://github.com/ZeKingStar/dj-vinny/releases/latest', '/compte'
+const T = {
+  fr: {
+    soon: 'Bientôt',
+    ribbon: 'SOIRÉE DANSANTE ★ PARTY DE BUREAU ★ MARIAGE ★ ANNIVERSAIRE ★ '
+  },
+  en: {
+    h1: 'Your guests pick the music. <em>Vinny calls it out.</em>',
+    lead: 'DJ Vinny runs on your PC with your Spotify Premium. Guests scan a QR code, request songs from their phone, and Vinny announces them on the mic.',
+    ctaPlans: 'See plans', ctaFree: 'Download for free',
+    ribbon: 'DANCE PARTY ★ OFFICE PARTY ★ WEDDING ★ BIRTHDAY ★ ',
+    howTitle: 'How it works',
+    s1t: 'Install', s1: 'DJ Vinny on your PC, connected to your Spotify Premium account.',
+    s2t: 'Show the QR code', s2: 'Guests search for songs and add them to the queue, no app to install.',
+    s3t: 'Vinny hosts', s3: 'Between songs, Vinny announces who requested what.',
+    plansTitle: 'Plans',
+    p0: 'Free', p0price: '$0', p0a: 'The full app on your PC', p0b: 'Guest requests over your Wi-Fi', p0c: 'Party screen and remote', p0d: "Vinny's voice with your own key", p0btn: 'Download',
+    p1: 'Party', p1price: '$10 <small>/ party</small>', plus: 'Everything in Free, plus:',
+    p1a: 'Your address: your-name.djvinny.ca, even without Wi-Fi', p1b: 'Wishes ahead of time, even with the PC off', p1c: 'Email invitations and printable QR code', p1d: "Vinny's voice included", p1btn: 'Buy a party',
+    p2: 'Subscription', p2price: '$20 <small>/ month</small>', plusSub: 'Same as Party, plus:', p2a: '4 parties per month', p2b: 'Cancel anytime', p2btn: 'Subscribe',
+    need: 'Requires a Windows PC and a Spotify Premium account.',
+    legal: 'Music plays through your own Spotify account. Public performance rights (SOCAN, Ré:Sonne) are the responsibility of the organizer or venue.',
+    soon: 'Coming soon'
+  }
+};
+// le français est dans la page : on le mémorise une fois pour pouvoir y revenir
+document.querySelectorAll('[data-t]').forEach(el => { if (!(el.dataset.t in T.fr)) T.fr[el.dataset.t] = el.innerHTML; });
+
+function langue(l) {
+  document.documentElement.lang = l;
+  document.querySelectorAll('[data-t]').forEach(el => { const v = T[l][el.dataset.t]; if (v != null) el.innerHTML = v; });
+  document.querySelector('.ribbon span').textContent = T[l].ribbon.repeat(8);
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l === l));
+  // liens pas encore prêts : bouton grisé « Bientôt »
+  const lier = (el, url) => { if (url) { el.href = url; el.removeAttribute('aria-disabled'); } else { el.removeAttribute('href'); el.setAttribute('aria-disabled', 'true'); el.textContent = el.closest('.plan') ? T[l].soon : el.textContent + ' · ' + T[l].soon; } };
+  document.querySelectorAll('[data-dl]').forEach(el => lier(el, LIENS.telecharger));
+  document.querySelectorAll('[data-buy]').forEach(el => lier(el, LIENS.acheter && LIENS.acheter + '?offre=' + el.dataset.buy + '&lang=' + l));
+  try { localStorage.setItem('lang', l); } catch {}
+}
+document.querySelectorAll('.lang button').forEach(b => b.onclick = () => langue(b.dataset.l));
+document.getElementById('an').textContent = new Date().getFullYear();
+let choisie = new URLSearchParams(location.search).get('lang');
+try { choisie = choisie || localStorage.getItem('lang'); } catch {}
+choisie = choisie || (navigator.language || 'fr').slice(0, 2);
+langue(choisie === 'en' ? 'en' : 'fr');
+</script>
+</body></html>

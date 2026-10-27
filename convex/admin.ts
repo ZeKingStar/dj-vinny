@@ -23,7 +23,7 @@ export const insererClient = internalMutation({
   args: { courriel: v.string(), sousDomaine: v.string(), licence: v.string() },
   handler: async (ctx, a) => {
     const sousDomaine = a.sousDomaine.toLowerCase();
-    if (!/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(sousDomaine) || ["www", "compte", "api", "admin"].includes(sousDomaine)) throw refus("sous_domaine_invalide");
+    if (!/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(sousDomaine) || ["www", "app", "compte", "api", "admin"].includes(sousDomaine)) throw refus("sous_domaine_invalide");
     if (await ctx.db.query("clients").withIndex("par_sousDomaine", q => q.eq("sousDomaine", sousDomaine)).unique()) throw refus("sous_domaine_pris", 409);
     const dernier = await ctx.db.query("clients").withIndex("par_port").order("desc").first();
     const portTunnel = dernier ? dernier.portTunnel + 1 : PORT_MIN;
