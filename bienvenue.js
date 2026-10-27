@@ -67,7 +67,7 @@ document.getElementById('f').onsubmit = async e => {
 
 const verifier = ({ password, clientId }) => {
   if (typeof password !== 'string' || password.length < 6 || password.length > 64) return 'Le mot de passe doit avoir de 6 à 64 caractères.';
-  if (/["\\x00-\x1f]/.test(password)) return 'Le mot de passe ne peut pas contenir de guillemet, de barre oblique inverse ni de saut de ligne.';
+  if (/["\\\x00-\x1f]/.test(password)) return 'Le mot de passe ne peut pas contenir de guillemet, de barre oblique inverse ni de saut de ligne.';
   if (typeof clientId !== 'string' || !/^[A-Za-z0-9]{20,64}$/.test(clientId)) return 'Le Client ID Spotify doit contenir de 20 à 64 lettres et chiffres, sans espace.';
   return '';
 };
