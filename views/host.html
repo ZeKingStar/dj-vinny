@@ -22,6 +22,7 @@
   .fx .b2 { background: var(--accent2); } .fx .b3 { background: var(--mint); } .fx .b4 { background: var(--text); }
   .logo { display: inline-flex; width: 44px; height: 44px; border-radius: 14px; background: var(--accent); align-items: center; justify-content: center; transform: rotate(-6deg); }
   #player.card { border-color: var(--accent); }
+  #lockScreen:not([hidden]) { display: flex; }
   /* Disposition : menu collant, cartes repliables et déplaçables */
   #nav { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; align-items: center; overflow-x: auto; white-space: nowrap; padding: 8px 4px; margin: 0 -4px 12px; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 2px solid var(--line); scrollbar-width: thin; }
   #nav a { flex: none; padding: 8px 14px; border-radius: 999px; background: var(--chip); border: 2px solid var(--line); color: var(--text); font-weight: 700; font-size: 14px; text-decoration: none; }
@@ -71,7 +72,7 @@
 </style></head>
 <body><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" data-i18n="c.modeCalm" data-i18n-title="h.modeCalmTip">🍽️ Souper</button><button id="modeParty" data-i18n="c.modeParty" data-i18n-title="h.modePartyTip">🪩 Soirée</button></span><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Remote</button><span id="tunnelBadge" hidden></span><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost" id="logout" data-i18n="h.logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" data-i18n="c.modeCalm" data-i18n-title="h.modeCalmTip">🍽️ Souper</button><button id="modeParty" data-i18n="c.modeParty" data-i18n-title="h.modePartyTip">🪩 Soirée</button></span><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Remote</button><span id="tunnelBadge" hidden></span><button class="ghost" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost" id="logout" data-i18n="h.logout">Déconnexion</button></div>
 
   <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
   <div id="tab-soiree">
@@ -241,6 +242,13 @@
   <div id="setFields"></div>
   <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="quitApp" style="margin-right:auto" data-i18n="set.quit">⏻ Fermer DJ Vinny</button><button type="button" class="ghost" id="setCancel" data-i18n="c.close">Fermer</button><button type="button" id="setSave" data-i18n="c.save">Enregistrer</button></div>
 </form></dialog>
+<div id="lockScreen" role="dialog" aria-modal="true" aria-labelledby="lockTitle" hidden style="position:fixed;inset:0;z-index:2147483647;background:var(--bg,#15102E);align-items:center;justify-content:center;padding:16px">
+  <form id="lockForm" class="card" style="max-width:340px;width:100%;text-align:center"><img src="/vinny.svg" width="56" height="56" alt="">
+    <h2 id="lockTitle" data-i18n="h.lockTitle">Verrouillé</h2>
+    <input id="lockPw" type="password" autocomplete="current-password" data-i18n-aria="h.lockPw" aria-label="Mot de passe">
+    <p id="lockErr" role="alert" class="muted" style="min-height:1.4em;margin:8px 0"></p>
+    <button id="lockGo" data-i18n="h.unlock">Déverrouiller</button>
+  </form></div>
 <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.js"></script>
 <script src="/anim.js"></script>
 <script>
@@ -1224,6 +1232,36 @@ async function tunnelBadge() {
   } catch {}
 }
 tunnelBadge(); setInterval(tunnelBadge, 15000);
+// ---------- Verrou : recouvre le dashboard (la musique continue), déverrouillage avec le mot de passe de l'hôte ----------
+let lockIdle = null;
+const isLocked = () => !$('lockScreen').hidden;
+function lockNow() {
+  document.querySelectorAll('dialog[open]').forEach(d => d.close());
+  document.querySelector('.wrap').inert = true; $('lockScreen').hidden = false; $('lockPw').value = ''; $('lockErr').textContent = '';
+  try { sessionStorage.setItem('locked', '1'); } catch {}
+  $('lockPw').focus();
+}
+function unlock() {
+  document.querySelector('.wrap').inert = false; $('lockScreen').hidden = true;
+  try { sessionStorage.removeItem('locked'); } catch {}
+  armIdle();
+}
+function armIdle() {
+  clearTimeout(lockIdle);
+  if (state && state.lockMin > 0 && !isLocked()) lockIdle = setTimeout(lockNow, state.lockMin * 60e3);
+}
+['pointerdown', 'keydown', 'wheel'].forEach(ev => document.addEventListener(ev, armIdle, { passive: true, capture: true }));
+$('btnLock').onclick = lockNow;
+$('lockForm').onsubmit = async e => {
+  e.preventDefault(); $('lockErr').textContent = ''; $('lockGo').disabled = true;
+  try {
+    const r = await fetch('/api/verify', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: JSON.stringify({ password: $('lockPw').value }) });
+    if (r.ok) return unlock();
+    $('lockErr').textContent = (await r.json().catch(() => ({}))).error || t('c.error'); $('lockPw').select();
+  } catch { $('lockErr').textContent = t('c.error'); }
+  finally { $('lockGo').disabled = false; }
+};
+try { if (sessionStorage.getItem('locked')) lockNow(); } catch {}
 // ---------- Réglages (remplacent le .env pour tout sauf le démarrage) ----------
 let setView = [], setReset = new Set();
 const dlg = $('settingsDlg');
