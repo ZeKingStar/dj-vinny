@@ -35,10 +35,14 @@ install -D -m 755 "$ICI/djvinny-sync.py" /opt/djvinny/djvinny-sync.py
 install -m 644 "$ICI/djvinny-sync.service" "$ICI/djvinny-sync.timer" /etc/systemd/system/
 systemctl daemon-reload
 if [ ! -f /etc/djvinny-sync.env ]; then
+  # jeton et adresse Convex déposés à côté de ce script (fichiers « jeton » et « convex-site-url »), sinon jeton généré ici
+  JETON="$(cat "$ICI/jeton" 2>/dev/null || head -c 32 /dev/urandom | base64 | tr -d '/+=')"
+  URL="$(cat "$ICI/convex-site-url" 2>/dev/null || true)"
   install -m 600 /dev/null /etc/djvinny-sync.env
-  printf 'CONVEX_SITE_URL=\nVPS_TOKEN=%s\nDOMAINE=djvinny.ca\nTUNNEL_USER=djv\n' "$(head -c 32 /dev/urandom | base64 | tr -d '/+=')" > /etc/djvinny-sync.env
-  echo "Créé /etc/djvinny-sync.env (jeton généré ; reste à mettre CONVEX_SITE_URL)"
+  printf 'CONVEX_SITE_URL=%s\nVPS_TOKEN=%s\nDOMAINE=djvinny.ca\nTUNNEL_USER=djv\n' "$URL" "$JETON" > /etc/djvinny-sync.env
+  echo "Créé /etc/djvinny-sync.env"
 fi
+rm -f "$ICI/jeton" # le jeton ne reste que dans /etc/djvinny-sync.env (root seulement)
 
 # 4. Activer la minuterie seulement si tout est prêt
 . /etc/djvinny-sync.env
