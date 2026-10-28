@@ -19,6 +19,8 @@ Variables d'environnement Convex (`npx convex env set NOM valeur`, jamais dans l
 | `ELEVENLABS_VOICE_ID` | Facultatif, Liam (`TX3LPaxmHKxFdv7VOQHJ`) par défaut |
 | `VPS_HOST`, `VPS_USER`, `VPS_HOST_KEY`, `DOMAINE` | Tunnel automatique vers le VPS (voir `deploy/vps/README.md`). Sans `VPS_HOST`, aucun tunnel |
 | `VPS_TOKEN` | Jeton de la minuterie du VPS pour `/vps/clients` |
+| `BREVO_API_KEY`, `BREVO_LIST_ID`, `BREVO_SENDER` | Courriel facultatif de la page de vente (`abonnes.ts`) : clé Brevo, numéro de la liste, adresse d'expéditeur validée dans Brevo. Sans clé, `/abonner` répond `non_configure` |
+| `ABONNES_SECRET` | Longue valeur aléatoire qui signe les liens de confirmation et de désabonnement |
 
 ## Gestion (en attendant le portail)
 
@@ -51,3 +53,7 @@ VPS : `GET /vps/clients` avec `Authorization: Bearer <VPS_TOKEN>` (sous-domaine,
 Invités : `GET /soiree?e=<code>` (fiche publique) et `POST /souhaiter` `{ code, texte, prenom, invite }`.
 
 Erreurs : `{ "error": "<code>" }` avec le statut HTTP. Codes : `licence_absente`, `licence_invalide`, `json_invalide`, `champs_invalides`, `soiree_invalide`, `soiree_inconnue`, `soiree_terminee`, `soiree_commencee`, `soiree_non_ouverte`, `soiree_non_active`, `dates_verrouillees`, `aucune_passe`, `limite_abonnement`, `aucune_passe_attachee`, `souhaits_recus`, `code_invalide`, `souhait_invalide`, `max_souhaits`, `souhaits_pleins`, `texte_invalide`, `plafond_voix`, `voix_non_configuree`, `voix_echec`, `cle_ssh_invalide`, `non_autorise`.
+
+## Courriel facultatif (page de vente)
+
+`POST /abonner` (`{courriel, majs, payant, consentement: true, lang}`), puis les liens signés `GET /confirmer?t=` et `GET /desabonner?t=` des courriels. Double confirmation : le contact n'entre dans la liste Brevo qu'au clic de confirmation; le désabonnement le met sur liste noire. À brancher : définir les 5 variables ci-dessus, créer la liste dans Brevo (attributs `LANG`, `MAJS`, `PAYANT`), puis mettre `https://<déploiement>.convex.site/abonner` dans `LIENS.courriel` de `deploy/vps/site/index.html` (vide = formulaire caché). Courriels de mise à jour : ajouter le lien `/desabonner` de chaque contact (obligatoire, LCAP).
