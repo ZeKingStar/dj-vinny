@@ -632,11 +632,6 @@
  "lic.plafond_voix": "Plafond de voix atteint pour cette passe",
  "lic.voix_non_configuree": "Voix incluse non configurée côté service",
  "lic.voix_echec": "La voix incluse a échoué",
-<<<<<<< HEAD
- "set.TUNNEL": "Tunnel vers le VPS (adresse publique)",
- "set.TUNNEL.help": "utilisateur@hôte:port distant, ex. deploy@5.78.177.164:3010. Le serveur ouvre le tunnel lui-même, sans fenêtre, et le relance s’il tombe. Vide = pas de tunnel.",
-=======
->>>>>>> 8ff1941 (Ménage gratuit : réglages payants regroupés, tunnel manuel retiré, caméra « expérimental »)
  "set.quit": "⏻ Fermer DJ Vinny",
  "set.quitQ": "Fermer DJ Vinny ? La musique, l’écran de la soirée, la télécommande et le tunnel s’arrêtent.",
  "h.tunnel.tip": "Adresse publique des invités (tunnel vers le VPS)",

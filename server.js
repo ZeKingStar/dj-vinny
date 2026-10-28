@@ -1215,12 +1215,7 @@ app.post('/api/shutdown/snooze', requireHost, (req, res) => {
 app.post('/api/shutdown', requireHost, (req, res) => { res.json({ ok: true }); setTimeout(() => closeServer('demandée'), 200); });
 
 // ---------- Tunnel vers le VPS (adresse publique des invités), lancé par le serveur, sans fenêtre ----------
-<<<<<<< HEAD
-// Deux façons : TUNNEL = utilisateur@hôte:port distant (montage manuel, ex. deploy@5.78.177.164:3010, empreinte dans deploy/known_hosts),
-// ou automatique avec la licence : Convex donne l'hôte, le port et l'empreinte du VPS ; la clé SSH est générée ici et ne quitte jamais ce PC.
-=======
 // Automatique avec la licence : Convex donne l'hôte, le port et l'empreinte du VPS ; la clé SSH est générée ici et ne quitte jamais ce PC.
->>>>>>> 8ff1941 (Ménage gratuit : réglages payants regroupés, tunnel manuel retiré, caméra « expérimental »)
 // Se relance 5 s après une coupure ; s'arrête avec le serveur. Sans tunnel ouvert, le QR reprend l'adresse du réseau local.
 const KEY_FILE = path.join(DATA_DIR, 'tunnel_ed25519'), KNOWN_FILE = path.join(DATA_DIR, 'tunnel_known_hosts');
 let tunnel = null, tunnelState = 'off', tunnelRetry = null, autoTarget = '';
