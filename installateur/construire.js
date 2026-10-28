@@ -13,6 +13,8 @@ const NODE_URL = `https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-w
 const FFMPEG_URL = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-lgpl.zip'; // build LGPL : redistribuable avec son avis
 const TAR = process.platform === 'win32' ? path.join(process.env.SystemRoot, 'System32', 'tar.exe') : 'tar'; // bsdtar lit et écrit les .zip
 
+// Partie payante, déploiement, docs internes et vidéos : pas dans le ZIP gratuit
+const HORS_ZIP = /^(convex|deploy|docs|video)\/|^curated\/(idees\/|soiree-v1\.json)/;
 const version = require(path.join(RACINE, 'package.json')).version;
 const nom = 'DJ Vinny';
 const rm = p => fs.rmSync(p, { recursive: true, force: true });
@@ -66,9 +68,9 @@ Modules npm (node_modules) : express, jsonwebtoken, qrcode et leurs dépendances
   const dossier = path.join(tmp, nom);
   rm(tmp); fs.mkdirSync(dossier, { recursive: true });
 
-  // 1. Code : les fichiers suivis par git, tels qu'ils sont sur le disque (sans installateur/ ni sounds/*.mp3, qui n'est pas suivi)
+  // 1. Code : les fichiers suivis par git, tels qu'ils sont sur le disque (sans installateur/, convex/, deploy/, docs/, video/ ni sounds/*.mp3, qui n'est pas suivi)
   const fichiers = execFileSync('git', ['ls-files', '-z'], { cwd: RACINE, encoding: 'utf8', maxBuffer: 1e8 }).split('\0')
-    .filter(f => f && !f.startsWith('installateur/') && f !== '.gitattributes');
+    .filter(f => f && !f.startsWith('installateur/') && f !== '.gitattributes' && !HORS_ZIP.test(f));
   for (const f of fichiers) {
     const dest = path.join(dossier, f);
     fs.mkdirSync(path.dirname(dest), { recursive: true });
