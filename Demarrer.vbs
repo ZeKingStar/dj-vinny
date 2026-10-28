@@ -1,5 +1,5 @@
 ' Demarre DJ Vinny sans aucune fenetre : serveur (s'il n'est pas deja lance), puis ouvre le navigateur.
-' Utilise le Node et le ffmpeg inclus dans le dossier outils, sinon le Node installe sur le PC.
+' Utilise le Node du dossier outils ; s'il manque (ZIP leger), le telecharge une fois (installer-node.ps1).
 ' Au tout premier demarrage, la page de bienvenue cree le fichier de reglages (.env).
 ' Journal : data\serveur.log (le precedent : data\serveur.old.log).
 ' Pour arreter : bouton "Fermer DJ Vinny" dans les Reglages du dashboard, ou fermeture automatique a 1 h.
@@ -14,10 +14,17 @@ Function PortOuvert()
   PortOuvert = (sh.Run("cmd /c netstat -ano | findstr /R /C:"":3000 .*LISTENING"" >nul", 0, True) = 0)
 End Function
 
-node = "node"
-If fs.FileExists(dossier & "\outils\node\node.exe") Then node = """" & dossier & "\outils\node\node.exe"""
+node = """" & dossier & "\outils\node\node.exe"""
 
 If Not PortOuvert() Then
+  ' Premier demarrage du ZIP leger : installer-node.ps1 telecharge Node.js (fenetre visible) et verifie son empreinte
+  If Not fs.FileExists(dossier & "\outils\node\node.exe") Then
+    sh.Run "powershell -NoProfile -ExecutionPolicy Bypass -File """ & dossier & "\installer-node.ps1""", 1, True
+    If Not fs.FileExists(dossier & "\outils\node\node.exe") Then
+      MsgBox "Node.js n'a pas pu etre telecharge. Verifie ta connexion Internet, puis relance DJ Vinny.", vbExclamation, "DJ Vinny"
+      WScript.Quit 1
+    End If
+  End If
   If Not fs.FolderExists(dossier & "\data") Then fs.CreateFolder dossier & "\data"
   If fs.FileExists(dossier & "\data\serveur.log") Then
     If fs.FileExists(dossier & "\data\serveur.old.log") Then fs.DeleteFile dossier & "\data\serveur.old.log"

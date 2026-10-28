@@ -1,6 +1,7 @@
 // Construit le ZIP de la version gratuite : node installateur/construire.js
-// Assemble le code suivi par git (sans sounds/*.mp3), node_modules de production, Node portable, ffmpeg (LGPL) et les avis de licence.
-// Résultat : installateur/sortie/DJ-Vinny-<version>-windows.zip. Téléchargements gardés dans installateur/cache/.
+// Par défaut, ZIP léger : le code et les modules, sans Node ni ffmpeg. Demarrer.vbs télécharge Node (vérifié par empreinte) au premier démarrage.
+// Avec --complet : Node et ffmpeg (LGPL) inclus, pour les salles sans Internet et pour la version payante (ffmpeg retouche les annonces).
+// Résultat : installateur/sortie/DJ-Vinny-<version>-windows[-complet].zip. Téléchargements gardés dans installateur/cache/.
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -15,6 +16,7 @@ const TAR = process.platform === 'win32' ? path.join(process.env.SystemRoot, 'Sy
 
 // Partie payante, déploiement, docs internes et vidéos : pas dans le ZIP gratuit
 const HORS_ZIP = /^(convex|deploy|docs|video)\/|^curated\/(idees\/|soiree-v1\.json)/;
+const COMPLET = process.argv.includes('--complet');
 const version = require(path.join(RACINE, 'package.json')).version;
 const nom = 'DJ Vinny';
 const rm = p => fs.rmSync(p, { recursive: true, force: true });
@@ -43,27 +45,29 @@ const LISEZ_MOI = `DJ Vinny : démarrage en 3 étapes
 2. Ouvrez le dossier, puis double-cliquez sur « Demarrer DJ Vinny ».
 3. Au premier démarrage, une page de bienvenue vous guide : mot de passe de l'hôte et Client ID Spotify.
 
-Rien à installer. Les avis de licence de Node.js et de ffmpeg sont dans le dossier « licences ».
+${COMPLET ? 'Rien à installer ni à télécharger.' : 'Au premier démarrage, Node.js (environ 30 Mo) se télécharge une seule fois depuis nodejs.org : il faut donc Internet.'}
+Les avis de licence des logiciels inclus sont dans le dossier « licences ».
 Pour ajouter vos propres sons, voir sounds/LICENCES.md.
 `;
 
-const AVIS = `Logiciels tiers inclus dans ce dossier
-
-DJ Vinny : licence PolyForm Noncommercial 1.0.0 (fichier LICENSE à la racine).
-
-Node.js ${NODE_VERSION} (outils/node) : licence MIT et licences de ses composants, texte dans licences/node-LICENSE.
-  Code source : https://github.com/nodejs/node
-
-ffmpeg (outils/ffmpeg) : build « lgpl » de BtbN, sous GNU LGPL version 2.1 ou plus récente, texte dans licences/ffmpeg-LICENSE.txt.
+const AVIS_FFMPEG = `ffmpeg (outils/ffmpeg) : build « lgpl » de BtbN, sous GNU LGPL version 2.1 ou plus récente, texte dans licences/ffmpeg-LICENSE.txt.
   Programme séparé, lancé comme commande ; il n'est pas lié à DJ Vinny. Vous pouvez le remplacer par votre propre ffmpeg.
   Code source et scripts de construction : https://github.com/BtbN/FFmpeg-Builds et https://ffmpeg.org/download.html
   Voir https://ffmpeg.org/legal.html
 
-Modules npm (node_modules) : express, jsonwebtoken, qrcode et leurs dépendances, chacun avec sa licence dans son dossier.
+`;
+
+const avis = () => `Logiciels tiers
+
+DJ Vinny : licence PolyForm Noncommercial 1.0.0 (fichier LICENSE à la racine).
+
+Node.js ${NODE_VERSION} (outils/node, téléchargé depuis nodejs.org au premier démarrage s'il n'est pas inclus) : licence MIT et licences de ses composants, https://github.com/nodejs/node/blob/main/LICENSE
+  Code source : https://github.com/nodejs/node
+
+${COMPLET ? AVIS_FFMPEG : ''}Modules npm (node_modules) : express, jsonwebtoken, qrcode et leurs dépendances, chacun avec sa licence dans son dossier.
 `;
 
 (async () => {
-  const [zipNode, zipFfmpeg] = [await telecharger(NODE_URL), await telecharger(FFMPEG_URL)];
   const tmp = path.join(CACHE, 'assemblage');
   const dossier = path.join(tmp, nom);
   rm(tmp); fs.mkdirSync(dossier, { recursive: true });
@@ -80,26 +84,28 @@ Modules npm (node_modules) : express, jsonwebtoken, qrcode et leurs dépendances
   // 2. Modules de production
   execFileSync(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['ci', '--omit=dev', '--no-audit', '--no-fund'], { cwd: dossier, stdio: 'inherit', shell: process.platform === 'win32' });
 
-  // 3. Node portable et ffmpeg
-  const node = extraire(zipNode, path.join(tmp, 'node'));
-  const ffmpeg = extraire(zipFfmpeg, path.join(tmp, 'ffmpeg'));
-  fs.mkdirSync(path.join(dossier, 'outils', 'node'), { recursive: true });
-  fs.mkdirSync(path.join(dossier, 'outils', 'ffmpeg'), { recursive: true });
-  fs.copyFileSync(path.join(node, 'node.exe'), path.join(dossier, 'outils', 'node', 'node.exe'));
-  fs.copyFileSync(path.join(ffmpeg, 'bin', 'ffmpeg.exe'), path.join(dossier, 'outils', 'ffmpeg', 'ffmpeg.exe'));
-
-  // 4. Avis de licence et mode d'emploi
+  // 3. Avis de licence et mode d'emploi
   fs.mkdirSync(path.join(dossier, 'licences'));
-  fs.copyFileSync(path.join(node, 'LICENSE'), path.join(dossier, 'licences', 'node-LICENSE'));
-  const licFfmpeg = ['LICENSE.txt', 'LICENSE'].map(n => path.join(ffmpeg, n)).find(fs.existsSync);
-  if (!licFfmpeg) throw new Error('Licence de ffmpeg introuvable dans l\'archive');
-  fs.copyFileSync(licFfmpeg, path.join(dossier, 'licences', 'ffmpeg-LICENSE.txt'));
-  fs.writeFileSync(path.join(dossier, 'licences', 'LISEZ-MOI.txt'), AVIS);
+  fs.writeFileSync(path.join(dossier, 'licences', 'LISEZ-MOI.txt'), avis());
   fs.writeFileSync(path.join(dossier, 'LISEZ-MOI.txt'), LISEZ_MOI);
+
+  // 4. Complet : Node portable et ffmpeg
+  if (COMPLET) {
+    const node = extraire(await telecharger(NODE_URL), path.join(tmp, 'node'));
+    const ffmpeg = extraire(await telecharger(FFMPEG_URL), path.join(tmp, 'ffmpeg'));
+    fs.mkdirSync(path.join(dossier, 'outils', 'node'), { recursive: true });
+    fs.mkdirSync(path.join(dossier, 'outils', 'ffmpeg'), { recursive: true });
+    fs.copyFileSync(path.join(node, 'node.exe'), path.join(dossier, 'outils', 'node', 'node.exe'));
+    fs.copyFileSync(path.join(node, 'LICENSE'), path.join(dossier, 'licences', 'node-LICENSE'));
+    fs.copyFileSync(path.join(ffmpeg, 'bin', 'ffmpeg.exe'), path.join(dossier, 'outils', 'ffmpeg', 'ffmpeg.exe'));
+    const licFfmpeg = ['LICENSE.txt', 'LICENSE'].map(n => path.join(ffmpeg, n)).find(fs.existsSync);
+    if (!licFfmpeg) throw new Error('Licence de ffmpeg introuvable dans l\'archive');
+    fs.copyFileSync(licFfmpeg, path.join(dossier, 'licences', 'ffmpeg-LICENSE.txt'));
+  }
 
   // 5. ZIP
   fs.mkdirSync(SORTIE, { recursive: true });
-  const zip = path.join(SORTIE, `DJ-Vinny-${version}-windows.zip`);
+  const zip = path.join(SORTIE, `DJ-Vinny-${version}-windows${COMPLET ? '-complet' : ''}.zip`);
   rm(zip);
   execFileSync(TAR, ['-a', '-c', '-f', zip, '-C', tmp, nom], { stdio: 'inherit' });
   rm(tmp);
