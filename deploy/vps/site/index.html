@@ -80,6 +80,9 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 section { padding: 76px 0; border-top: 1px solid var(--line); scroll-margin-top: 72px; }
 section > h2 { font-size: clamp(28px, 4.2vw, 42px); margin-bottom: 28px; }
 .kicker { display: block; color: var(--pink); font-weight: 800; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.ico.c-y { color: var(--yellow); } .ico.c-p { color: var(--pink); } .ico.c-m { color: var(--mint); }
+.mic { vertical-align: -3px; }
+.ico svg { width: 28px; height: 28px; }
 .ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; margin-bottom: 14px; background: var(--chip); }
 .steps li { position: relative; overflow: hidden; }
 .steps li::after { content: counter(s); position: absolute; right: 14px; top: -6px; font: 900 96px/1 'Bricolage Grotesque', sans-serif; color: rgba(255,255,255,.05); }
@@ -219,7 +222,7 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
       <div class="song"><i></i><span>Pour que tu m'aimes encore<br><small>Céline Dion</small></span><em data-t="phAdd">Ajoutée</em></div>
       <div class="song"><i></i><span>Danser sur la lune<br><small>Les Colocs</small></span></div>
       <div class="song"><i></i><span>Les Mots d'amour<br><small>Marjo</small></span></div>
-      <div class="say" data-t="phSay">🎙️ « Demande spéciale de Marie-Ève ! Pour que tu m'aimes encore, de Céline Dion ! »</div>
+      <div class="say" data-t="phSay"><svg class="mic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg> « Demande spéciale de Marie-Ève ! Pour que tu m'aimes encore, de Céline Dion ! »</div>
     </div>
 </div></div>
 
@@ -255,9 +258,9 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
     <span class="kicker" data-t="kHow">Comment ça marche</span>
     <h2 data-t="howTitle">Prêt en trois étapes</h2>
     <ol class="steps">
-      <li><div class="ico" aria-hidden="true">🎶</div><h3 data-t="s1t">Choisis ta liste</h3><p data-t="s1">Une playlist prémontée. Deux boutons : rechercher, appliquer.</p></li>
-      <li><div class="ico" aria-hidden="true">📱</div><h3 data-t="s2t">Affiche le QR</h3><p data-t="s2">Tes invités scannent et choisissent leur toune. Aucun compte.</p></li>
-      <li><div class="ico" aria-hidden="true">🎉</div><h3 data-t="s3t">Fais la fête aussi</h3><p data-t="s3">Vinny annonce et enchaîne les tounes. Tu gères tout depuis ton cell.</p></li>
+      <li><div class="ico c-y"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></div><h3 data-t="s1t">Choisis ta liste</h3><p data-t="s1">Une playlist prémontée. Deux boutons : rechercher, appliquer.</p></li>
+      <li><div class="ico c-p"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/></svg></div><h3 data-t="s2t">Affiche le QR</h3><p data-t="s2">Tes invités scannent et choisissent leur toune. Aucun compte.</p></li>
+      <li><div class="ico c-m"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l5-12 7 7z"/><path d="M13 5v2M18 9h2M16 4l1 1M19 14l1.5 1.5"/></svg></div><h3 data-t="s3t">Fais la fête aussi</h3><p data-t="s3">Vinny annonce et enchaîne les tounes. Tu gères tout depuis ton cell.</p></li>
     </ol>
   </section>
 
@@ -265,12 +268,12 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
     <span class="kicker" data-t="kAll">Tout est inclus</span>
     <h2 data-t="featTitle">Tout ce qui fait une bonne soirée</h2>
     <div class="grid">
-      <div class="box"><div class="ico" aria-hidden="true">⚖️</div><h3 data-t="f1t">Une file équitable</h3><p data-t="f1">Des limites par invité et par période. Personne ne monopolise la musique.</p></div>
-      <div class="box"><div class="ico" aria-hidden="true">👵</div><h3 data-t="f2t">Simple de 7 à 77 ans</h3><p data-t="f2">Un champ, une recherche, un bouton. Même grand-maman y arrive.</p></div>
-      <div class="box"><div class="ico" aria-hidden="true">🤖</div><h3 data-t="f3t">Liste autonome</h3><p data-t="f3">Quand personne ne demande rien, la liste autonome prend le relais.</p></div>
-      <div class="box"><div class="ico" aria-hidden="true">🍽️</div><h3 data-t="f4t">Souper puis danse</h3><p data-t="f4">L'ambiance change seule : calme au repas, dansant ensuite. Danse en ligne incluse.</p></div>
-      <div class="box"><div class="ico" aria-hidden="true">🎛️</div><h3 data-t="f5t">Télécommande</h3><p data-t="f5">Pause, suivant, file : depuis ton cell, sans quitter ta table.</p></div>
-      <div class="box"><div class="ico" aria-hidden="true">🌐</div><h3 data-t="f6t">Bilingue</h3><p data-t="f6">Interface et voix de Vinny en français et en anglais.</p></div>
+      <div class="box"><div class="ico c-y"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M4 12h7M4 17h4"/><path d="M17 8v9M14.5 14.5L17 17l2.5-2.5"/></svg></div><h3 data-t="f1t">Une file équitable</h3><p data-t="f1">Des limites par invité et par période. Personne ne monopolise la musique.</p></div>
+      <div class="box"><div class="ico c-p"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l13 6.5-5.5 2L10 17z"/></svg></div><h3 data-t="f2t">Simple de 7 à 77 ans</h3><p data-t="f2">Un champ, une recherche, un bouton. Même grand-maman y arrive.</p></div>
+      <div class="box"><div class="ico c-m"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4l3 3-3 3"/><path d="M4 11v-1a3 3 0 013-3h13"/><path d="M7 20l-3-3 3-3"/><path d="M20 13v1a3 3 0 01-3 3H4"/></svg></div><h3 data-t="f3t">Liste autonome</h3><p data-t="f3">Quand personne ne demande rien, la liste autonome prend le relais.</p></div>
+      <div class="box"><div class="ico c-y"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3v7a2 2 0 002 2v9M9 3v7a2 2 0 01-2 2"/><path d="M14 9v6M17.5 6v12M21 10v4"/></svg></div><h3 data-t="f4t">Souper puis danse</h3><p data-t="f4">L'ambiance change seule : calme au repas, dansant ensuite. Danse en ligne incluse.</p></div>
+      <div class="box"><div class="ico c-p"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></div><h3 data-t="f5t">Télécommande</h3><p data-t="f5">Pause, suivant, file : depuis ton cell, sans quitter ta table.</p></div>
+      <div class="box"><div class="ico c-m"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h11a1 1 0 011 1v6a1 1 0 01-1 1H8l-3 3v-3H3a1 1 0 01-1-1V6a1 1 0 011-1z"/><path d="M17 9h3a1 1 0 011 1v6a1 1 0 01-1 1h-1v3l-3-3h-5"/></svg></div><h3 data-t="f6t">Bilingue</h3><p data-t="f6">Interface et voix de Vinny en français et en anglais.</p></div>
     </div>
   </section>
 
@@ -388,7 +391,7 @@ const T = {
   },
   en: {
     badge: 'A Quebec-voiced host for your parties', pr1: 'Guests need no account', pr2: 'Your Spotify Premium', pr3: 'Ready in 5 minutes',
-    phT: 'Find your song', phAdd: 'Added', phSay: '🎙️ "Special request from Marie-Ève! Pour que tu m\'aimes encore, by Céline Dion!"',
+    phT: 'Find your song', phAdd: 'Added', phSay: '<svg class="mic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg> "Special request from Marie-Ève! Pour que tu m\'aimes encore, by Céline Dion!"',
     kDiff: 'The difference', kHow: 'How it works', kAll: 'Everything included', kPrix: 'Pricing', kCmp: 'Comparison', kFaq: 'Questions', rec: 'Recommended',
     navHow: 'How it works', navFaq: 'FAQ', navPrix: 'Pricing', ctaFree: 'Download for free', ctaHow: 'See how it works', ctaPrix: 'See pricing',
     aviseT: 'Notify me', aviseSend: 'Notify me',
