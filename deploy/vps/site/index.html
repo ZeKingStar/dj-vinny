@@ -57,13 +57,34 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 .hero p.lead { font-size: 20px; color: var(--muted); max-width: 30em; margin: 20px 0 28px; }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
 
-/* Emplacement vidéo : la vidéo 9:16 se remplace en changeant seulement les attributs src et poster */
-.video { position: relative; justify-self: center; width: min(300px, 72vw); aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; border: 3px solid var(--line); background: var(--card); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
-.video video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.video .son { position: absolute; left: 12px; right: 12px; bottom: 12px; min-height: 44px; border: 0; border-radius: 999px; background: rgba(21,16,46,.82); color: var(--text); font: 700 15px 'Figtree', sans-serif; cursor: pointer; backdrop-filter: blur(6px); }
+.hero-bg { background: radial-gradient(600px 360px at 85% 10%, rgba(122,92,255,.35), transparent 70%), radial-gradient(520px 320px at 5% 90%, rgba(255,79,123,.22), transparent 70%); }
+.badge { display: inline-flex; gap: 8px; align-items: center; background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+.proof { display: flex; gap: 8px 18px; flex-wrap: wrap; margin-top: 26px; color: var(--muted); font-size: 14px; }
+.proof span::before { content: "✓ "; color: var(--mint); font-weight: 900; }
 
-section { padding: 72px 0 0; scroll-margin-top: 72px; }
+/* Maquette de téléphone des invités (la vidéo HyperFrames viendra dans la section « Vinny en action », pas ici) */
+.phone { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: 18px; width: min(310px, 100%); justify-self: center; box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 8px rgba(122,92,255,.08); transform: rotate(2deg); }
+.phone .bar { height: 6px; width: 60px; background: var(--line); border-radius: 9px; margin: 0 auto 14px; }
+.phone h4 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.song { display: flex; align-items: center; gap: 10px; background: var(--chip); border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+.song i { width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, var(--violet), var(--pink)); flex: none; }
+.song:nth-of-type(2) i { background: linear-gradient(135deg, var(--mint), var(--violet)); }
+.song:nth-of-type(3) i { background: linear-gradient(135deg, var(--yellow), var(--pink)); }
+.song span { display: block; font-size: 14px; line-height: 1.25; }
+.song small { color: var(--muted); }
+.song em { margin-left: auto; font-style: normal; background: var(--yellow); color: var(--ink); font-weight: 800; font-size: 12px; padding: 5px 10px; border-radius: 99px; }
+.say { background: var(--pink); color: #fff; border-radius: 14px 14px 14px 4px; padding: 12px 14px; font-size: 14px; margin-top: 12px; animation: pop 5s ease-in-out infinite; }
+@keyframes pop { 0%, 8% { opacity: 0; transform: translateY(8px) scale(.96); } 14%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+section { padding: 76px 0; border-top: 1px solid var(--line); scroll-margin-top: 72px; }
 section > h2 { font-size: clamp(28px, 4.2vw, 42px); margin-bottom: 28px; }
+.kicker { display: block; color: var(--pink); font-weight: 800; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.ico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 24px; margin-bottom: 14px; background: var(--chip); }
+.steps li { position: relative; overflow: hidden; }
+.steps li::after { content: counter(s); position: absolute; right: 14px; top: -6px; font: 900 96px/1 'Bricolage Grotesque', sans-serif; color: rgba(255,255,255,.05); }
+.rv { opacity: 0; transform: translateY(16px); transition: opacity .6s, transform .6s; }
+.rv.in { opacity: 1; transform: none; }
 .box { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 24px; }
 .box h3 { font-size: 22px; margin-bottom: 8px; }
 .box p { margin: 0; color: var(--muted); }
@@ -128,7 +149,7 @@ th.vin { color: var(--yellow); }
 .faq details > div p:last-child { margin: 0; }
 .faq a { color: var(--yellow); }
 
-.final { text-align: center; }
+.final { text-align: center; background: radial-gradient(500px 260px at 50% 0, rgba(255,79,123,.2), transparent 70%); }
 .final h2 { margin-bottom: 24px; }
 .final .ctas { justify-content: center; }
 
@@ -162,6 +183,7 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
 @media (max-width: 560px) { .ctas .btn { width: 100%; } .right a.btn { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  .rv { opacity: 1; transform: none; }
   html { scroll-behavior: auto; }
 }
 </style></head>
@@ -180,23 +202,30 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
   </div>
 </nav>
 
-<div class="wrap">
-  <div class="hero">
+<div class="hero-bg"><div class="wrap hero">
     <div>
+      <div class="badge" data-t="badge">Animateur à voix québécoise pour tes soirées</div>
       <h1 id="h1">Tes invités demandent. <span class="pink">Vinny s'en occupe.</span></h1>
       <p class="lead" id="lead">Toi, tu soupes en paix. Ton cell reste dans ta poche.</p>
       <div class="ctas">
         <a class="btn" href="#" data-dl data-t="ctaFree">Télécharger gratuitement</a>
         <a class="btn ghost" href="#comment" data-t="ctaHow">Voir comment ça marche</a>
       </div>
+      <div class="proof"><span data-t="pr1">Invités sans compte</span><span data-t="pr2">Ton Spotify Premium</span><span data-t="pr3">Prêt en 5 minutes</span></div>
     </div>
-    <div class="video">
-      <video muted loop autoplay playsinline preload="metadata" poster="dj-vinny-9x16-poster.jpg" aria-label="DJ Vinny en 30 secondes"><source src="dj-vinny-9x16-web.mp4" type="video/mp4"></video>
-      <button class="son" type="button" data-t="sonOn">Activer le son</button>
+    <div class="phone" aria-hidden="true">
+      <div class="bar"></div>
+      <h4 data-t="phT">Trouve ta toune</h4>
+      <div class="song"><i></i><span>Pour que tu m'aimes encore<br><small>Céline Dion</small></span><em data-t="phAdd">Ajoutée</em></div>
+      <div class="song"><i></i><span>Danser sur la lune<br><small>Les Colocs</small></span></div>
+      <div class="song"><i></i><span>Les Mots d'amour<br><small>Marjo</small></span></div>
+      <div class="say" data-t="phSay">🎙️ « Demande spéciale de Marie-Ève ! Pour que tu m'aimes encore, de Céline Dion ! »</div>
     </div>
-  </div>
+</div></div>
 
-  <section>
+<div class="wrap">
+  <section class="rv">
+    <span class="kicker" data-t="kDiff">La différence</span>
     <h2><span data-t="vsT1">Spotify joue de la musique.</span> <span class="yellow" data-t="vsT2">Vinny anime la soirée.</span></h2>
     <div class="vs">
       <div class="box bad">
@@ -222,28 +251,31 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
     </div>
   </section>
 
-  <section id="comment">
+  <section id="comment" class="rv">
+    <span class="kicker" data-t="kHow">Comment ça marche</span>
     <h2 data-t="howTitle">Prêt en trois étapes</h2>
     <ol class="steps">
-      <li><h3 data-t="s1t">Choisis ta liste</h3><p data-t="s1">Une playlist prémontée. Deux boutons : rechercher, appliquer.</p></li>
-      <li><h3 data-t="s2t">Affiche le QR</h3><p data-t="s2">Tes invités scannent et choisissent leur toune. Aucun compte.</p></li>
-      <li><h3 data-t="s3t">Fais la fête aussi</h3><p data-t="s3">Vinny annonce et enchaîne les tounes. Tu gères tout depuis ton cell.</p></li>
+      <li><div class="ico" aria-hidden="true">🎶</div><h3 data-t="s1t">Choisis ta liste</h3><p data-t="s1">Une playlist prémontée. Deux boutons : rechercher, appliquer.</p></li>
+      <li><div class="ico" aria-hidden="true">📱</div><h3 data-t="s2t">Affiche le QR</h3><p data-t="s2">Tes invités scannent et choisissent leur toune. Aucun compte.</p></li>
+      <li><div class="ico" aria-hidden="true">🎉</div><h3 data-t="s3t">Fais la fête aussi</h3><p data-t="s3">Vinny annonce et enchaîne les tounes. Tu gères tout depuis ton cell.</p></li>
     </ol>
   </section>
 
-  <section>
+  <section class="rv">
+    <span class="kicker" data-t="kAll">Tout est inclus</span>
     <h2 data-t="featTitle">Tout ce qui fait une bonne soirée</h2>
     <div class="grid">
-      <div class="box"><h3 data-t="f1t">Une file équitable</h3><p data-t="f1">Des limites par invité et par période. Personne ne monopolise la musique.</p></div>
-      <div class="box"><h3 data-t="f2t">Simple de 7 à 77 ans</h3><p data-t="f2">Un champ, une recherche, un bouton. Même grand-maman y arrive.</p></div>
-      <div class="box"><h3 data-t="f3t">Liste autonome</h3><p data-t="f3">Quand personne ne demande rien, la liste autonome prend le relais.</p></div>
-      <div class="box"><h3 data-t="f4t">Souper puis danse</h3><p data-t="f4">L'ambiance change seule : calme au repas, dansant ensuite. Danse en ligne incluse.</p></div>
-      <div class="box"><h3 data-t="f5t">Télécommande</h3><p data-t="f5">Pause, suivant, file : depuis ton cell, sans quitter ta table.</p></div>
-      <div class="box"><h3 data-t="f6t">Bilingue</h3><p data-t="f6">Interface et voix de Vinny en français et en anglais.</p></div>
+      <div class="box"><div class="ico" aria-hidden="true">⚖️</div><h3 data-t="f1t">Une file équitable</h3><p data-t="f1">Des limites par invité et par période. Personne ne monopolise la musique.</p></div>
+      <div class="box"><div class="ico" aria-hidden="true">👵</div><h3 data-t="f2t">Simple de 7 à 77 ans</h3><p data-t="f2">Un champ, une recherche, un bouton. Même grand-maman y arrive.</p></div>
+      <div class="box"><div class="ico" aria-hidden="true">🤖</div><h3 data-t="f3t">Liste autonome</h3><p data-t="f3">Quand personne ne demande rien, la liste autonome prend le relais.</p></div>
+      <div class="box"><div class="ico" aria-hidden="true">🍽️</div><h3 data-t="f4t">Souper puis danse</h3><p data-t="f4">L'ambiance change seule : calme au repas, dansant ensuite. Danse en ligne incluse.</p></div>
+      <div class="box"><div class="ico" aria-hidden="true">🎛️</div><h3 data-t="f5t">Télécommande</h3><p data-t="f5">Pause, suivant, file : depuis ton cell, sans quitter ta table.</p></div>
+      <div class="box"><div class="ico" aria-hidden="true">🌐</div><h3 data-t="f6t">Bilingue</h3><p data-t="f6">Interface et voix de Vinny en français et en anglais.</p></div>
     </div>
   </section>
 
-  <section id="prix">
+  <section id="prix" class="rv">
+    <span class="kicker" data-t="kPrix">Prix</span>
     <h2 data-t="plansTitle">Gratuit pour commencer. 10 $ pour aller plus loin.</h2>
     <div class="duo">
       <div class="box plan" id="telecharger">
@@ -258,6 +290,7 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
         <a class="btn ghost" href="#" data-dl data-t="p0btn">Télécharger</a>
       </div>
       <div class="box plan top">
+        <span class="tag" style="align-self:flex-start;background:var(--yellow);color:var(--ink)" data-t="rec">Recommandé</span>
         <h3 data-t="p1">Soirée</h3>
         <div class="price" data-t="p1price">10 $ <small>par soirée + taxes</small></div>
         <ul>
@@ -275,7 +308,8 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
     <p class="need" data-t="need">Prix en dollars canadiens, taxes en sus.</p>
   </section>
 
-  <section>
+  <section class="rv">
+    <span class="kicker" data-t="kCmp">Comparaison</span>
     <h2 data-t="cmpTitle">Une soirée, trois façons</h2>
     <div class="table">
       <table>
@@ -291,7 +325,8 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
     </div>
   </section>
 
-  <section id="faq">
+  <section id="faq" class="rv">
+    <span class="kicker" data-t="kFaq">Questions</span>
     <h2 data-t="faqTitle">On répond d'avance</h2>
     <div class="faq">
       <details><summary data-t="q1">Mes invités ont-ils besoin de Spotify?</summary><div data-t="a1"><p>Non. Seul l'hôte a besoin d'un Spotify Premium. Les invités scannent le QR et demandent, sans compte ni app.</p></div></details>
@@ -308,7 +343,7 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
     </div>
   </section>
 
-  <section class="final">
+  <section class="final rv">
     <h2><span data-t="finA">Ce soir,</span> <span class="pink">Vinny</span> <span data-t="finB">prend la soirée en main.</span></h2>
     <div class="ctas">
       <a class="btn" href="#" data-dl data-t="ctaFree">Télécharger gratuitement</a>
@@ -349,13 +384,15 @@ const T = {
   fr: {
     soon: 'Bientôt', newsMail: 'ton@courriel.ca', newsOk: "C'est noté. On te prévient dès que c'est prêt.",
     newsErr: { courriel: 'Courriel invalide.', consent: 'Coche la case de consentement.', serveur: "L'inscription a échoué. Réessaie plus tard.", envoi: 'Envoi en cours…' },
-    sonOff: 'Couper le son', fermer: 'Fermer'
+    fermer: 'Fermer'
   },
   en: {
+    badge: 'A Quebec-voiced host for your parties', pr1: 'Guests need no account', pr2: 'Your Spotify Premium', pr3: 'Ready in 5 minutes',
+    phT: 'Find your song', phAdd: 'Added', phSay: '🎙️ "Special request from Marie-Ève! Pour que tu m\'aimes encore, by Céline Dion!"',
+    kDiff: 'The difference', kHow: 'How it works', kAll: 'Everything included', kPrix: 'Pricing', kCmp: 'Comparison', kFaq: 'Questions', rec: 'Recommended',
     navHow: 'How it works', navFaq: 'FAQ', navPrix: 'Pricing', ctaFree: 'Download for free', ctaHow: 'See how it works', ctaPrix: 'See pricing',
     aviseT: 'Notify me', aviseSend: 'Notify me',
     newsConsent: 'I agree to receive emails from Pop &amp; Show about DJ Vinny. I can unsubscribe at any time.',
-    sonOn: 'Turn sound on (French)',
     vsT1: 'Spotify plays music.', vsT2: 'Vinny hosts the party.', vsTag1: 'Without Vinny', vsTag2: 'With DJ Vinny',
     vs1t: 'Spotify alone, Jam, or the phone in a corner', vs1a: 'Every guest needs an account', vs1b: 'Your phone is held hostage all night', vs1c: 'Requests come by text or by shouting', vs1d: 'Nobody looks after the order or the silences',
     vs2t: 'A real party, no effort', vs2a: 'Guests need nothing: no app, no account', vs2b: 'Requests are gathered and queued', vs2c: 'No silences, even with no special requests', vs2d: 'Vinny announces the name and the song',
@@ -398,18 +435,14 @@ const T = {
     legal: 'DJ Vinny is a Pop &amp; Show product. Not affiliated with Spotify. Prices in Canadian dollars.',
     newsMail: 'you@email.com', newsOk: "Noted. We'll let you know as soon as it's ready.",
     newsErr: { courriel: 'Invalid email.', consent: 'Tick the consent box.', serveur: 'Sign-up failed. Please try again later.', envoi: 'Sending…' },
-    sonOff: 'Turn sound off', soon: 'Coming soon', fermer: 'Close'
+    soon: 'Coming soon', fermer: 'Close'
   }
 };
 // le français est dans la page : on le mémorise une fois pour pouvoir y revenir
 document.querySelectorAll('[data-t]').forEach(el => { if (!(el.dataset.t in T.fr)) T.fr[el.dataset.t] = el.innerHTML; });
 
-const video = document.querySelector('.video video'), son = document.querySelector('.son');
 const dlg = document.getElementById('avise'), form = dlg.querySelector('form'), statut = dlg.querySelector('[role=status]');
 let lang = 'fr', variante = 'B';
-const texteSon = () => { son.textContent = T[lang][video.muted ? 'sonOn' : 'sonOff']; };
-son.onclick = () => { video.muted = !video.muted; if (!video.muted) video.play().catch(() => {}); texteSon(); };
-if (matchMedia('(prefers-reduced-motion: reduce)').matches) { video.removeAttribute('autoplay'); video.pause(); }
 
 function langue(l) {
   lang = l;
@@ -419,8 +452,7 @@ function langue(l) {
   document.getElementById('h1').innerHTML = V[variante][l][0];
   document.getElementById('lead').innerHTML = V[variante][l][1];
   document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l === l));
-  statut.textContent = ''; texteSon();
-  video.setAttribute('aria-label', l === 'en' ? 'DJ Vinny in 30 seconds' : 'DJ Vinny en 30 secondes');
+  statut.textContent = '';
   dlg.querySelector('.x').setAttribute('aria-label', T[l].fermer);
   form.courriel.setAttribute('aria-label', l === 'en' ? 'Email' : 'Courriel');
   // liens pas encore prêts : « Bientôt » (le téléchargement ouvre le pop-up, l'achat est grisé)
@@ -460,6 +492,10 @@ form.onsubmit = async e => {
     form.reset(); dire(T[lang].newsOk);
   } catch { dire(E.serveur, 1); }
 };
+
+// Apparition au défilement (sans IntersectionObserver, tout est visible d'emblée)
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 }) : null;
+document.querySelectorAll('.rv').forEach(el => io ? io.observe(el) : el.classList.add('in'));
 
 let choisie = new URLSearchParams(location.search).get('lang');
 try { choisie = choisie || localStorage.getItem('lang'); } catch {}
