@@ -340,7 +340,7 @@ dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44p
 // telecharger = '/telecharger' remet le vrai téléchargement (sinon « Bientôt » et le pop-up) ; il faut aussi remettre la redirection dans djvinny-site.conf ;
 // acheter = portail Clerk + Stripe ; courriel = adresse /abonner du déploiement Convex (https://<déploiement>.convex.site/abonner).
 const LIENS = { telecharger: '', acheter: '', courriel: '' };
-// Accroche en test A/B : une version tirée au hasard et gardée par visiteur ; ?v=A ou ?v=B force l'une des deux
+// Accroche : la version B est fixée (variante). La A reste ici si on veut reprendre le test.
 const V = {
   A: { fr: ["Fini d'être l'otage de ta playlist.", 'Tes invités demandent, <b class="pink">Vinny joue</b>, toi tu fais la fête.'], en: ['Done being held hostage by your playlist.', 'Your guests ask, <b class="pink">Vinny plays</b>, you enjoy the party.'] },
   B: { fr: ['Tes invités demandent. <span class="pink">Vinny s\'en occupe.</span>', 'Toi, tu soupes en paix. Ton cell reste dans ta poche.'], en: ['Your guests ask. <span class="pink">Vinny handles it.</span>', 'You eat your supper in peace. Your phone stays in your pocket.'] }
@@ -424,9 +424,11 @@ function langue(l) {
   dlg.querySelector('.x').setAttribute('aria-label', T[l].fermer);
   form.courriel.setAttribute('aria-label', l === 'en' ? 'Email' : 'Courriel');
   // liens pas encore prêts : « Bientôt » (le téléchargement ouvre le pop-up, l'achat est grisé)
+  // sans adresse de courriel, le pop-up ne stockerait rien : le bouton est alors seulement grisé
   document.querySelectorAll('[data-dl]').forEach(el => {
-    if (LIENS.telecharger) el.href = LIENS.telecharger;
-    else el.textContent += ' · ' + T[l].soon;
+    if (LIENS.telecharger) { el.href = LIENS.telecharger; el.removeAttribute('aria-disabled'); return; }
+    el.textContent += ' · ' + T[l].soon;
+    if (!LIENS.courriel) { el.removeAttribute('href'); el.setAttribute('aria-disabled', 'true'); }
   });
   document.querySelectorAll('[data-buy]').forEach(el => {
     if (LIENS.acheter) { el.href = LIENS.acheter + '?offre=' + el.dataset.buy + '&lang=' + l; el.removeAttribute('aria-disabled'); }
@@ -439,7 +441,7 @@ document.getElementById('an').textContent = new Date().getFullYear();
 
 // Pop-up « Je veux être avisé » : consentement explicite, double confirmation par courriel (voir convex/abonnes.ts). Aucun succès simulé.
 document.querySelectorAll('[data-dl]').forEach(el => el.addEventListener('click', e => {
-  if (LIENS.telecharger) return;
+  if (LIENS.telecharger || !LIENS.courriel) return;
   e.preventDefault(); statut.textContent = ''; dlg.showModal(); form.courriel.focus();
 }));
 dlg.querySelector('[data-fermer]').onclick = () => dlg.close();
@@ -459,11 +461,8 @@ form.onsubmit = async e => {
   } catch { dire(E.serveur, 1); }
 };
 
-const q = new URLSearchParams(location.search);
-let choisie = q.get('lang'), v = (q.get('v') || '').toUpperCase();
-try { choisie = choisie || localStorage.getItem('lang'); v = V[v] ? v : localStorage.getItem('variante'); } catch {}
-variante = V[v] ? v : (Math.random() < .5 ? 'A' : 'B');
-try { localStorage.setItem('variante', variante); } catch {}
+let choisie = new URLSearchParams(location.search).get('lang');
+try { choisie = choisie || localStorage.getItem('lang'); } catch {}
 choisie = choisie || (navigator.language || 'fr').slice(0, 2);
 langue(choisie === 'en' ? 'en' : 'fr');
 </script>
