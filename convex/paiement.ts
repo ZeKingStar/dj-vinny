@@ -193,7 +193,7 @@ export async function envoyerLicence(p: { courriel: string; licence: string; sou
   const m = courrielLicence(p);
   const r = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST", headers: { "api-key": cle, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ sender: { name: "DJ Vinny", email: "invitations@djvinny.ca" }, to: [{ email: p.courriel }], subject: m.sujet, htmlContent: m.html, textContent: m.text }),
+    body: JSON.stringify({ sender: { name: "DJ Vinny", email: "invitations@djvinny.ca" }, replyTo: { name: "DJ Vinny", email: "soutien@djvinny.ca" }, to: [{ email: p.courriel }], subject: m.sujet, htmlContent: m.html, textContent: m.text }),
   });
   if (!r.ok) throw new Error("Brevo " + r.status + " " + (await r.text()).slice(0, 300));
 }
