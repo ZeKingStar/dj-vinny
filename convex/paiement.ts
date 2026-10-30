@@ -155,18 +155,44 @@ export const remplacerLicence = internalMutation({
 });
 
 // ---------- Courriel (Brevo) ----------
+// Habillage : bande indigo, fond crème, accent rose (maquette « C », contenu de la « B »). Tableaux et styles en ligne : compatible avec les logiciels de courriel.
+// Le logo est l'emoji 🎧 en attendant un PNG hébergé (Gmail n'affiche pas les SVG).
+export function courrielLicence(p: { licence: string; sousDomaine: string; lang: "fr" | "en" }) {
+  const adresse = `${p.sousDomaine}.djvinny.ca`;
+  const t = p.lang === "en"
+    ? { sujet: "Your DJ Vinny license key", titre: "Thanks for your purchase!", cle: "Your license key", adr: "Your address", comment: "To activate it", e1: "Open DJ Vinny", e2: "<b>⚙ Settings</b> → <b>DJ Vinny licence</b>", e3: "Paste your key", garde: "Keep this email: the key is shown only here." }
+    : { sujet: "Ta clé de licence DJ Vinny", titre: "Merci pour ton achat!", cle: "Ta clé de licence", adr: "Ton adresse", comment: "Pour l'activer", e1: "Ouvre DJ Vinny", e2: "<b>⚙ Réglages</b> → <b>Licence DJ Vinny</b>", e3: "Colle ta clé", garde: "Garde ce courriel : la clé n'est affichée qu'ici." };
+  const pastille = (n: number) => `<span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:12px;background:#FF4F7B;color:#15102E;font-weight:800;">${n}</span>`;
+  const etape = (n: number, x: string) => `<tr><td style="padding:3px 12px 3px 0;vertical-align:top;">${pastille(n)}</td><td style="padding:3px 0;">${x}</td></tr>`;
+  const html = `<!doctype html><html lang="${p.lang}"><body style="margin:0;padding:0;background:#FFF6E5;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF6E5;"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;font-family:Arial,Helvetica,sans-serif;color:#15102E;background:#FFF6E5;">
+<tr><td style="background:#15102E;padding:18px 24px;font-size:22px;font-weight:800;color:#FFF6E5;">🎧 DJ Vinny</td></tr>
+<tr><td style="padding:28px 24px 8px;">
+<div style="font-size:26px;font-weight:800;line-height:1.15;">${t.titre}</div>
+<div style="margin:22px 0 6px;font-size:14px;color:#5b5480;">${t.cle}</div>
+<div style="background:#ffffff;border:2px solid #15102E;border-radius:12px;padding:14px;font:16px/1.4 Consolas,Menlo,monospace;word-break:break-all;">${p.licence}</div>
+<div style="margin:22px 0 4px;font-size:14px;color:#5b5480;">${t.adr}</div>
+<div style="font-size:18px;font-weight:800;color:#FF4F7B;">${adresse}</div>
+</td></tr>
+<tr><td style="padding:8px 24px;">
+<div style="margin:14px 0 8px;font-size:16px;font-weight:800;">${t.comment}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" style="font-size:15px;line-height:1.5;">${etape(1, t.e1)}${etape(2, t.e2)}${etape(3, t.e3)}</table>
+</td></tr>
+<tr><td style="padding:18px 24px 26px;font-size:13px;color:#5b5480;">${t.garde}</td></tr>
+</table></td></tr></table></body></html>`;
+  const strip = (s: string) => s.replace(/<[^>]+>/g, "");
+  const text = `${t.titre}\n\n${t.cle} : ${p.licence}\n${t.adr} : ${adresse}\n\n${t.comment} :\n1. ${t.e1}\n2. ${strip(t.e2)}\n3. ${t.e3}\n\n${t.garde}`;
+  return { sujet: t.sujet, html, text };
+}
+
 export async function envoyerLicence(p: { courriel: string; licence: string; sousDomaine: string; lang: "fr" | "en" }) {
   const cle = process.env.BREVO_API_KEY;
   if (!cle) throw new Error("BREVO_API_KEY absente");
-  const adresse = `${p.sousDomaine}.djvinny.ca`;
-  const t = p.lang === "en"
-    ? { sujet: "Your DJ Vinny license key", salut: "Thanks for your purchase!", cle: "Your license key", adr: "Your address", etape: "In DJ Vinny, paste the key in Settings, License key. Keep this email: the key is shown only here." }
-    : { sujet: "Ta clé de licence DJ Vinny", salut: "Merci pour ton achat!", cle: "Ta clé de licence", adr: "Ton adresse", etape: "Dans DJ Vinny, colle la clé dans Réglages, Clé de licence. Garde ce courriel : la clé n'est affichée qu'ici." };
-  const html = `<div style="font:16px/1.5 system-ui,sans-serif;color:#15102E"><p>${t.salut}</p><p>${t.cle} :<br><code style="font-size:15px;word-break:break-all">${p.licence}</code></p><p>${t.adr} : <b>${adresse}</b></p><p>${t.etape}</p></div>`;
-  const text = `${t.salut}\n\n${t.cle} : ${p.licence}\n${t.adr} : ${adresse}\n\n${t.etape}`;
+  const m = courrielLicence(p);
   const r = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST", headers: { "api-key": cle, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ sender: { name: "DJ Vinny", email: "invitations@djvinny.ca" }, to: [{ email: p.courriel }], subject: t.sujet, htmlContent: html, textContent: text }),
+    body: JSON.stringify({ sender: { name: "DJ Vinny", email: "invitations@djvinny.ca" }, to: [{ email: p.courriel }], subject: m.sujet, htmlContent: m.html, textContent: m.text }),
   });
   if (!r.ok) throw new Error("Brevo " + r.status + " " + (await r.text()).slice(0, 300));
 }
