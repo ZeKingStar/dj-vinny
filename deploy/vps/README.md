@@ -4,7 +4,7 @@ Chaque client payant a `<client>.djvinny.ca`. Son serveur DJ Vinny (sur son PC) 
 
 Rien ici ne touche à `djvinny.korvia.ca` (montage actuel de Pat).
 
-`djvinny.ca` lui-même sert la page de vente bilingue (`site/`, bloc `djvinny-site.conf`, `www` redirigé). Installée par `installer.sh` en même temps que la minuterie, une fois le certificat obtenu. Les boutons Télécharger et Acheter restent grisés (« Bientôt ») tant que `LIENS` est vide dans `site/index.html` (étapes 9 et 4). Dans le DNS, `www` doit pointer vers le VPS (A ou CNAME vers `djvinny.ca`).
+`djvinny.ca` lui-même sert la page de vente bilingue (`site/`, bloc `djvinny-site.conf`, `www` redirigé). Installée par `installer.sh` en même temps que la minuterie, une fois le certificat obtenu. `/telecharger` redirige (302) vers `releases/latest/download/DJ-Vinny-windows.zip` du dépôt GitHub : le ZIP publié doit porter ce nom, sans numéro de version. Les boutons Acheter restent grisés (« Bientôt ») tant que `LIENS.acheter` est vide dans `site/index.html` (étape 4); le formulaire de courriel reste caché tant que `LIENS.courriel` est vide (voir `convex/README.md`). La vidéo (`dj-vinny-9x16-web.mp4`) est servie par le VPS avec la page. Dans le DNS, `www` doit pointer vers le VPS (A ou CNAME vers `djvinny.ca`).
 
 ## Installation (une fois, avec l'accord de Pat)
 

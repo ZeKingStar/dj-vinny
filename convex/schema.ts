@@ -4,6 +4,17 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // Courriel facultatif de la page de vente (djvinny.ca) : double confirmation, voir abonnes.ts
+  abonnes: defineTable({
+    courriel: v.string(), // en minuscules
+    lang: v.union(v.literal("fr"), v.literal("en")),
+    majs: v.boolean(), // « mises à jour »
+    payant: v.boolean(), // « me prévenir pour la version payante »
+    etat: v.union(v.literal("attente"), v.literal("confirme"), v.literal("desabonne")),
+    consentiLe: v.number(), // instant de la case cochée (preuve de consentement)
+    dernierEnvoi: v.number(), // un courriel de confirmation par 10 minutes au plus
+  }).index("par_courriel", ["courriel"]),
+
   clients: defineTable({
     courriel: v.string(),
     clerkId: v.optional(v.string()), // inutilisé : le portail identifie le client par son courriel et son client Stripe

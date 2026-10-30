@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node --env-file=.env server.js"
+    "start": "node demarrer.js"
   },
   "dependencies": {
     "express": "^4.21.2",

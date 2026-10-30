@@ -17,25 +17,26 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   PUBLIC_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   MAX_PENDING_PER_GUEST: ['number:1:20', '3', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
   REQ_PER_PERIOD: ['number:1:50', '2', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
+  LOCK_MINUTES: ['number:0:240', '0', v => /^\d+$/.test(v) && v <= 240],
   TTS_MODEL: ['text', 'elevenlabs/eleven-v3', v => /^[\w./:-]{1,80}$/.test(v)],
   TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
-  TUNNEL: ['text', '', v => v === '' || /^[\w.-]+@[\w.-]+:\d{2,5}$/.test(v)],
 };
-let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, TTS_MODEL, TTS_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_LIVE, SPOTIFY, LICENCE_KEY, CONVEX_URL, TUNNEL;
+let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, LOCK_MIN, TTS_MODEL, TTS_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_LIVE, SPOTIFY, LICENCE_KEY, CONVEX_URL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
+const CONVEX_DEFAUT = 'https://shocking-marten-220.convex.site'; // service de Pop & Show : le client colle seulement sa clé de licence
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
   const g = settingValue;
   PUBLIC_URL = g('PUBLIC_URL').replace(/\/$/, ''); STOREFRONT = g('STOREFRONT').toLowerCase();
-  MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2);
+  MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2); LOCK_MIN = Math.min(240, Number(g('LOCK_MINUTES')) || 0);
   TTS_MODEL = g('TTS_MODEL'); TTS_VOICE = process.env.TTS_VOICE || 'george'; // TTS_VOICE (.env) : seulement pour un serveur de voix local
   MUSIC_PROVIDER = g('MUSIC_PROVIDER'); SPOTIFY_CLIENT_ID = g('SPOTIFY_CLIENT_ID'); TTS_BASE_URL = g('TTS_BASE_URL');
   // Version gratuite : clips prégénérés (voix/). Voix en direct : serveur local TTS_BASE_URL (compatible OpenAI /v1/audio/speech) ou passe payante (Convex).
   TTS_LOCAL = !!TTS_BASE_URL;
   TTS_BASE = TTS_BASE_URL.replace(/\/$/, '');
-  LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = g('CONVEX_URL').replace(/\/$/, ''); TUNNEL = g('TUNNEL');
+  LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = (g('CONVEX_URL') || CONVEX_DEFAUT).replace(/\/$/, '');
   TTS_LIVE = TTS_LOCAL || !!(LICENCE_KEY && CONVEX_URL);
   SPOTIFY = MUSIC_PROVIDER === 'spotify';
 }
@@ -164,7 +165,7 @@ const publicState = () => ({
   theme: (() => { const p = state.phases.find(x => x.id === state.activePhaseId); return p && p.color ? { accent: p.color } : null; })(),
   lists: listsView(), activeList: activeListInfo(), autoCount: state.autoCount,
   phases: state.phases, autoPhases: state.autoPhases,
-  announce: state.announce, tts: TTS_LIVE || hasClips(), ttsLive: TTS_LIVE, autoFx: state.autoFx,
+  lockMin: LOCK_MIN, announce: state.announce, tts: TTS_LIVE || hasClips(), ttsLive: TTS_LIVE, autoFx: state.autoFx,
   provider: SPOTIFY ? 'spotify' : 'apple',
   phase: state.phases.find(p => p.id === state.activePhaseId) || null,
   pool: { name: state.poolName, count: state.pool.length },
@@ -342,6 +343,12 @@ app.post('/login', (req, res) => {
   if (!safeEq(req.body.password || '', HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
   const secure = req.secure || (PUBLIC_URL || '').startsWith('https') ? '; Secure' : '';
   res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
+  res.json({ ok: true });
+});
+// Déverrouillage du dashboard : revérifie le mot de passe de l'hôte (ne change pas la session)
+app.post('/api/verify', requireHost, (req, res) => {
+  if (limited('verify:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
+  if (!safeEq(String(req.body.password || ''), HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
   res.json({ ok: true });
 });
 app.post('/logout', (req, res) => {
@@ -758,9 +765,7 @@ app.post('/api/app-settings', requireHost, (req, res) => {
   }
   fs.mkdirSync(DATA_DIR, { recursive: true });
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(overrides, null, 1));
-  const oldTunnel = TUNNEL;
   applySettings(); published.clear(); droits = null; commit(); licSync();
-  if (TUNNEL !== oldTunnel) { stopTunnel(); startTunnel(); }
   if (!licenced()) syncTunnel(null).catch(() => {}); // licence retirée : plus de tunnel automatique
   res.json(settingsView());
 });
@@ -1211,23 +1216,22 @@ app.post('/api/shutdown/snooze', requireHost, (req, res) => {
 app.post('/api/shutdown', requireHost, (req, res) => { res.json({ ok: true }); setTimeout(() => closeServer('demandée'), 200); });
 
 // ---------- Tunnel vers le VPS (adresse publique des invités), lancé par le serveur, sans fenêtre ----------
-// Deux façons : TUNNEL = utilisateur@hôte:port distant (montage manuel, ex. deploy@5.78.177.164:3010, empreinte dans deploy/known_hosts),
-// ou automatique avec la licence : Convex donne l'hôte, le port et l'empreinte du VPS ; la clé SSH est générée ici et ne quitte jamais ce PC.
+// Automatique avec la licence : Convex donne l'hôte, le port et l'empreinte du VPS ; la clé SSH est générée ici et ne quitte jamais ce PC.
 // Se relance 5 s après une coupure ; s'arrête avec le serveur. Sans tunnel ouvert, le QR reprend l'adresse du réseau local.
 const KEY_FILE = path.join(DATA_DIR, 'tunnel_ed25519'), KNOWN_FILE = path.join(DATA_DIR, 'tunnel_known_hosts');
 let tunnel = null, tunnelState = 'off', tunnelRetry = null, autoTarget = '';
-const tunnelTarget = () => TUNNEL || autoTarget;
+const tunnelTarget = () => autoTarget;
 function setTunnelState(st) {
   if (st === tunnelState) return;
   tunnelState = st;
-  if (!TUNNEL && autoTarget) { state.qrRev++; commit(); } // adresse publique ouverte ou fermée : les QR affichés se mettent à jour
+  if (autoTarget) { state.qrRev++; commit(); } // adresse publique ouverte ou fermée : les QR affichés se mettent à jour
 }
 function startTunnel() {
   clearTimeout(tunnelRetry);
-  const m = /^(.+):(\d+)$/.exec(tunnelTarget()), auto = !TUNNEL;
+  const m = /^(.+):(\d+)$/.exec(tunnelTarget());
   if (!m || tunnel || closing) { if (!m) setTunnelState('off'); return; }
   setTunnelState('connecting');
-  const keys = auto ? ['-i', KEY_FILE, '-o', 'IdentitiesOnly=yes', '-o', 'UserKnownHostsFile=' + KNOWN_FILE] : ['-o', 'UserKnownHostsFile=' + path.join(__dirname, 'deploy', 'known_hosts')];
+  const keys = ['-i', KEY_FILE, '-o', 'IdentitiesOnly=yes', '-o', 'UserKnownHostsFile=' + KNOWN_FILE];
   const p = tunnel = require('child_process').spawn('ssh', ['-N', '-o', 'ExitOnForwardFailure=yes', '-o', 'ServerAliveInterval=15', '-o', 'ServerAliveCountMax=3',
     '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', ...keys, '-R', `127.0.0.1:${m[2]}:127.0.0.1:${PORT}`, m[1]], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
   const up = setTimeout(() => { if (tunnel === p) { setTunnelState('up'); console.log('Tunnel ouvert vers', m[1]); } }, 5000); // ssh -N ne dit rien quand ça marche
@@ -1265,12 +1269,12 @@ async function syncTunnel(tu, cleConnue) {
   }
   if (target === autoTarget) return;
   autoTarget = target;
-  if (!TUNNEL) { stopTunnel(); startTunnel(); }
+  stopTunnel(); startTunnel();
 }
 // Adresse des invités (QR, liens) : l'adresse publique quand le tunnel automatique est ouvert, sinon PUBLIC_URL ou le réseau local (repli)
-const guestBase = req => (!TUNNEL && autoTarget && tunnelState === 'up' && droits && droits.tunnel ? droits.tunnel.adresse
+const guestBase = req => (autoTarget && tunnelState === 'up' && droits && droits.tunnel ? droits.tunnel.adresse
   : PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
-app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!tunnelTarget(), state: tunnelState, address: !TUNNEL && droits && droits.tunnel ? droits.tunnel.adresse : '' }));
+app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!tunnelTarget(), state: tunnelState, address: droits && droits.tunnel ? droits.tunnel.adresse : '' }));
 
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)
 app.listen(PORT, BIND, () => {

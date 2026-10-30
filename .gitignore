@@ -10,3 +10,6 @@ video/snapshots/
 
 .env.local
 .claude/settings.local.json
+
+installateur/cache/
+installateur/sortie/

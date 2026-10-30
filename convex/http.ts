@@ -8,6 +8,7 @@ import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { sha256, sousDomaineValide } from "./lib";
 import { creerSession, normaliser, signatureValide } from "./paiement";
+import { signer, verifier, page, brevo } from "./abonnes";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization" };
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", ...CORS } });
@@ -136,5 +137,36 @@ route("/souhaiter", httpAction(async (ctx, req) => {
     empreinte: await sha256(code), texte: texte(b.texte), prenom: texte(b.prenom), invite: texte(b.invite),
   })));
 }));
+
+// ---------- Courriel facultatif de la page de vente : /abonner (POST), /confirmer et /desabonner (liens des courriels) ----------
+// Répond « non_configure » (503) tant que BREVO_API_KEY et ABONNES_SECRET ne sont pas définies (voir convex/README.md)
+route("/abonner", httpAction(async (ctx, req) => {
+  let b: any = {};
+  try { b = await req.json(); } catch { return erreur("json_invalide", 400); }
+  const courriel = texte(b?.courriel).trim().toLowerCase();
+  if (b?.consentement !== true) return erreur("consentement_requis", 400);
+  if (courriel.length > 254 || !/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(courriel)) return erreur("courriel_invalide", 400);
+  const majs = b.majs === true, payant = b.payant === true;
+  if (!majs && !payant) return erreur("choix_requis", 400);
+  if (!process.env.BREVO_API_KEY || !process.env.ABONNES_SECRET) return erreur("non_configure", 503);
+  const lang = b.lang === "en" ? "en" : "fr";
+  const r = await ctx.runMutation(internal.abonnes.inscrire, { courriel, lang, majs, payant });
+  if (r.envoyer && !(await brevo.confirmation(courriel, lang, `${process.env.CONVEX_SITE_URL}/confirmer?t=${await signer("c", courriel)}`))) return erreur("envoi_echec", 502);
+  return json({ ok: true }); // même réponse que le courriel soit déjà inscrit ou non
+}));
+http.route({ path: "/confirmer", method: "GET", handler: httpAction(async (ctx, req) => {
+  const c = await verifier("c", new URL(req.url).searchParams.get("t") || "");
+  const a = c && await ctx.runMutation(internal.abonnes.confirmer, { courriel: c });
+  if (!c || !a) return page("lien", "fr");
+  if (!(await brevo.ajouter(a))) return page("erreur", a.lang);
+  return page("confirme", a.lang, `${process.env.CONVEX_SITE_URL}/desabonner?t=${await signer("d", c)}`);
+}) });
+http.route({ path: "/desabonner", method: "GET", handler: httpAction(async (ctx, req) => {
+  const c = await verifier("d", new URL(req.url).searchParams.get("t") || "");
+  const a = c && await ctx.runMutation(internal.abonnes.desabonner, { courriel: c });
+  if (!c || !a) return page("lien", "fr");
+  if (!(await brevo.retirer(c))) return page("erreur", a.lang);
+  return page("desabonne", a.lang);
+}) });
 
 export default http;
