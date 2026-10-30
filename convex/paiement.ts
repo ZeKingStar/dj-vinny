@@ -156,7 +156,8 @@ export const remplacerLicence = internalMutation({
 
 // ---------- Courriel (Brevo) ----------
 // Habillage : bande indigo, fond crème, accent rose (maquette « C », contenu de la « B »). Tableaux et styles en ligne : compatible avec les logiciels de courriel.
-// Logo : PNG hébergé sur le site (deploy/vps/site/vinny-courriel.png, tiré de vinny.svg) ; Gmail n'affiche pas les SVG. Il apparaît une fois le site mis à jour sur le VPS.
+// En-tête : une seule image (deploy/vps/site/vinny-courriel-bandeau.png, tirée de vinny.svg) ; Gmail n'affiche pas les SVG et, en mode sombre, inverse les fonds en CSS mais pas les images.
+// Le fond indigo autour est un dégradé : l'astuce qui l'empêche d'être éclairci en mode sombre.
 export function courrielLicence(p: { licence: string; sousDomaine: string; lang: "fr" | "en" }) {
   const adresse = `${p.sousDomaine}.djvinny.ca`;
   const t = p.lang === "en"
@@ -167,7 +168,7 @@ export function courrielLicence(p: { licence: string; sousDomaine: string; lang:
   const html = `<!doctype html><html lang="${p.lang}"><body style="margin:0;padding:0;background:#FFF6E5;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF6E5;"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;font-family:Arial,Helvetica,sans-serif;color:#15102E;background:#FFF6E5;">
-<tr><td style="background:#15102E;padding:14px 24px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding:0 12px 0 0;"><img src="https://djvinny.ca/vinny-courriel.png" width="48" height="48" alt="" style="display:block;border:0;border-radius:12px;"></td><td style="font-size:22px;font-weight:800;color:#FFF6E5;">DJ Vinny</td></tr></table></td></tr>
+<tr><td bgcolor="#15102E" style="background-color:#15102E;background-image:linear-gradient(#15102E,#15102E);padding:0;"><img src="https://djvinny.ca/vinny-courriel-bandeau.png" width="520" height="80" alt="DJ Vinny" style="display:block;border:0;width:100%;max-width:520px;height:auto;color:#FFF6E5;font-size:22px;font-weight:800;"></td></tr>
 <tr><td style="padding:28px 24px 8px;">
 <div style="font-size:26px;font-weight:800;line-height:1.15;">${t.titre}</div>
 <div style="margin:22px 0 6px;font-size:14px;color:#5b5480;">${t.cle}</div>
