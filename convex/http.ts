@@ -139,7 +139,7 @@ route("/souhaiter", httpAction(async (ctx, req) => {
 }));
 
 // ---------- Courriel facultatif de la page de vente : /abonner (POST), /confirmer et /desabonner (liens des courriels) ----------
-// Répond « non_configure » (503) tant que BREVO_API_KEY et ABONNES_SECRET ne sont pas définies (voir convex/README.md)
+// Tant que BREVO_API_KEY et ABONNES_SECRET ne sont pas définies, l'inscription est seulement gardée (état « attente », voir convex/README.md)
 route("/abonner", httpAction(async (ctx, req) => {
   let b: any = {};
   try { b = await req.json(); } catch { return erreur("json_invalide", 400); }
@@ -148,9 +148,10 @@ route("/abonner", httpAction(async (ctx, req) => {
   if (courriel.length > 254 || !/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(courriel)) return erreur("courriel_invalide", 400);
   const majs = b.majs === true, payant = b.payant === true;
   if (!majs && !payant) return erreur("choix_requis", 400);
-  if (!process.env.BREVO_API_KEY || !process.env.ABONNES_SECRET) return erreur("non_configure", 503);
   const lang = b.lang === "en" ? "en" : "fr";
   const r = await ctx.runMutation(internal.abonnes.inscrire, { courriel, lang, majs, payant });
+  // Sans Brevo : l'adresse et le consentement sont gardés en « attente » ; la confirmation par courriel partira quand Brevo sera configuré
+  if (!process.env.BREVO_API_KEY || !process.env.ABONNES_SECRET) return json({ ok: true, confirmation: false });
   if (r.envoyer && !(await brevo.confirmation(courriel, lang, `${process.env.CONVEX_SITE_URL}/confirmer?t=${await signer("c", courriel)}`))) return erreur("envoi_echec", 502);
   return json({ ok: true }); // même réponse que le courriel soit déjà inscrit ou non
 }));

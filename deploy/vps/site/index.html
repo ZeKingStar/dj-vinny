@@ -1,99 +1,135 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>DJ Vinny</title>
-<meta name="description" content="Tes invités scannent un QR et demandent leurs tounes; tu gardes la main. / Guests scan a QR code and request songs; you stay in control.">
+<meta name="description" content="Spotify joue de la musique. Vinny anime la soirée. / Spotify plays music. Vinny hosts the party.">
 <link rel="icon" type="image/svg+xml" href="/vinny.svg">
 <link rel="alternate" hreflang="fr" href="https://djvinny.ca/?lang=fr"><link rel="alternate" hreflang="en" href="https://djvinny.ca/?lang=en">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* Même look que l'app : indigo nuit + crème, accents jaune / rose */
-:root { --bg: #15102E; --card: #221A47; --chip: #2D2358; --line: #3A2F6B; --muted: #B3A9D9; --text: #FFF6E5; --ink: #15102E; --yellow: #FFD23F; --pink: #FF4F7B; --mint: #38E1B0; --violet: #7A5CFF; }
+/* Même look que l'app : indigo nuit + crème, accents jaune / rose / menthe */
+:root { --bg: #15102E; --bg2: #1B1540; --card: #221A47; --chip: #2D2358; --line: #3A2F6B; --muted: #B3A9D9; --text: #FFF6E5; --ink: #15102E; --yellow: #FFD23F; --pink: #FF4F7B; --mint: #38E1B0; --violet: #7A5CFF; }
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body { margin: 0; font: 17px/1.5 'Figtree', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-h1, h2, h3 { font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+h1, h2, h3 { font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; letter-spacing: -.02em; margin: 0; line-height: 1.08; }
 a { color: inherit; }
-code { font: 600 .9em ui-monospace, Consolas, monospace; background: var(--chip); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
-:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
-.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; position: relative; z-index: 1; }
-.bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
-.bg::before, .bg::after { content: ""; position: absolute; width: 70vmax; height: 70vmax; border-radius: 50%; filter: blur(90px); opacity: .2; background: var(--violet); animation: drift 18s ease-in-out infinite alternate; }
-.bg::before { top: -30vmax; left: -20vmax; }
-.bg::after { bottom: -35vmax; right: -25vmax; background: var(--pink); animation-duration: 24s; animation-direction: alternate-reverse; }
-@keyframes drift { to { transform: translate(18vmax, 12vmax) scale(1.25); } }
-@media (prefers-reduced-motion: reduce) { .bg::before, .bg::after { animation: none; } }
+:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; border-radius: 8px; }
+.pink { color: var(--pink); }
+.yellow { color: var(--yellow); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
 
-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; }
-.brand { display: flex; align-items: center; gap: 10px; font: 800 20px 'Bricolage Grotesque', sans-serif; text-decoration: none; }
-.brand img { width: 40px; height: 40px; }
+nav { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 64px; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 800 22px 'Bricolage Grotesque', sans-serif; text-decoration: none; }
+.brand b { color: var(--yellow); }
+.eq { display: inline-flex; gap: 3px; align-items: flex-end; height: 20px; }
+.eq i { width: 4px; border-radius: 2px; background: var(--pink); }
+.eq i:nth-child(1) { height: 40%; } .eq i:nth-child(2) { height: 90%; background: var(--yellow); } .eq i:nth-child(3) { height: 60%; background: var(--mint); } .eq i:nth-child(4) { height: 75%; }
+.right { display: flex; align-items: center; gap: 18px; }
+.right a.t { text-decoration: none; color: var(--muted); font-size: 15px; }
+.right a.t:hover { color: var(--text); }
 .lang { display: flex; gap: 4px; background: var(--chip); border: 2px solid var(--line); border-radius: 999px; padding: 3px; }
 .lang button { font: 700 14px 'Figtree', sans-serif; min-width: 44px; min-height: 36px; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; }
 .lang button[aria-pressed=true] { background: var(--yellow); color: var(--ink); }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 999px; font: 700 17px 'Figtree', sans-serif; text-decoration: none; background: var(--yellow); color: var(--ink); box-shadow: 0 3px 0 rgba(0,0,0,.35); border: 0; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 24px; border-radius: 999px; font: 700 17px 'Figtree', sans-serif; text-decoration: none; background: var(--yellow); color: var(--ink); box-shadow: 0 3px 0 rgba(0,0,0,.35); border: 0; cursor: pointer; transition: transform .15s; }
+.btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.35); }
 .btn.ghost { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
-.btn.pink { background: var(--pink); }
+.btn.ghost:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn.pink { background: var(--pink); color: #fff; }
+.btn.sm { min-height: 44px; padding: 0 18px; font-size: 15px; }
 .btn[aria-disabled=true] { opacity: .55; pointer-events: none; box-shadow: none; }
 
-.hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 32px; align-items: center; padding: 48px 0 64px; }
-.hero h1 { font-size: clamp(40px, 6.4vw, 76px); line-height: .98; }
-.hero h1 em { font-style: normal; color: var(--yellow); }
-.hero p { font-size: 20px; color: var(--muted); max-width: 34em; margin: 20px 0 28px; }
+.hero-bg { background: radial-gradient(600px 360px at 85% 10%, rgba(122,92,255,.35), transparent 70%), radial-gradient(520px 320px at 5% 90%, rgba(255,79,123,.22), transparent 70%); }
+.hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 32px; align-items: center; padding: 56px 0 72px; }
+.hero h1 { font-size: clamp(36px, 5.8vw, 66px); line-height: 1; }
+.hero p.lead { font-size: 20px; color: var(--muted); max-width: 30em; margin: 20px 0 28px; }
 .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.proof { display: flex; gap: 8px 18px; flex-wrap: wrap; margin-top: 26px; color: var(--muted); font-size: 14px; }
+.proof span::before { content: "✓ "; color: var(--mint); font-weight: 900; }
 
-.news { margin-top: 20px; max-width: 30em; }
-.news summary { cursor: pointer; color: var(--muted); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
-.news form { display: grid; gap: 10px; background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 16px; margin-top: 4px; }
-.news input[type=email] { font: 17px 'Figtree', sans-serif; min-height: 48px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); color: var(--text); padding: 0 14px; width: 100%; }
-.news label.chk { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; min-height: 32px; cursor: pointer; }
-.news input[type=checkbox] { width: 22px; height: 22px; flex: none; margin: 2px 0 0; accent-color: var(--mint); }
-.news .btn { min-height: 48px; justify-self: start; }
-.news [role=status] { margin: 0; font-size: 16px; color: var(--mint); }
-.news [role=status].err { color: var(--pink); }
+/* Téléphones : invités (hero) et télécommande (organisateur) */
+.phone { background: var(--card); border: 1px solid var(--line); border-radius: 30px; padding: 18px; width: min(310px, 100%); justify-self: center; box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 8px rgba(122,92,255,.08); transform: rotate(2deg); }
+.phone .bar { height: 6px; width: 60px; background: var(--line); border-radius: 9px; margin: 0 auto 14px; }
+.phone h4 { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+.song { display: flex; align-items: center; gap: 10px; background: var(--chip); border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+.song i { width: 38px; height: 38px; border-radius: 8px; background: linear-gradient(135deg, var(--violet), var(--pink)); flex: none; }
+.song:nth-of-type(2) i { background: linear-gradient(135deg, var(--mint), var(--violet)); }
+.song:nth-of-type(3) i { background: linear-gradient(135deg, var(--yellow), var(--pink)); }
+.song span { display: block; font-size: 14px; line-height: 1.25; }
+.song small { color: var(--muted); }
+.song em { margin-left: auto; font-style: normal; background: var(--yellow); color: var(--ink); font-weight: 800; font-size: 12px; padding: 5px 10px; border-radius: 99px; }
+.say { background: var(--pink); color: #fff; border-radius: 14px 14px 14px 4px; padding: 12px 14px; font-size: 14px; margin-top: 12px; }
+.mic { vertical-align: -3px; }
+/* Premier frame = l'écran statique ; « Écouter Vinny » joue l'animation (9:16, avec la voix) par-dessus, puis on revient au premier frame */
+.screen { position: relative; aspect-ratio: 9 / 16; display: flex; flex-direction: column; }
+.screen .go { flex: 1; display: grid; place-items: center; }
+.btn.listen { gap: 8px; }
+.motion { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 16px; background: var(--chip); }
+.listen[hidden], .motion[hidden] { display: none; }
 
-.video { position: relative; justify-self: center; width: min(300px, 72vw); aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; border: 3px solid var(--line); background: var(--card); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
-.video video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.video .son { position: absolute; left: 12px; right: 12px; bottom: 12px; min-height: 44px; border: 0; border-radius: 999px; background: rgba(21,16,46,.82); color: var(--text); font: 700 15px 'Figtree', sans-serif; cursor: pointer; backdrop-filter: blur(6px); }
+section { padding: 76px 0; border-top: 1px solid var(--line); scroll-margin-top: 72px; }
+section > h2, .org-txt > h2 { font-size: clamp(28px, 4.2vw, 42px); margin-bottom: 28px; }
+.kicker { display: block; color: var(--pink); font-weight: 800; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+.rv { opacity: 0; transform: translateY(16px); transition: opacity .6s, transform .6s; }
+.rv.in { opacity: 1; transform: none; }
+.box { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 24px; }
+.box h3 { font-size: 22px; margin-bottom: 8px; }
+.box p { margin: 0; color: var(--muted); }
 
-.ribbon { background: var(--yellow); color: var(--ink); font: 800 14px 'Bricolage Grotesque', sans-serif; letter-spacing: .14em; white-space: nowrap; overflow: hidden; padding: 9px 0; transform: rotate(-1.5deg); margin: 0 -16px; position: relative; z-index: 1; }
-.ribbon span { display: inline-block; animation: defile 30s linear infinite; }
-@keyframes defile { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .ribbon span { animation: none; } }
+.vs, .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.vs ul { padding: 0; margin: 14px 0 0; list-style: none; }
+.vs li { margin: .6em 0; padding-left: 32px; position: relative; }
+.vs li::before { position: absolute; left: 0; top: 1px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 900; }
+.vs .bad { background: transparent; border: 2px dashed #5b4f94; }
+.vs .bad h3 { color: var(--muted); }
+.vs .bad li { color: #9d93c6; text-decoration: line-through; text-decoration-color: rgba(255,79,123,.55); text-decoration-thickness: 1.5px; }
+.vs .bad li::before { content: "✕"; background: rgba(255,79,123,.18); color: var(--pink); }
+.vs .good { background: linear-gradient(160deg, #2B2060, #221A47); border-color: var(--yellow); box-shadow: 0 0 0 6px rgba(255,210,63,.07), 0 18px 50px rgba(0,0,0,.35); }
+.vs .good li::before { content: "✓"; background: var(--mint); color: var(--ink); }
+.tag { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 99px; margin-bottom: 12px; }
+.bad .tag { background: var(--chip); color: var(--muted); }
+.good .tag { background: var(--yellow); color: var(--ink); }
 
-section { padding: 72px 0 0; }
-section > h2 { font-size: clamp(30px, 4.5vw, 44px); margin-bottom: 28px; }
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; list-style: none; padding: 0; margin: 0; counter-reset: s; }
-.steps li { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 24px; counter-increment: s; }
-.steps li::before { content: counter(s); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--yellow); color: var(--ink); font: 800 20px 'Bricolage Grotesque', sans-serif; margin-bottom: 14px; }
-.steps li:nth-child(2)::before { background: var(--pink); }
-.steps li:nth-child(3)::before { background: var(--mint); }
-.steps h3 { font-size: 22px; margin-bottom: 6px; }
-.steps p { margin: 0; color: var(--muted); }
+/* Organisateur : texte + télécommande penchée sur le côté */
+.org { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; overflow: hidden; }
+.org-txt > h2 { margin-bottom: 16px; }
+.org-txt .lead { color: var(--muted); font-size: 19px; margin: 0 0 26px; max-width: 28em; }
+.pts { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.pts li { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: start; }
+.pts .n { width: 44px; height: 44px; border-radius: 14px; background: var(--chip); display: grid; place-items: center; color: var(--yellow); }
+.pts li:nth-child(2) .n { color: var(--pink); } .pts li:nth-child(3) .n { color: var(--mint); }
+.pts svg { width: 26px; height: 26px; }
+.pts h3 { font-size: 20px; margin-bottom: 2px; }
+.pts p { margin: 0; color: var(--muted); }
+.remote-wrap { position: relative; height: 510px; justify-self: center; width: min(320px, 100%); -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); }
+.phone.remote { transform: rotate(-4deg); width: 100%; padding: 16px; }
+.rtop { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font: 800 14px 'Bricolage Grotesque', sans-serif; }
+.rtop img { width: 26px; height: 26px; border-radius: 8px; }
+.rtop b { flex: 1; font: inherit; }
+.rtop .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 8px var(--mint); }
+.rnp { display: flex; gap: 10px; align-items: center; background: var(--chip); border-radius: 12px; padding: 8px; margin-bottom: 10px; }
+.rnp i { width: 40px; height: 40px; border-radius: 8px; background: linear-gradient(135deg, var(--mint), var(--violet)); flex: none; }
+.rnp b { display: block; font-size: 14px; line-height: 1.2; } .rnp small { color: var(--muted); font-size: 12px; }
+.rg { display: grid; gap: 8px; margin-bottom: 8px; }
+.rg.two { grid-template-columns: 1fr 1fr; } .rg.three { grid-template-columns: 1fr 1fr 1fr; }
+.rb { display: grid; place-items: center; min-height: 44px; border-radius: 999px; background: var(--yellow); color: var(--ink); font: 700 13px 'Figtree', sans-serif; box-shadow: 0 3px 0 rgba(0,0,0,.35); text-align: center; padding: 0 4px; }
+.rb.ghost { background: var(--chip); color: var(--text); border: 2px solid var(--line); box-shadow: none; }
+.rb.cur { background: var(--yellow); }
+.rg.three .rb { border-radius: 14px; min-height: 52px; }
+.rb.c1 { background: var(--pink); color: var(--ink); } .rb.c2 { background: var(--mint); } .rb.c3 { background: var(--violet); color: #fff; }
+.phone.remote { margin-top: 40px; }
+.over { position: absolute; left: 0; top: 0; z-index: 2; background: var(--pink); color: #fff; font: 800 17px 'Bricolage Grotesque', sans-serif; padding: 10px 16px; border-radius: 14px 14px 14px 4px; transform: rotate(-3deg); box-shadow: 0 10px 30px rgba(0,0,0,.4); white-space: nowrap; line-height: 1.15; }
 
-.screens { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-.screen { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 22px; display: flex; flex-direction: column; gap: 8px; }
-.screen .on { align-self: flex-start; background: var(--chip); border-radius: 999px; padding: 4px 12px; font-size: 14px; font-weight: 700; color: var(--yellow); }
-.screen:nth-child(2) .on { color: var(--pink); }
-.screen:nth-child(3) .on { color: var(--mint); }
-.screen h3 { font-size: 22px; }
-.screen p { margin: 0; color: var(--muted); font-size: 16px; }
-.screen code { align-self: flex-start; font-size: 14px; }
-
-.needs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; list-style: none; padding: 0; margin: 0; }
-.needs li { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 20px 22px; }
-.needs b { display: block; font: 800 20px 'Bricolage Grotesque', sans-serif; margin-bottom: 4px; }
-.needs span { color: var(--muted); font-size: 16px; }
-.needs a { color: var(--yellow); }
-
-.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
-.plan { display: flex; flex-direction: column; background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 28px 24px; }
+.plan { display: flex; flex-direction: column; }
 .plan.top { border-color: var(--pink); box-shadow: 0 0 0 4px rgba(255,79,123,.18); }
 .plan h3 { font-size: 24px; }
 .price { font: 800 44px/1 'Bricolage Grotesque', sans-serif; margin: 14px 0 4px; }
 .price small { font: 600 16px 'Figtree', sans-serif; color: var(--muted); }
 .plan ul { list-style: none; padding: 0; margin: 18px 0 24px; flex: 1; }
-.plan li { padding: 7px 0 7px 28px; position: relative; }
+.plan li { padding: 7px 0 7px 28px; position: relative; margin: 0; }
 .plan li::before { content: ""; position: absolute; left: 2px; top: 14px; width: 12px; height: 7px; border-left: 3px solid var(--mint); border-bottom: 3px solid var(--mint); transform: rotate(-45deg); }
 .plan li.plus { color: var(--muted); font-weight: 700; padding-left: 0; }
 .plan li.plus::before { display: none; }
@@ -102,260 +138,349 @@ section > h2 { font-size: clamp(30px, 4.5vw, 44px); margin-bottom: 28px; }
 
 .faq { display: grid; gap: 10px; max-width: 760px; }
 .faq details { background: var(--card); border: 2px solid var(--line); border-radius: 18px; }
-.faq summary { cursor: pointer; font: 700 18px 'Figtree', sans-serif; padding: 14px 18px; min-height: 52px; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.faq details[open] { border-color: var(--violet); }
+.faq summary { cursor: pointer; font: 700 18px 'Figtree', sans-serif; padding: 14px 18px; min-height: 56px; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .faq summary::-webkit-details-marker { display: none; }
 .faq summary::after { content: "+"; font: 800 24px 'Bricolage Grotesque', sans-serif; color: var(--yellow); flex: none; }
 .faq details[open] summary::after { content: "–"; }
 .faq details > div { padding: 0 18px 16px; color: var(--muted); }
-.faq details > div p { margin: 0 0 10px; }
-.faq details > div p:last-child { margin: 0; }
+.faq details > div p { margin: 0 0 10px; } .faq details > div p:last-child { margin: 0; }
+.faq ol { margin: 0; padding-left: 1.3em; } .faq ol li { margin: .4em 0; } .faq ol b { color: var(--text); }
 .faq a { color: var(--yellow); }
+
+.final { text-align: center; background: radial-gradient(500px 260px at 50% 0, rgba(255,79,123,.2), transparent 70%); }
+.final h2 { margin-bottom: 24px; }
+.final .ctas { justify-content: center; }
 
 footer { margin-top: 88px; padding: 28px 0 36px; border-top: 2px solid var(--line); color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
 footer p { margin: 0; max-width: 46em; }
 
-@media (max-width: 960px) { .screens, .needs { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 820px) {
-  .hero { grid-template-columns: 1fr; padding: 24px 0 48px; }
-  .steps, .plans { grid-template-columns: 1fr; }
-  section { padding-top: 56px; }
-}
-@media (max-width: 560px) { .screens, .needs { grid-template-columns: 1fr; } .ctas .btn { width: 100%; } }
-</style></head>
-<body><div class="bg"></div>
-<div class="wrap">
-  <header>
-    <a class="brand" href="/"><img src="/vinny.svg" alt="">DJ Vinny</a>
-    <div class="lang" role="group" aria-label="Langue / Language">
-      <button type="button" data-l="fr" aria-pressed="true">FR</button><button type="button" data-l="en" aria-pressed="false">EN</button>
-    </div>
-  </header>
+.sticky { display: none; }
 
-  <div class="hero">
-    <div>
-      <h1 data-t="h1">Tes invités choisissent la musique. <em>Tu gardes la main.</em></h1>
-      <p data-t="lead">DJ Vinny tourne sur ton PC avec ton Spotify Premium. Les invités scannent un QR et demandent leurs tounes sur leur cellulaire. Elles s'ajoutent à ta file, que tu gères depuis ton tableau de bord, l'écran de soirée ou ta télécommande.</p>
-      <div class="ctas">
-        <a class="btn" href="#forfaits" data-t="ctaPlans">Voir les forfaits</a>
-        <a class="btn ghost" data-dl data-t="ctaFree">Télécharger pour Windows</a>
+dialog { border: 2px solid var(--line); border-radius: 24px; background: var(--card); color: var(--text); padding: 24px; width: min(440px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(10,7,30,.8); }
+dialog h3 { font-size: 26px; margin-bottom: 16px; padding-right: 36px; }
+dialog form { display: grid; gap: 12px; }
+dialog input[type=email] { font: 17px 'Figtree', sans-serif; min-height: 48px; border-radius: 14px; border: 2px solid var(--line); background: var(--bg); color: var(--text); padding: 0 14px; width: 100%; }
+dialog label.chk { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--muted); cursor: pointer; }
+dialog input[type=checkbox] { width: 22px; height: 22px; flex: none; margin: 0; accent-color: var(--mint); }
+dialog .btn { width: 100%; }
+dialog [role=status] { margin: 0; color: var(--mint); min-height: 1.5em; }
+dialog [role=status].err { color: var(--pink); }
+dialog .x { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--chip); color: var(--text); font-size: 22px; cursor: pointer; }
+
+@media (max-width: 820px) {
+  .hero { grid-template-columns: 1fr; padding: 28px 0 56px; }
+  .vs, .duo, .org { grid-template-columns: 1fr; }
+  .org { gap: 28px; }
+  section { padding-top: 56px; padding-bottom: 56px; }
+  .right a.t { display: none; }
+  .remote-wrap { height: 420px; }
+  .hero .phone { width: min(270px, 100%); }
+  .sticky { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 10px 16px; background: var(--bg); border-top: 2px solid var(--line); }
+  .sticky .btn { width: 100%; }
+  footer { margin-bottom: 72px; }
+}
+@media (max-width: 560px) { .ctas .btn { width: 100%; } .right a.btn { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; }
+  .rv { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
+}
+</style></head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>DJ <b>Vinny</b></a>
+    <div class="right">
+      <a class="t" href="#faq" data-t="navFaq">Questions</a>
+      <a class="btn ghost sm" href="#prix" data-t="navPrix">Prix</a>
+      <div class="lang" role="group" aria-label="Langue / Language">
+        <button type="button" data-l="fr" aria-pressed="true">FR</button><button type="button" data-l="en" aria-pressed="false">EN</button>
       </div>
-      <details class="news" id="news" hidden>
-        <summary data-t="newsOpen">Recevoir des nouvelles (facultatif)</summary>
-        <form novalidate>
-          <input type="email" name="courriel" autocomplete="email" required data-ph="newsMail" aria-label="Courriel">
-          <label class="chk"><input type="checkbox" name="majs"><span data-t="newsMajs">Me prévenir des mises à jour</span></label>
-          <label class="chk"><input type="checkbox" name="payant"><span data-t="newsPayant">Me prévenir pour la version payante</span></label>
-          <label class="chk"><input type="checkbox" name="consentement"><span data-t="newsConsent">Je consens à recevoir ces courriels de Pop &amp; Show. Je peux me désabonner en tout temps.</span></label>
-          <button class="btn ghost" type="submit" data-t="newsSend">M'inscrire</button>
-          <p role="status" aria-live="polite"></p>
-        </form>
-      </details>
-    </div>
-    <div class="video">
-      <video muted loop autoplay playsinline preload="metadata" poster="dj-vinny-9x16-poster.jpg" aria-label="DJ Vinny en 30 secondes"><source src="dj-vinny-9x16-web.mp4" type="video/mp4"></video>
-      <button class="son" type="button" data-t="sonOn">Activer le son</button>
     </div>
   </div>
-</div>
+</nav>
 
-<div class="ribbon" aria-hidden="true"><span data-t="ribbon"></span></div>
+<div class="hero-bg"><div class="wrap hero">
+    <div>
+      <h1 id="h1">Tes invités demandent. <span class="pink">Vinny s'en occupe.</span></h1>
+      <p class="lead" id="lead">Toi, tu soupes en paix. Ton cell reste dans ta poche.</p>
+      <div class="ctas">
+        <a class="btn" href="#" data-dl data-t="ctaFree">Télécharger gratuitement</a>
+        <a class="btn ghost" href="#prix" data-t="ctaPrix">Voir les prix</a>
+      </div>
+      <div class="proof"><span data-t="pr1">Invités sans compte</span><span data-t="pr2">Ton Spotify Premium</span><span data-t="pr3">Prêt en 5 minutes</span></div>
+    </div>
+    <div class="phone" id="ph">
+      <div class="bar"></div>
+      <div class="screen">
+        <h4 data-t="phT">Trouve ta toune</h4>
+        <div class="song"><i></i><span>Pour que tu m'aimes encore<br><small>Céline Dion</small></span><em data-t="phAdd">Ajoutée</em></div>
+        <div class="song"><i></i><span>Danser sur la lune<br><small>Les Colocs</small></span></div>
+        <div class="song"><i></i><span>Les Mots d'amour<br><small>Marjo</small></span></div>
+        <div class="go"><button class="btn listen" type="button" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span data-t="listen">Écouter Vinny</span></button></div>
+        <div class="say" data-t="phSay"><svg class="mic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg> « Demande spéciale de Marie-Ève ! Pour que tu m'aimes encore, de Céline Dion ! »</div>
+        <video class="motion" controls playsinline preload="none" hidden></video>
+      </div>
+    </div>
+</div></div>
 
 <div class="wrap">
-  <section id="comment">
-    <h2 data-t="howTitle">Comment ça marche</h2>
-    <ol class="steps">
-      <li><h3 data-t="s1t">Installe</h3><p data-t="s1">Télécharge, décompresse, double-clique. Branche ton compte Spotify Premium.</p></li>
-      <li><h3 data-t="s2t">Affiche le QR</h3><p data-t="s2">Sur l'écran de soirée. Les invités cherchent leurs tounes sur leur cellulaire, sans application à installer.</p></li>
-      <li><h3 data-t="s3t">Garde la main</h3><p data-t="s3">Les demandes arrivent dans ta file. Vinny ouvre la soirée, rappelle le QR et la ferme.</p></li>
-    </ol>
-  </section>
-
-  <section id="ecrans">
-    <h2 data-t="scrTitle">Les écrans</h2>
-    <div class="screens">
-      <div class="screen"><span class="on" data-t="sc1on">Sur le PC qui joue la musique</span><h3 data-t="sc1t">Tableau de bord</h3><p data-t="sc1">File d'attente, périodes, autopilote.</p><code>127.0.0.1:3000/host</code></div>
-      <div class="screen"><span class="on" data-t="sc2on">Projecteur ou second moniteur</span><h3 data-t="sc2t">Écran de soirée</h3><p data-t="sc2">Titre en cours, demandes et QR.</p><code>/ecran.html</code></div>
-      <div class="screen"><span class="on" data-t="sc3on">Ton téléphone</span><h3 data-t="sc3t">Télécommande</h3><p data-t="sc3">Pause, suivant et file, de n'importe où dans la salle.</p><code>/remote</code></div>
-      <div class="screen"><span class="on" data-t="sc4on">Leur téléphone, même Wi-Fi</span><h3 data-t="sc4t">Invités</h3><p data-t="sc4">Ils scannent le QR, cherchent et demandent.</p><code data-t="sc4c">QR</code></div>
+  <section class="rv">
+    <span class="kicker" data-t="kDiff">La différence</span>
+    <h2><span data-t="vsT1">Spotify joue de la musique.</span> <span class="yellow" data-t="vsT2">Vinny anime la soirée.</span></h2>
+    <div class="vs">
+      <div class="box bad">
+        <span class="tag" data-t="vsTag1">Sans Vinny</span>
+        <h3 data-t="vs1t">Spotify seul, Jam ou le cell dans un coin</h3>
+        <ul>
+          <li data-t="vs1a">Chaque invité doit avoir un compte</li>
+          <li data-t="vs1b">Ton cell reste en otage toute la soirée</li>
+          <li data-t="vs1c">Les demandes arrivent par texto ou en criant</li>
+          <li data-t="vs1d">Personne ne s'occupe de l'ordre ni des silences</li>
+        </ul>
+      </div>
+      <div class="box good">
+        <span class="tag" data-t="vsTag2">Avec DJ Vinny</span>
+        <h3 data-t="vs2t">Une vraie soirée, sans effort</h3>
+        <ul>
+          <li data-t="vs2a">Les invités n'ont besoin de rien : ni app, ni compte</li>
+          <li data-t="vs2b">Les demandes sont centralisées et mises en file</li>
+          <li data-t="vs2c">Jamais de silence, même sans demande spéciale</li>
+          <li data-t="vs2d">Vinny annonce le nom et la toune</li>
+        </ul>
+      </div>
     </div>
   </section>
 
-  <section id="besoin">
-    <h2 data-t="needTitle">Ce qu'il te faut</h2>
-    <ul class="needs">
-      <li><b data-t="n1t">PC Windows</b><span data-t="n1">Qui reste branché pendant la soirée.</span></li>
-      <li><b data-t="n2t">Chrome ou Edge</b><span data-t="n2">La musique joue dans le navigateur du PC.</span></li>
-      <li><b data-t="n3t">Spotify Premium</b><span data-t="n3">Et un Client ID, créé gratuitement sur <a href="https://developer.spotify.com/dashboard" rel="noopener">developer.spotify.com</a>.</span></li>
-      <li><b data-t="n4t">Haut-parleurs</b><span data-t="n4">Branchés au PC.</span></li>
-    </ul>
+  <section class="rv org">
+    <div class="org-txt">
+      <span class="kicker" data-t="kOrg">Pour l'organisateur</span>
+      <h2 data-t="orgT">Toi aussi, tu fais le party.</h2>
+      <p class="lead" data-t="orgLead">Pause, suivant, boutons DJ : tout depuis ton cell, sans quitter ta table.</p>
+      <ul class="pts">
+        <li><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M4 12h7M4 17h4"/><path d="M17 8v9M14.5 14.5L17 17l2.5-2.5"/></svg></span><div><h3 data-t="f1t">Une file équitable</h3><p data-t="f1">Des limites par invité et par période. Personne ne monopolise la musique.</p></div></li>
+        <li><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l13 6.5-5.5 2L10 17z"/></svg></span><div><h3 data-t="f2t">Simple de 7 à 77 ans</h3><p data-t="f2">Un champ, une recherche, un bouton. Même grand-maman y arrive.</p></div></li>
+        <li><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 4l3 3-3 3"/><path d="M4 11v-1a3 3 0 013-3h13"/><path d="M7 20l-3-3 3-3"/><path d="M20 13v1a3 3 0 01-3 3H4"/></svg></span><div><h3 data-t="f3t">Liste autonome</h3><p data-t="f3">Quand personne ne demande rien, la liste autonome prend le relais.</p></div></li>
+      </ul>
+    </div>
+    <div class="remote-wrap" aria-hidden="true">
+      <div class="over" data-t="over">Toi aussi, tu fais la fête</div>
+      <div class="phone remote">
+        <div class="bar"></div>
+        <div class="rtop"><img src="/vinny.svg" alt=""><b data-t="rTitle">DJ Vinny · télécommande</b><span class="dot"></span></div>
+        <div class="rnp"><i></i><div><b>Danser sur la lune</b><small>Les Colocs</small></div></div>
+        <div class="rg two"><span class="rb ghost" data-t="rPause">⏯ Pause</span><span class="rb" data-t="rNext">⏭ Suivant</span></div>
+        <div class="rg two"><span class="rb ghost" data-t="rCalm">Souper</span><span class="rb cur" data-t="rParty">Soirée</span></div>
+        <div class="rg three">
+          <span class="rb c1" data-t="r1">Klaxon</span><span class="rb c1" data-t="r2">Scratch</span><span class="rb c1" data-t="r3">Rewind</span>
+          <span class="rb c2" data-t="r4">Fanfare</span><span class="rb c2" data-t="r5">Cornet</span><span class="rb c2" data-t="r6">Roulement</span>
+          <span class="rb c3" data-t="r7">Applaudis.</span><span class="rb c3" data-t="r8">Ovation</span><span class="rb c3" data-t="r9">Montée</span>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section id="forfaits">
-    <h2 data-t="plansTitle">Forfaits</h2>
-    <div class="plans">
-      <div class="plan">
+  <section id="prix" class="rv">
+    <span class="kicker" data-t="kPrix">Prix</span>
+    <h2 data-t="plansTitle">Gratuit pour commencer. 10 $ pour aller plus loin.</h2>
+    <div class="duo">
+      <div class="box plan" id="telecharger">
         <h3 data-t="p0">Gratuit</h3>
         <div class="price" data-t="p0price">0 $</div>
         <ul>
-          <li data-t="p0a">L'app complète sur ton PC</li>
-          <li data-t="p0b">Demandes des invités sur le Wi-Fi de la salle</li>
-          <li data-t="p0c">Écran de soirée et télécommande</li>
-          <li data-t="p0d">Voix de Vinny préenregistrée : ouverture, rappels du QR, fermeture</li>
+          <li data-t="p0a">Demandes par QR sur le Wi-Fi de la salle</li>
+          <li data-t="p0b">Voix de Vinny préenregistrée</li>
+          <li data-t="p0c">File, liste autonome, télécommande, écran</li>
+          <li data-t="p0d">Ton Spotify Premium</li>
         </ul>
-        <a class="btn ghost" data-dl data-t="p0btn">Télécharger</a>
+        <a class="btn ghost" href="#" data-dl data-t="p0btn">Télécharger</a>
       </div>
-      <div class="plan top">
+      <div class="box plan top">
+        <span class="tag" style="align-self:flex-start;background:var(--yellow);color:var(--ink)" data-t="rec">Recommandé</span>
         <h3 data-t="p1">Soirée</h3>
-        <div class="price" data-t="p1price">10 $ <small>/ soirée</small></div>
+        <div class="price" data-t="p1price">10 $ <small>par soirée + taxes</small></div>
         <ul>
           <li class="plus" data-t="plus">Tout le gratuit, plus :</li>
-          <li data-t="p1a">Ton adresse : ton-nom.djvinny.ca, même hors Wi-Fi</li>
-          <li data-t="p1b">Souhaits d'avance</li>
-          <li data-t="p1c">Invitations par courriel et QR imprimable</li>
-          <li data-t="p1d">Vinny annonce le nom du demandeur et sa toune</li>
+          <li data-t="p1a">Demandes aussi par le réseau cellulaire, sans Wi-Fi</li>
+          <li data-t="p1b">Souhaits d'avance pour préparer la liste</li>
+          <li data-t="p1c">Courriel d'invitation et QR imprimable</li>
+          <li data-t="p1d">Vinny annonce le nom et la toune</li>
+          <li data-t="p1f">Rejoue ta soirée à un prochain événement</li>
         </ul>
         <a class="btn pink" data-buy="soiree" data-t="p1btn">Acheter une soirée</a>
       </div>
-      <div class="plan">
-        <h3 data-t="p2">Abonnement</h3>
-        <div class="price" data-t="p2price">20 $ <small>/ mois</small></div>
-        <ul>
-          <li class="plus" data-t="plusSub">Comme la soirée, plus :</li>
-          <li data-t="p2a">4 soirées par mois</li>
-          <li data-t="p2b">Annulable en tout temps</li>
-        </ul>
-        <a class="btn" data-buy="abonnement" data-t="p2btn">S'abonner</a>
-      </div>
     </div>
-    <p class="need" data-t="need">Prix en dollars canadiens, taxes en sus.</p>
+    <p class="need" data-t="need">Un DJ professionnel : 500 à 1 000 $ et plus. Prix en dollars canadiens, taxes en sus.</p>
   </section>
 
-  <section id="faq">
-    <h2 data-t="faqTitle">Questions fréquentes</h2>
+  <section id="faq" class="rv">
+    <span class="kicker" data-t="kFaq">Questions</span>
+    <h2 data-t="faqTitle">On répond d'avance</h2>
     <div class="faq">
-      <details><summary data-t="q1">Quelle est la différence entre gratuit et payant?</summary><div data-t="a1"><p>Le gratuit est l'app complète sur ton PC : les invités demandent leurs tounes sur le Wi-Fi de la salle, avec l'écran de soirée, la télécommande et la voix de Vinny préenregistrée.</p><p>Le payant n'est pas encore en vente. Il ajoutera une adresse à toi qui marche hors Wi-Fi, les souhaits d'avance, les invitations par courriel avec QR imprimable, et l'annonce du nom du demandeur et de sa toune. Prix prévus : 10 $ la soirée ou 20 $ par mois pour 4 soirées.</p></div></details>
-      <details><summary data-t="q2">Qu'est-ce qu'il me faut?</summary><div data-t="a2"><p>Un PC Windows avec Chrome ou Edge, un compte Spotify Premium, un Client ID Spotify (gratuit, voir plus bas) et des haut-parleurs.</p></div></details>
-      <details><summary data-t="q3">Ça marche sur Mac ou sur téléphone?</summary><div data-t="a3"><p>Non. L'app est faite pour Windows. Ton téléphone sert de télécommande, et celui des invités à demander leurs tounes.</p></div></details>
-      <details><summary data-t="q4">À quoi servent l'écran de soirée, la télécommande et le tableau de bord?</summary><div data-t="a4"><p>Le tableau de bord (<code>127.0.0.1:3000/host</code>) est ton poste de commande, sur le PC qui joue la musique. L'écran de soirée (<code>/ecran.html</code>) va sur un projecteur ou un second moniteur : titre en cours, demandes et QR. La télécommande (<code>/remote</code>) est pour ton téléphone : pause, suivant, file.</p></div></details>
-      <details><summary data-t="q5">Les invités doivent-ils installer quelque chose?</summary><div data-t="a5"><p>Non. Ils scannent le QR et la page s'ouvre dans leur navigateur.</p></div></details>
-      <details><summary data-t="q6">Et si la salle n'a pas de Wi-Fi?</summary><div data-t="a6"><p>Dans le gratuit, les invités doivent être sur le même Wi-Fi que ton PC. L'adresse publique qui marche hors Wi-Fi fait partie du forfait payant, pas encore en vente.</p></div></details>
-      <details><summary data-t="q7">C'est quoi, ce Client ID Spotify?</summary><div data-t="a7"><p>Spotify demande à chaque hôte de créer sa propre app. C'est gratuit et ça prend 5 minutes sur <a href="https://developer.spotify.com/dashboard" rel="noopener">developer.spotify.com</a> : crée une app, ajoute l'adresse de redirection <code>http://127.0.0.1:3000/host</code>, coche Web Playback SDK, puis copie le Client ID. Il n'y a pas de secret à copier. La page de bienvenue de DJ Vinny te guide pas à pas.</p></div></details>
-      <details><summary data-t="q8">Windows affiche un avertissement au premier lancement.</summary><div data-t="a8"><p>C'est normal : l'app n'est pas signée numériquement, alors SmartScreen se méfie. Clique sur « Informations complémentaires », puis « Exécuter quand même ».</p></div></details>
-      <details><summary data-t="q9">Puis-je l'utiliser dans un bar ou à un mariage?</summary><div data-t="a9"><p>Les droits de diffusion en public (SOCAN, Ré:Sonne) relèvent de l'organisateur ou de la salle. Les conditions de Spotify limitent l'usage à un cadre personnel et non commercial, et interdisent la diffusion publique dans les commerces. DJ Vinny convient aux fêtes privées; vérifie les règles qui s'appliquent à ton événement.</p></div></details>
-      <details><summary data-t="q10">La voix de Vinny, c'est une vraie personne?</summary><div data-t="a10"><p>Non, c'est une voix générée par intelligence artificielle, en français québécois et en anglais. Dans le gratuit, ce sont des clips préenregistrés, sans compte ni clé à configurer.</p></div></details>
-      <details><summary data-t="q11">Quelles données sont collectées?</summary><div data-t="a11"><p>Dans le gratuit, tout reste sur ton ordinateur. Le journal de soirée ne contient ni noms, ni adresses IP, ni images. La caméra est facultative : elle mesure le mouvement en direct et rien n'est enregistré. Ton courriel, si tu le donnes, sert seulement aux envois que tu as choisis.</p></div></details>
+      <details open><summary data-t="q0">Comment ça marche?</summary><div data-t="a0"><ol><li><b>Choisis ta liste.</b> Une playlist prémontée, deux boutons : rechercher, appliquer.</li><li><b>Affiche le QR.</b> Tes invités scannent et choisissent leur toune, sans compte.</li><li><b>Fais la fête aussi.</b> Vinny annonce et enchaîne les tounes. Tu gères tout depuis ton cell.</li></ol></div></details>
+      <details><summary data-t="q1">Mes invités ont-ils besoin de Spotify?</summary><div data-t="a1"><p>Non. Seul l'hôte a besoin d'un Spotify Premium. Les invités scannent le QR et demandent, sans compte ni app.</p></div></details>
+      <details><summary data-t="q2">Qu'est-ce qu'il me faut?</summary><div data-t="a2"><p>Un PC Windows avec Chrome ou Edge, des haut-parleurs, un Spotify Premium, et une app Spotify gratuite à créer en 5 minutes sur <a href="https://developer.spotify.com/dashboard" rel="noopener">developer.spotify.com</a> (la page de bienvenue de DJ Vinny te guide à l'écran).</p></div></details>
+      <details><summary data-t="q3">Les 10 $, c'est pour acheter la musique?</summary><div data-t="a3"><p>Non. Pop &amp; Show ne vend ni ne diffuse aucune musique. Ta musique vient de ton propre Spotify Premium, sur ton PC, avec ton compte. Les 10 $ paient le service autour : l'adresse publique pour les invités, les souhaits d'avance, l'invitation et les annonces personnalisées.</p></div></details>
+      <details><summary data-t="q9">Est-ce légal pour mon événement?</summary><div data-t="a9"><p>DJ Vinny est conçu pour les fêtes privées. Les droits SOCAN et Ré:Sonne et les conditions de Spotify relèvent de l'organisateur.</p></div></details>
+      <details><summary data-t="q10">Vinny remplace-t-il un DJ?</summary><div data-t="a10"><p>Non. Il remplace le cell dans le coin. Pour un mariage ou un gala, garde ton DJ.</p></div></details>
+      <details><summary data-t="q11">Windows affiche un avertissement au premier lancement.</summary><div data-t="a11"><p>C'est normal : l'app n'est pas signée numériquement, alors SmartScreen se méfie. Clique sur « Informations complémentaires », puis « Exécuter quand même ».</p></div></details>
+    </div>
+  </section>
+
+  <section class="final rv">
+    <h2><span data-t="finA">Ce soir,</span> <span class="pink">Vinny</span> <span data-t="finB">prend la soirée en main.</span></h2>
+    <div class="ctas">
+      <a class="btn" href="#" data-dl data-t="ctaFree">Télécharger gratuitement</a>
+      <a class="btn ghost" href="#prix" data-t="ctaPrix">Voir les prix</a>
     </div>
   </section>
 
   <footer>
     <span>© <span id="an"></span> Pop &amp; Show</span>
-    <p data-t="legal">La musique joue avec ton propre compte Spotify. Les droits de diffusion en public (SOCAN, Ré:Sonne) relèvent de l'organisateur ou de la salle. DJ Vinny n'est affilié ni à Spotify, ni à Apple, ni à OpenRouter, ni à ElevenLabs.</p>
+    <p data-t="legal">DJ Vinny est un produit de Pop &amp; Show. Non affilié à Spotify. Prix en dollars canadiens.</p>
   </footer>
 </div>
 
+<div class="sticky"><a class="btn" href="#" data-dl data-t="ctaFree">Télécharger gratuitement</a></div>
+
+<dialog id="avise" aria-labelledby="avise-t">
+  <button class="x" type="button" data-fermer data-aria="close" aria-label="Fermer">×</button>
+  <h3 id="avise-t" data-t="aviseT">Je veux être avisé</h3>
+  <form novalidate>
+    <input type="email" name="courriel" autocomplete="email" required data-ph="newsMail" aria-label="Courriel">
+    <label class="chk"><input type="checkbox" name="consentement"><span data-t="newsConsent">Je consens à recevoir des courriels de Pop &amp; Show au sujet de DJ Vinny. Je peux me désabonner en tout temps.</span></label>
+    <button class="btn" type="submit" data-t="aviseSend">M'aviser</button>
+    <p role="status" aria-live="polite"></p>
+  </form>
+</dialog>
+
 <script>
-// Liens à activer quand ils existeront : portail Clerk + Stripe (étape 4) pour acheter ; courriel = adresse /abonner du déploiement Convex (https://<déploiement>.convex.site/abonner), vide = formulaire caché.
-const LIENS = { telecharger: '/telecharger', acheter: '', courriel: '' };
+// Liens à activer quand ils existeront :
+// telecharger = '/telecharger' remet le vrai téléchargement (sinon « Je veux être avisé » et le pop-up) ; il faut aussi remettre la redirection dans djvinny-site.conf ;
+// acheter = portail Clerk + Stripe ; courriel = adresse /abonner du déploiement Convex (https://<déploiement>.convex.site/abonner).
+const LIENS = { telecharger: '', acheter: '', courriel: '' };
+// Animation « Écouter Vinny » du téléphone du hero (vide = pas de bouton)
+const MOTION = '/ecouter-vinny-9x16-web.mp4';
+const V = {
+  fr: ["Tes invités demandent. <span class=\"pink\">Vinny s'en occupe.</span>", 'Toi, tu soupes en paix. Ton cell reste dans ta poche.'],
+  en: ['Your guests ask. <span class="pink">Vinny handles it.</span>', 'You eat your supper in peace. Your phone stays in your pocket.']
+};
 const T = {
   fr: {
-    soon: 'Bientôt',
-    ribbon: 'SOIRÉE DANSANTE ★ PARTY DE BUREAU ★ MARIAGE ★ ANNIVERSAIRE ★ ',
-    newsMail: 'ton@courriel.ca', newsOk: "Presque fini : un courriel de confirmation t'attend.",
-    newsErr: { courriel: 'Courriel invalide.', choix: 'Choisis au moins un envoi.', consent: 'Coche la case de consentement.', serveur: "L'inscription a échoué. Réessaie plus tard.", envoi: 'Envoi en cours…' },
-    sonOff: 'Couper le son'
+    soon: 'Bientôt', newsMail: 'ton@courriel.ca', newsOk: "C'est noté. On te prévient dès que c'est prêt.",
+    newsErr: { courriel: 'Courriel invalide.', consent: 'Coche la case de consentement.', serveur: "L'inscription a échoué. Réessaie plus tard.", envoi: 'Envoi en cours…' },
+    fermer: 'Fermer'
   },
   en: {
-    h1: 'Your guests pick the music. <em>You stay in control.</em>',
-    lead: 'DJ Vinny runs on your PC with your Spotify Premium. Guests scan a QR code and request songs from their phone. They land in your queue, which you manage from your dashboard, the party screen or your remote.',
-    ctaPlans: 'See plans', ctaFree: 'Download for Windows',
-    newsOpen: 'Get news (optional)', newsMajs: 'Tell me about updates', newsPayant: 'Tell me about the paid version',
-    newsConsent: 'I agree to receive these emails from Pop &amp; Show. I can unsubscribe at any time.', newsSend: 'Sign me up',
-    sonOn: 'Turn sound on (French)',
-    ribbon: 'DANCE PARTY ★ OFFICE PARTY ★ WEDDING ★ BIRTHDAY ★ ',
-    howTitle: 'How it works',
-    s1t: 'Install', s1: 'Download, unzip, double-click. Connect your Spotify Premium account.',
-    s2t: 'Show the QR code', s2: 'On the party screen. Guests search for songs on their phone, no app to install.',
-    s3t: 'Stay in control', s3: 'Requests land in your queue. Vinny opens the party, reminds guests of the QR code and closes it.',
-    scrTitle: 'The screens',
-    sc1on: 'On the PC playing the music', sc1t: 'Dashboard', sc1: 'Queue, time periods, autopilot.',
-    sc2on: 'Projector or second monitor', sc2t: 'Party screen', sc2: 'Now playing, requests and QR code.',
-    sc3on: 'Your phone', sc3t: 'Remote', sc3: 'Pause, next and queue, from anywhere in the room.',
-    sc4on: 'Their phone, same Wi-Fi', sc4t: 'Guests', sc4: 'They scan the QR code, search and request.',
-    needTitle: 'What you need',
-    n1t: 'Windows PC', n1: 'Left plugged in during the party.',
-    n2t: 'Chrome or Edge', n2: 'The music plays in the PC browser.',
-    n3t: 'Spotify Premium', n3: 'And a Client ID, created for free on <a href="https://developer.spotify.com/dashboard" rel="noopener">developer.spotify.com</a>.',
-    n4t: 'Speakers', n4: 'Connected to the PC.',
-    plansTitle: 'Plans',
-    p0: 'Free', p0price: '$0', p0a: 'The full app on your PC', p0b: "Guest requests over the venue's Wi-Fi", p0c: 'Party screen and remote', p0d: "Prerecorded Vinny voice: opening, QR reminders, closing", p0btn: 'Download',
-    p1: 'Party', p1price: '$10 <small>/ party</small>', plus: 'Everything in Free, plus:',
-    p1a: 'Your address: your-name.djvinny.ca, even without Wi-Fi', p1b: 'Wishes ahead of time', p1c: 'Email invitations and printable QR code', p1d: "Vinny announces the requester's name and their song", p1btn: 'Buy a party',
-    p2: 'Subscription', p2price: '$20 <small>/ month</small>', plusSub: 'Same as Party, plus:', p2a: '4 parties per month', p2b: 'Cancel anytime', p2btn: 'Subscribe',
-    need: 'Prices in Canadian dollars, taxes extra.',
-    faqTitle: 'FAQ',
-    q1: "What's the difference between free and paid?", a1: "<p>Free is the full app on your PC: guests request songs over the venue's Wi-Fi, with the party screen, the remote and the prerecorded Vinny voice.</p><p>Paid is not on sale yet. It will add your own address that works without Wi-Fi, wishes ahead of time, email invitations with a printable QR code, and announcements of the requester's name and song. Planned prices: $10 per party or $20 a month for 4 parties.</p>",
-    q2: 'What do I need?', a2: '<p>A Windows PC with Chrome or Edge, a Spotify Premium account, a Spotify Client ID (free, see below) and speakers.</p>',
-    q3: 'Does it work on Mac or phone?', a3: "<p>No. The app is built for Windows. Your phone works as a remote, and your guests' phones are used to request songs.</p>",
-    q4: 'What are the party screen, remote and dashboard for?', a4: '<p>The dashboard (<code>127.0.0.1:3000/host</code>) is your control room, on the PC playing the music. The party screen (<code>/ecran.html</code>) goes on a projector or second monitor: now playing, requests and QR code. The remote (<code>/remote</code>) is for your phone: pause, next, queue.</p>',
-    q5: 'Do guests have to install anything?', a5: '<p>No. They scan the QR code and the page opens in their browser.</p>',
-    q6: 'What if the venue has no Wi-Fi?', a6: "<p>In the free version, guests must be on the same Wi-Fi as your PC. The public address that works without Wi-Fi is part of the paid plan, not on sale yet.</p>",
-    q7: "What's a Spotify Client ID?", a7: '<p>Spotify asks each host to create their own app. It is free and takes 5 minutes on <a href="https://developer.spotify.com/dashboard" rel="noopener">developer.spotify.com</a>: create an app, add the redirect URI <code>http://127.0.0.1:3000/host</code>, tick Web Playback SDK, then copy the Client ID. There is no secret to copy. The DJ Vinny welcome page walks you through it.</p>',
-    q8: 'Windows shows a warning on first launch.', a8: '<p>That is normal: the app is not digitally signed, so SmartScreen is cautious. Click "More info", then "Run anyway".</p>',
-    q9: 'Can I use it at a bar or a wedding?', a9: "<p>Public performance rights (SOCAN, Re:Sound) are the responsibility of the organizer or the venue. Spotify's terms limit use to personal, non-commercial settings and prohibit public playback in businesses. DJ Vinny suits private parties; check the rules that apply to your event.</p>",
-    q10: "Is Vinny's voice a real person?", a10: '<p>No, it is an artificial-intelligence voice, in Quebec French and in English. In the free version these are prerecorded clips, with no account or key to set up.</p>',
-    q11: 'What data is collected?', a11: '<p>In the free version, everything stays on your computer. The party log contains no names, IP addresses or images. The camera is optional: it measures movement live and nothing is recorded. Your email, if you give it, is only used for the mailings you chose.</p>',
-    legal: "Music plays through your own Spotify account. Public performance rights (SOCAN, Re:Sound) are the responsibility of the organizer or venue. DJ Vinny is not affiliated with Spotify, Apple, OpenRouter or ElevenLabs.",
-    newsMail: 'you@email.com', newsOk: 'Almost done: a confirmation email is on its way.',
-    newsErr: { courriel: 'Invalid email.', choix: 'Pick at least one mailing.', consent: 'Tick the consent box.', serveur: 'Sign-up failed. Please try again later.', envoi: 'Sending…' },
-    sonOff: 'Turn sound off',
-    soon: 'Coming soon'
+    pr1: 'Guests need no account', pr2: 'Your Spotify Premium', pr3: 'Ready in 5 minutes',
+    phT: 'Find your song', phAdd: 'Added', phSay: '<svg class="mic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg> "Special request from Marie-Ève! Pour que tu m\'aimes encore, by Céline Dion!"',
+    kDiff: 'The difference', kOrg: 'For the host', kPrix: 'Pricing', kFaq: 'Questions', rec: 'Recommended',
+    navFaq: 'FAQ', navPrix: 'Pricing', ctaFree: 'Download for free', ctaPrix: 'See pricing',
+    aviseT: 'Notify me', aviseSend: 'Notify me',
+    newsConsent: 'I agree to receive emails from Pop &amp; Show about DJ Vinny. I can unsubscribe at any time.',
+    vsT1: 'Spotify plays music.', vsT2: 'Vinny hosts the party.', vsTag1: 'Without Vinny', vsTag2: 'With DJ Vinny',
+    vs1t: 'Spotify alone, Jam, or the phone in a corner', vs1a: 'Every guest needs an account', vs1b: 'Your phone is held hostage all night', vs1c: 'Requests come by text or by shouting', vs1d: 'Nobody looks after the order or the silences',
+    vs2t: 'A real party, no effort', vs2a: 'Guests need nothing: no app, no account', vs2b: 'Requests are gathered and queued', vs2c: 'No silences, even with no special requests', vs2d: 'Vinny announces the name and the song',
+    orgT: 'You get to party too.', orgLead: 'Pause, skip, DJ buttons: all from your phone, without leaving your table.', over: 'You party too',
+    f1t: 'A fair queue', f1: 'Limits per guest and per period. Nobody takes over the music.',
+    f2t: 'Easy from 7 to 77', f2: 'One field, one search, one button. Even grandma gets it.',
+    f3t: 'Autonomous list', f3: 'When nobody requests anything, the autonomous list takes over.',
+    rTitle: 'DJ Vinny · remote', rPause: '⏯ Pause', rNext: '⏭ Next', rCalm: 'Dinner', rParty: 'Party',
+    r1: 'Horn', r2: 'Scratch', r3: 'Rewind', r4: 'Fanfare', r5: 'Cornet', r6: 'Drumroll', r7: 'Applause', r8: 'Ovation', r9: 'Riser',
+    plansTitle: 'Free to start. $10 to go further.',
+    p0: 'Free', p0price: '$0', p0a: "Requests by QR code over the venue's Wi-Fi", p0b: 'Prerecorded Vinny voice', p0c: 'Queue, autonomous list, remote, party screen', p0d: 'Your Spotify Premium', p0btn: 'Download',
+    p1: 'Party', p1price: '$10 <small>per party + tax</small>', plus: 'Everything in Free, plus:',
+    p1a: 'Requests also over the cellular network, no Wi-Fi needed', p1b: 'Wishes ahead of time to prepare the list', p1c: 'Invitation email and printable QR code', p1d: 'Vinny announces the name and the song', p1f: 'Replay your party at a future event', p1btn: 'Buy a party',
+    need: 'A professional DJ: $500 to $1,000 and up. Prices in Canadian dollars, taxes extra.',
+    faqTitle: 'Answers up front',
+    q0: 'How does it work?', a0: '<ol><li><b>Pick your list.</b> A ready-made playlist. Two buttons: search, apply.</li><li><b>Show the QR code.</b> Your guests scan it and pick their song, no account.</li><li><b>Enjoy the party too.</b> Vinny announces and keeps the songs going. You run everything from your phone.</li></ol>',
+    q1: 'Do my guests need Spotify?', a1: '<p>No. Only the host needs a Spotify Premium. Guests scan the QR code and request, with no account or app.</p>',
+    q2: 'What do I need?', a2: '<p>A Windows PC with Chrome or Edge, speakers, a Spotify Premium, and a free Spotify app to create in 5 minutes on <a href="https://developer.spotify.com/dashboard" rel="noopener">developer.spotify.com</a> (the DJ Vinny welcome page guides you on screen).</p>',
+    q3: 'Is the $10 for buying music?', a3: '<p>No. Pop &amp; Show does not sell or stream any music. Your music comes from your own Spotify Premium, on your PC, with your account. The $10 pays for the service around it: the public address for guests, wishes ahead of time, the invitation and personalized announcements.</p>',
+    q9: 'Is it legal for my event?', a9: '<p>DJ Vinny is built for private parties. SOCAN and Re:Sound rights and Spotify\'s terms are the organizer\'s responsibility.</p>',
+    q10: 'Does Vinny replace a DJ?', a10: '<p>No. It replaces the phone in the corner. For a wedding or a gala, keep your DJ.</p>',
+    q11: 'Windows shows a warning on first launch.', a11: '<p>That is normal: the app is not digitally signed, so SmartScreen is cautious. Click "More info", then "Run anyway".</p>',
+    finA: 'Tonight,', finB: 'takes the party in hand.',
+    legal: 'DJ Vinny is a Pop &amp; Show product. Not affiliated with Spotify. Prices in Canadian dollars.',
+    newsMail: 'you@email.com', newsOk: "Noted. We'll let you know as soon as it's ready.",
+    newsErr: { courriel: 'Invalid email.', consent: 'Tick the consent box.', serveur: 'Sign-up failed. Please try again later.', envoi: 'Sending…' },
+    listen: 'Listen to Vinny', soon: 'Coming soon', fermer: 'Close'
   }
 };
 // le français est dans la page : on le mémorise une fois pour pouvoir y revenir
 document.querySelectorAll('[data-t]').forEach(el => { if (!(el.dataset.t in T.fr)) T.fr[el.dataset.t] = el.innerHTML; });
 
-const video = document.querySelector('.video video'), son = document.querySelector('.son'), statut = document.querySelector('.news [role=status]');
+const dlg = document.getElementById('avise'), form = dlg.querySelector('form'), statut = dlg.querySelector('[role=status]');
 let lang = 'fr';
-const texteSon = () => { son.textContent = T[lang][video.muted ? 'sonOn' : 'sonOff']; };
-son.onclick = () => { video.muted = !video.muted; if (!video.muted) video.play().catch(() => {}); texteSon(); };
-if (matchMedia('(prefers-reduced-motion: reduce)').matches) { video.removeAttribute('autoplay'); video.pause(); }
 
 function langue(l) {
   lang = l;
   document.documentElement.lang = l;
   document.querySelectorAll('[data-t]').forEach(el => { const v = T[l][el.dataset.t]; if (typeof v === 'string') el.innerHTML = v; });
   document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = T[l][el.dataset.ph]; });
-  document.querySelector('.ribbon span').textContent = T[l].ribbon.repeat(8);
+  document.getElementById('h1').innerHTML = V[l][0];
+  document.getElementById('lead').innerHTML = V[l][1];
   document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l === l));
-  statut.textContent = ''; texteSon();
-  video.setAttribute('aria-label', l === 'en' ? 'DJ Vinny in 30 seconds' : 'DJ Vinny en 30 secondes');
-  document.querySelector('.news input[type=email]').setAttribute('aria-label', l === 'en' ? 'Email' : 'Courriel');
-  // liens pas encore prêts : bouton grisé « Bientôt »
-  const lier = (el, url) => { if (url) { el.href = url; el.removeAttribute('aria-disabled'); } else { el.removeAttribute('href'); el.setAttribute('aria-disabled', 'true'); el.textContent = el.closest('.plan') ? T[l].soon : el.textContent + ' · ' + T[l].soon; } };
-  document.querySelectorAll('[data-dl]').forEach(el => lier(el, LIENS.telecharger));
-  document.querySelectorAll('[data-buy]').forEach(el => lier(el, LIENS.acheter && LIENS.acheter + '?offre=' + el.dataset.buy + '&lang=' + l));
+  statut.textContent = '';
+  dlg.querySelector('.x').setAttribute('aria-label', T[l].fermer);
+  form.courriel.setAttribute('aria-label', l === 'en' ? 'Email' : 'Courriel');
+  // téléchargement pas prêt : les boutons ouvrent le pop-up « Je veux être avisé » (ou « Bientôt » grisé sans adresse de courriel) ; l'achat reste grisé
+  // sans adresse de courriel, le pop-up ne stockerait rien : le bouton est alors seulement grisé
+  document.querySelectorAll('[data-dl]').forEach(el => {
+    if (LIENS.telecharger) { el.href = LIENS.telecharger; el.removeAttribute('aria-disabled'); return; }
+    if (LIENS.courriel) el.textContent = T[l].aviseT;
+    else { el.textContent += ' · ' + T[l].soon; el.removeAttribute('href'); el.setAttribute('aria-disabled', 'true'); }
+  });
+  document.querySelectorAll('[data-buy]').forEach(el => {
+    if (LIENS.acheter) { el.href = LIENS.acheter + '?offre=' + el.dataset.buy + '&lang=' + l; el.removeAttribute('aria-disabled'); }
+    else { el.removeAttribute('href'); el.setAttribute('aria-disabled', 'true'); el.textContent = T[l].soon; }
+  });
   try { localStorage.setItem('lang', l); } catch {}
 }
 document.querySelectorAll('.lang button').forEach(b => b.onclick = () => langue(b.dataset.l));
 document.getElementById('an').textContent = new Date().getFullYear();
 
-// Courriel facultatif : jamais bloquant, consentement explicite, double confirmation par courriel (voir convex/abonnes.ts)
-const news = document.getElementById('news'), form = news.querySelector('form');
-news.hidden = !LIENS.courriel;
+// Pop-up « Je veux être avisé » : consentement explicite, double confirmation par courriel (voir convex/abonnes.ts). Aucun succès simulé.
+document.querySelectorAll('[data-dl]').forEach(el => el.addEventListener('click', e => {
+  if (LIENS.telecharger || !LIENS.courriel) return;
+  e.preventDefault(); statut.textContent = ''; dlg.showModal(); form.courriel.focus();
+}));
+dlg.querySelector('[data-fermer]').onclick = () => dlg.close();
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 form.onsubmit = async e => {
   e.preventDefault();
   const f = new FormData(form), c = String(f.get('courriel') || '').trim(), E = T[lang].newsErr;
   const dire = (m, err) => { statut.textContent = m; statut.classList.toggle('err', !!err); };
   if (!/^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/.test(c)) return dire(E.courriel, 1);
-  if (!f.get('majs') && !f.get('payant')) return dire(E.choix, 1);
   if (!f.get('consentement')) return dire(E.consent, 1);
+  if (!LIENS.courriel) return dire(E.serveur, 1);
   dire(E.envoi);
   try {
-    const r = await fetch(LIENS.courriel, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courriel: c, majs: !!f.get('majs'), payant: !!f.get('payant'), consentement: true, lang }) });
+    const r = await fetch(LIENS.courriel, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courriel: c, majs: true, payant: true, consentement: true, lang }) });
     if (!r.ok) throw 0;
     form.reset(); dire(T[lang].newsOk);
   } catch { dire(E.serveur, 1); }
 };
+
+// Téléphone du hero : clic = animation avec la voix ; fin ou erreur = retour au premier frame ; hors écran = pause
+const vid = document.querySelector('.motion'), listen = document.querySelector('.listen');
+if (MOTION) {
+  listen.hidden = false;
+  const retour = () => { vid.pause(); vid.hidden = true; };
+  listen.onclick = () => {
+    if (!vid.getAttribute('src')) vid.src = MOTION;
+    vid.hidden = false; vid.currentTime = 0;
+    vid.play().catch(retour);
+  };
+  vid.onended = vid.onerror = () => { vid.hidden = true; listen.focus(); };
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting && !vid.paused) vid.pause(); }), { threshold: .25 }).observe(vid);
+}
+
+// Apparition au défilement (sans IntersectionObserver, tout est visible d'emblée)
+const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 }) : null;
+document.querySelectorAll('.rv').forEach(el => io ? io.observe(el) : el.classList.add('in'));
 
 let choisie = new URLSearchParams(location.search).get('lang');
 try { choisie = choisie || localStorage.getItem('lang'); } catch {}
