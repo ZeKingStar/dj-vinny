@@ -208,6 +208,7 @@ Le travail commercial se fait sur une branche à part ; `perso` et l'étiquette 
 | Ordre bilingue / payant | Sans importance : bilingue d'abord (étape 2), il ne dépend de rien |
 | Entreprise | Pop & Show |
 | Catalogue | `ca` |
+| Compte client du portail (30 oct. 2026) | Pas de Clerk : Stripe Checkout + courriel. Le webhook crée le client et envoie la clé de licence par Brevo (`convex/paiement.ts`, `deploy/vps/compte/`). Clerk reste possible plus tard (`clerkId` facultatif) |
 | Fenêtres sur le PC du client | Aucune fenêtre de terminal visible, en gratuit comme en payant. Pas d’installateur pour l’instant. L’onglet du dashboard est protégé contre une fermeture par erreur (seulement une fois la soirée démarrée) |
 | Moteur sur le VPS ? | Non : le moteur (`server.js`) reste sur le PC du client, le VPS ne sert que de passerelle pour les invités. Un moteur hébergé par Pop & Show ferait d’elle le service qui fait jouer la musique (§ IV.2.1) |
 

@@ -6,7 +6,8 @@ import { ConvexError } from "convex/values";
 import { httpAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
-import { sha256 } from "./lib";
+import { sha256, sousDomaineValide } from "./lib";
+import { creerSession, normaliser, signatureValide } from "./paiement";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization" };
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", ...CORS } });
@@ -79,6 +80,39 @@ route("/voix", licencie(async (ctx, c, b) => {
   }
   return new Response(await r.arrayBuffer(), { status: 200, headers: { "Content-Type": "audio/mpeg", ...CORS } });
 }));
+
+// ---------- Portail compte.djvinny.ca : paiement sans compte (paiement.ts) ----------
+route("/checkout", httpAction(async (ctx, req) => {
+  let b: any = {};
+  try { b = await req.json(); } catch { return erreur("json_invalide", 400); }
+  const courriel = texte(b?.courriel).trim().toLowerCase(), sousDomaine = texte(b?.sousDomaine).trim().toLowerCase();
+  const offre = b?.offre === "abonnement" ? "abonnement" : "soiree", lang = b?.lang === "en" ? "en" : "fr";
+  if (courriel.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel)) return erreur("courriel_invalide", 400);
+  const etat = await ctx.runQuery(internal.paiement.verifier, { courriel, sousDomaine });
+  if (etat.suspendu) return erreur("client_suspendu", 403);
+  if (!etat.existant) { // un nouveau client choisit son adresse ; un client existant achète pour son adresse actuelle
+    if (!sousDomaineValide(sousDomaine)) return erreur("sous_domaine_invalide", 400);
+    if (etat.pris) return erreur("sous_domaine_pris", 409);
+  }
+  try { return json({ url: await creerSession({ offre, courriel, sousDomaine, lang }) }); }
+  catch (e) { console.error("checkout", e); return erreur("paiement_indisponible", 502); }
+}));
+
+// Webhook Stripe (événements : checkout.session.completed, invoice.paid). Signature vérifiée avant tout ; une erreur renvoie 500 et Stripe réessaie.
+http.route({ path: "/stripe", method: "POST", handler: httpAction(async (ctx, req) => {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret) return erreur("webhook_non_configure", 503);
+  const corps = await req.text();
+  if (!(await signatureValide(corps, req.headers.get("Stripe-Signature") || "", secret))) return erreur("signature_invalide", 400);
+  let evt: any;
+  try { evt = JSON.parse(corps); } catch { return erreur("json_invalide", 400); }
+  const a = normaliser(evt);
+  if (a) {
+    try { await ctx.runAction(internal.paiement.traiter, a); }
+    catch (e) { console.error("stripe", evt.id, e); return erreur("traitement_echoue", 500); }
+  }
+  return json({ recu: true });
+}) });
 
 // ---------- VPS : liste lue chaque minute par deploy/vps/djvinny-sync.py (jeton VPS_TOKEN, variable d'environnement Convex) ----------
 http.route({ path: "/vps/clients", method: "GET", handler: httpAction(async (ctx, req) => {

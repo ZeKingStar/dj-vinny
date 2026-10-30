@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DJ Vinny</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="https://djvinny.ca/vinny.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg: #15102E; --card: #221A47; --chip: #2D2358; --line: #3A2F6B; --muted: #B3A9D9; --text: #FFF6E5; --ink: #15102E; --yellow: #FFD23F; --pink: #FF4F7B; --mint: #38E1B0; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; font: 17px/1.5 'Figtree', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+h1 { font: 800 clamp(30px, 6vw, 42px)/1 'Bricolage Grotesque', system-ui, sans-serif; letter-spacing: -.02em; margin: 0 0 24px; }
+:focus-visible { outline: 3px solid var(--pink); outline-offset: 3px; }
+.wrap { max-width: 520px; margin: 0 auto; padding: 0 16px 48px; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 24px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 800 20px 'Bricolage Grotesque', sans-serif; text-decoration: none; color: inherit; }
+.brand img { width: 40px; height: 40px; }
+.lang { display: flex; gap: 4px; background: var(--chip); border: 2px solid var(--line); border-radius: 999px; padding: 3px; }
+.lang button { font: 700 14px 'Figtree', sans-serif; min-width: 44px; min-height: 36px; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; }
+.lang button[aria-pressed=true] { background: var(--yellow); color: var(--ink); }
+form, .ok { background: var(--card); border: 2px solid var(--line); border-radius: 24px; padding: 24px; }
+fieldset { border: 0; padding: 0; margin: 0 0 20px; display: grid; gap: 10px; }
+legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.offre { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; border: 2px solid var(--line); border-radius: 16px; background: var(--chip); cursor: pointer; }
+.offre:has(input:checked) { border-color: var(--yellow); }
+.offre input { accent-color: var(--yellow); width: 20px; height: 20px; margin: 0; }
+.offre b { margin-left: auto; font-weight: 700; white-space: nowrap; }
+.champ > label { font-weight: 700; }
+label.champ { display: block; font-weight: 700; margin-bottom: 16px; }
+.champ input { display: block; width: 100%; min-height: 52px; margin-top: 6px; padding: 0 14px; font: 400 17px 'Figtree', sans-serif; color: var(--text); background: var(--chip); border: 2px solid var(--line); border-radius: 14px; }
+.adresse { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.adresse input { margin: 0; text-align: right; }
+.adresse span { color: var(--muted); white-space: nowrap; }
+.btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; border: 0; border-radius: 999px; font: 700 18px 'Figtree', sans-serif; background: var(--pink); color: var(--ink); cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
+.btn:disabled { opacity: .55; cursor: progress; box-shadow: none; }
+#err { margin: 0 0 16px; padding: 12px 14px; border-radius: 14px; background: rgba(255,79,123,.15); border: 2px solid var(--pink); }
+.ok { text-align: center; }
+.ok p { color: var(--muted); margin: 0 0 20px; }
+a.lien { color: var(--yellow); font-weight: 700; }
+[hidden] { display: none !important; }
+</style></head>
+<body><div class="wrap">
+<header>
+  <a class="brand" href="https://djvinny.ca"><img src="https://djvinny.ca/vinny.svg" alt="" width="40" height="40">DJ Vinny</a>
+  <div class="lang" role="group" aria-label="Langue / Language"><button data-l="fr" aria-pressed="true">FR</button><button data-l="en" aria-pressed="false">EN</button></div>
+</header>
+
+<main>
+<form id="form" novalidate>
+  <h1 data-t="titre">Ta soirée avec Vinny</h1>
+  <fieldset>
+    <legend data-t="offre">Offre</legend>
+    <label class="offre"><input type="radio" name="offre" value="soiree" checked><span data-t="soiree">Une soirée</span><b>10 $</b></label>
+    <label class="offre"><input type="radio" name="offre" value="abonnement"><span data-t="abo">4 soirées par mois</span><b data-t="aboPrix">20 $ / mois</b></label>
+  </fieldset>
+  <label class="champ"><span data-t="courriel">Courriel</span><input id="courriel" type="email" autocomplete="email" inputmode="email" required></label>
+  <div class="champ" id="blocAdresse">
+    <label for="sous" data-t="adresse">Ton adresse</label>
+    <div class="adresse"><input id="sous" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="32" placeholder="ton-nom"><span>.djvinny.ca</span></div>
+  </div>
+  <p id="err" role="alert" hidden></p>
+  <button class="btn" id="payer" type="submit" data-t="payer">Payer</button>
+</form>
+
+<div class="ok" id="merci" hidden role="status">
+  <h1 data-t="merciTitre">Merci!</h1>
+  <p data-t="merciTexte">Ta clé de licence arrive par courriel dans quelques minutes. Pense à vérifier tes pourriels.</p>
+  <a class="lien" href="https://djvinny.ca" data-t="retour">Retour à djvinny.ca</a>
+</div>
+</main>
+</div>
+
+<script src="/config.js"></script>
+<script>
+const T = {
+  fr: { titre: 'Ta soirée avec Vinny', offre: 'Offre', soiree: 'Une soirée', abo: '4 soirées par mois', aboPrix: '20 $ / mois', courriel: 'Courriel', adresse: 'Ton adresse', payer: 'Payer', attente: 'Un instant…', merciTitre: 'Merci!', merciTexte: 'Premier achat : ta clé de licence arrive par courriel (vérifie tes pourriels). Sinon, tes soirées sont déjà ajoutées à ta clé.', retour: 'Retour à djvinny.ca',
+    courriel_invalide: 'Ce courriel ne semble pas valide.', sous_domaine_invalide: 'Adresse invalide : lettres minuscules, chiffres et tirets, sans espace.', sous_domaine_pris: 'Cette adresse est déjà prise, essaie-en une autre.', client_suspendu: 'Ce compte est suspendu. Écris-nous.', paiement_indisponible: 'Le paiement est indisponible pour le moment. Réessaie dans quelques minutes.', reseau: 'Connexion impossible. Réessaie.' },
+  en: { titre: 'Your party with Vinny', offre: 'Plan', soiree: 'One party', abo: '4 parties per month', aboPrix: '$20 / month', courriel: 'Email', adresse: 'Your address', payer: 'Pay', attente: 'One moment…', merciTitre: 'Thank you!', merciTexte: 'First purchase: your license key is on its way by email (check spam). Otherwise, your parties are already added to your key.', retour: 'Back to djvinny.ca',
+    courriel_invalide: "This email doesn't look valid.", sous_domaine_invalide: 'Invalid address: lowercase letters, digits and dashes, no spaces.', sous_domaine_pris: 'This address is taken, try another one.', client_suspendu: 'This account is suspended. Please contact us.', paiement_indisponible: 'Payment is unavailable right now. Try again in a few minutes.', reseau: "Can't connect. Try again." }
+};
+const $ = id => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+let lang = q.get('lang') || (() => { try { return localStorage.getItem('lang'); } catch {} })() || (navigator.language || '').slice(0, 2);
+if (!T[lang]) lang = 'fr';
+
+function langue(l) {
+  lang = l;
+  document.documentElement.lang = l;
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = T[l][el.dataset.t]; });
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.l === l));
+  $('payer').textContent = T[l][$('payer').disabled ? 'attente' : 'payer'];
+  try { localStorage.setItem('lang', l); } catch {}
+}
+document.querySelectorAll('.lang button').forEach(b => b.onclick = () => langue(b.dataset.l));
+langue(lang);
+
+const offre = q.get('offre') === 'abonnement' ? 'abonnement' : 'soiree';
+document.querySelector(`input[name=offre][value=${offre}]`).checked = true;
+if (q.get('merci')) { $('form').hidden = true; $('merci').hidden = false; }
+
+function erreur(code) { const e = $('err'); e.textContent = T[lang][code] || T[lang].paiement_indisponible; e.hidden = false; }
+
+$('form').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  $('err').hidden = true;
+  const courriel = $('courriel').value.trim(), sousDomaine = $('sous').value.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(courriel)) return erreur('courriel_invalide'), $('courriel').focus();
+  $('payer').disabled = true; $('payer').textContent = T[lang].attente;
+  try {
+    const r = await fetch((window.CONVEX_SITE || '') + '/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ offre: document.querySelector('input[name=offre]:checked').value, courriel, sousDomaine, lang }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.url) return location.assign(d.url); // page de paiement Stripe
+    erreur(d.error); if (d.error === 'sous_domaine_pris' || d.error === 'sous_domaine_invalide') $('sous').focus();
+  } catch { erreur('reseau'); }
+  $('payer').disabled = false; $('payer').textContent = T[lang].payer;
+});
+</script>
+</body></html>

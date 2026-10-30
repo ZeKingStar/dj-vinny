@@ -20,6 +20,20 @@ Variables d'environnement Convex (`npx convex env set NOM valeur`, jamais dans l
 | `VPS_HOST`, `VPS_USER`, `VPS_HOST_KEY`, `DOMAINE` | Tunnel automatique vers le VPS (voir `deploy/vps/README.md`). Sans `VPS_HOST`, aucun tunnel |
 | `VPS_TOKEN` | Jeton de la minuterie du VPS pour `/vps/clients` |
 
+## Paiement (portail compte.djvinny.ca, sans compte Clerk)
+
+Le client entre son courriel et l'adresse voulue sur `compte.djvinny.ca` (`deploy/vps/compte/`), paie sur Stripe Checkout, et le webhook (`paiement.ts`) crée le client et ses passes, puis lui envoie sa clé de licence par courriel (Brevo). Une passe achetée = 1 passe (12 mois) ; un abonnement = 4 passes par facture payée, qui expirent à la fin de la période. Un client qui revient avec le même courriel reçoit ses nouvelles passes sur son adresse actuelle.
+
+| Variable Convex | Valeur |
+|---|---|
+| `STRIPE_SECRET_KEY` | clé secrète Stripe (`sk_test_…` puis `sk_live_…`) |
+| `STRIPE_WEBHOOK_SECRET` | secret de signature du webhook (`whsec_…`) |
+| `STRIPE_PRICE_SOIREE`, `STRIPE_PRICE_ABONNEMENT` | les `price_…` de la passe 10 $ et de l'abonnement 20 $/mois |
+| `BREVO_API_KEY` | clé API Brevo (expéditeur `invitations@djvinny.ca`) |
+| `PORTAIL_URL` | facultatif, `https://compte.djvinny.ca` par défaut |
+
+Webhook Stripe : adresse `https://<déploiement>.convex.site/stripe`, événements `checkout.session.completed` et `invoice.paid`. Clé perdue ou courriel non reçu : `npx convex run paiement:nouvelleCle '{"courriel":"client@exemple.ca"}'` (remplace la clé). Remboursements et annulations : à faire dans Stripe, puis `admin:suspendre` si besoin ; les passes d'un abonnement annulé expirent seules.
+
 ## Gestion (en attendant le portail)
 
 ```bash

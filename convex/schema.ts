@@ -6,7 +6,7 @@ import { v } from "convex/values";
 export default defineSchema({
   clients: defineTable({
     courriel: v.string(),
-    clerkId: v.optional(v.string()), // rempli par le portail (étape 4)
+    clerkId: v.optional(v.string()), // inutilisé : le portail identifie le client par son courriel et son client Stripe
     sousDomaine: v.string(), // <sousDomaine>.djvinny.ca
     portTunnel: v.number(), // port du tunnel SSH sur le VPS, unique
     cleSsh: v.optional(v.string()), // clé publique générée par l'app (étape 6)
@@ -17,7 +17,9 @@ export default defineSchema({
     .index("par_licence", ["licence"])
     .index("par_sousDomaine", ["sousDomaine"])
     .index("par_port", ["portTunnel"])
-    .index("par_clerk", ["clerkId"]),
+    .index("par_clerk", ["clerkId"])
+    .index("par_courriel", ["courriel"])
+    .index("par_stripe", ["stripeCustomerId"]),
 
   achats: defineTable({
     clientId: v.id("clients"),

@@ -57,6 +57,14 @@ if [ -z "$MANQUE" ]; then
     if nginx -t 2>/dev/null; then systemctl reload nginx && echo "Page djvinny.ca en ligne"
     else rm -f /etc/nginx/sites-enabled/djvinny-site.conf; echo "ÉCHEC de nginx -t : page djvinny.ca retirée, nginx inchangé"; fi
   fi
+  # Portail de paiement compte.djvinny.ca (dossier compte/ + djvinny-compte.conf) ; config.js donne l'adresse Convex à la page
+  if [ -f "$ICI/compte/index.html" ] && [ -f "$ICI/djvinny-compte.conf" ]; then
+    install -d -m 755 /var/www/compte.djvinny.ca && cp -r "$ICI/compte/." /var/www/compte.djvinny.ca/
+    printf 'window.CONVEX_SITE = "%s";\n' "$CONVEX_SITE_URL" > /var/www/compte.djvinny.ca/config.js
+    install -m 644 "$ICI/djvinny-compte.conf" /etc/nginx/sites-enabled/djvinny-compte.conf
+    if nginx -t 2>/dev/null; then systemctl reload nginx && echo "Portail compte.djvinny.ca en ligne"
+    else rm -f /etc/nginx/sites-enabled/djvinny-compte.conf; echo "ÉCHEC de nginx -t : portail retiré, nginx inchangé"; fi
+  fi
   systemctl enable --now djvinny-sync.timer && echo "Minuterie activée"
 else
   echo "Minuterie NON activée, il manque :$MANQUE (voir README.md, puis relancer ce script)"
