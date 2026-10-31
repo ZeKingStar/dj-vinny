@@ -36,11 +36,14 @@ export const insererClient = internalMutation({
 
 // Passe offerte (bêta, dépannage) : npx convex run admin:ajouterPasse '{"sousDomaine":"…"}'
 export const ajouterPasse = internalMutation({
-  args: { sousDomaine: v.string(), origine: v.optional(v.union(v.literal("achat"), v.literal("abonnement"))) },
-  handler: async (ctx, { sousDomaine, origine }) => {
+  // `quantite` et `expireLe` (ms) servent aux comptes à vie : '{"sousDomaine":"…","quantite":200,"expireLe":4102444800000}'
+  args: { sousDomaine: v.string(), origine: v.optional(v.union(v.literal("achat"), v.literal("abonnement"))), quantite: v.optional(v.number()), expireLe: v.optional(v.number()) },
+  handler: async (ctx, { sousDomaine, origine, quantite, expireLe }) => {
     const c = await ctx.db.query("clients").withIndex("par_sousDomaine", q => q.eq("sousDomaine", sousDomaine)).unique();
     if (!c) throw refus("client_inconnu", 404);
-    return await ctx.db.insert("passes", { clientId: c._id, origine: origine ?? "achat", etat: "libre", expireLe: Date.now() + AN, voixCaracteres: 0 });
+    let id;
+    for (let i = 0; i < Math.min(quantite ?? 1, 500); i++) id = await ctx.db.insert("passes", { clientId: c._id, origine: origine ?? "achat", etat: "libre", expireLe: expireLe ?? Date.now() + AN, voixCaracteres: 0 });
+    return id;
   },
 });
 
