@@ -15,8 +15,8 @@ Variables d'environnement Convex (`npx convex env set NOM valeur`, jamais dans l
 | Variable | Rôle |
 |---|---|
 | `ELEVENLABS_API_KEY` | Clé ElevenLabs de Pop & Show (forfait Creator). Sans elle, `/voix` répond `voix_non_configuree` |
-| `ELEVENLABS_MODEL` | Facultatif, `eleven_v3` par défaut |
-| `ELEVENLABS_VOICE_ID` | Facultatif, Liam (`TX3LPaxmHKxFdv7VOQHJ`) par défaut |
+| `ELEVENLABS_MODEL` | Facultatif, `eleven_v4_turbo` par défaut (moitié prix, balises audio) |
+| `ELEVENLABS_VOICE_ID`, `ELEVENLABS_VOICE_ID_EN` | Facultatifs, Felix Tabarnak (`RBhYSNMNu6b2CGZ9Fn1M`) par défaut, en français et en anglais. Il doit être dans « Mes voix » du compte |
 | `VPS_HOST`, `VPS_USER`, `VPS_HOST_KEY`, `DOMAINE` | Tunnel automatique vers le VPS (voir `deploy/vps/README.md`). Sans `VPS_HOST`, aucun tunnel |
 | `VPS_TOKEN` | Jeton de la minuterie du VPS pour `/vps/clients` |
 | `BREVO_API_KEY`, `BREVO_LIST_ID`, `BREVO_SENDER` | Courriel facultatif de la page de vente (`abonnes.ts`) : clé Brevo, numéro de la liste, adresse d'expéditeur validée dans Brevo. Sans clé, `/abonner` répond `non_configure` |

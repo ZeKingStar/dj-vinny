@@ -1,9 +1,12 @@
 // Génère les clips de voix de la version gratuite (voix/<langue>/<intensité>-<catégorie>-<n>.mp3) à partir de announce/<langue>.json.
-// Seules les phrases sans {title} {artist} {name} sont produites. Clé OpenRouter lue dans l'environnement, jamais enregistrée.
-//   node --env-file=.env voix/generer.js [fr|en] [--force]
+// Seules les phrases sans {title} {artist} {name} sont produites. ElevenLabs en direct (forfait payant : usage commercial) avec les mêmes voix et le même modèle
+// que la voix incluse (convex/http.ts). Clé lue dans l'environnement, jamais enregistrée.
+//   node --env-file=.env voix/generer.js [fr|en] [--force]      (ELEVENLABS_API_KEY ; facultatifs : ELEVENLABS_VOICE_ID, ELEVENLABS_VOICE_ID_EN, ELEVENLABS_MODEL)
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
-const key = process.env.OPENROUTER_API_KEY;
-if (!key) { console.error('OPENROUTER_API_KEY manquant'); process.exit(1); }
+const key = process.env.ELEVENLABS_API_KEY;
+if (!key) { console.error('ELEVENLABS_API_KEY manquant'); process.exit(1); }
+const VOIX = { fr: process.env.ELEVENLABS_VOICE_ID || 'RBhYSNMNu6b2CGZ9Fn1M', en: process.env.ELEVENLABS_VOICE_ID_EN || 'RBhYSNMNu6b2CGZ9Fn1M' }; // Felix Tabarnak, dans les deux langues
+const MODELE = process.env.ELEVENLABS_MODEL || 'eleven_v4_turbo';
 const force = process.argv.includes('--force'), only = process.argv.find(a => /^(fr|en)$/.test(a));
 const REVERB = [0.32, 0.28, 0.24, 0.2, 0.15, 0.1];
 const filter = c => [c.tempo && c.tempo !== 1 && `atempo=${c.tempo}`, 'highpass=f=90', c.presence > 0 && `equalizer=f=3500:t=q:w=1.1:g=${c.presence}`,
@@ -22,8 +25,8 @@ const filter = c => [c.tempo && c.tempo !== 1 && `atempo=${c.tempo}`, 'highpass=
         for (const [i, text] of todo.entries()) {
           const out = path.join(dir, `${intensity}-${cat}-${i + 1}.mp3`);
           if (!force && fs.existsSync(out)) continue;
-          const body = { model: cfg.model, input: text, voice: c.voice || cfg.voice, response_format: 'mp3', provider: { options: { elevenlabs: { language_code: lang, ...(c.voiceSettings && { voice_settings: c.voiceSettings }) } } } };
-          const r = await fetch('https://openrouter.ai/api/v1/audio/speech', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body: JSON.stringify(body) });
+          const body = { text, model_id: MODELE, language_code: lang, ...(c.voiceSettings && { voice_settings: c.voiceSettings }) };
+          const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOIX[lang]}?output_format=mp3_44100_128`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'audio/mpeg', 'xi-api-key': key }, body: JSON.stringify(body) });
           if (!r.ok) { console.error(`${lang}/${path.basename(out)} : ${r.status} ${await r.text()}`); process.exit(1); }
           const raw = out + '.raw'; fs.writeFileSync(raw, Buffer.from(await r.arrayBuffer()));
           execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', '-i', raw, '-af', filter(c), '-ar', '44100', '-b:a', '160k', out]);

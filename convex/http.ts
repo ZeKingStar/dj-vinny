@@ -56,15 +56,16 @@ route("/cle-ssh", licencie(async (ctx, c, b) => json(await ctx.runMutation(inter
 route("/souhaits", licencie(async (ctx, c) => json({ souhaits: await ctx.runMutation(internal.soirees.prendreSouhaits, { clientId: c._id }) })));
 
 // Voix de Vinny incluse : texte -> MP3 par ElevenLabs, avec la clé de Pop & Show (variable d'environnement Convex, jamais envoyée au client).
-// Modèle et voix fixés ici (variables ELEVENLABS_MODEL et ELEVENLABS_VOICE_ID) : le client ne peut pas choisir un modèle plus cher.
+// Modèle et voix fixés ici (variables ELEVENLABS_MODEL, ELEVENLABS_VOICE_ID et ELEVENLABS_VOICE_ID_EN) : le client ne peut pas choisir un modèle plus cher.
 route("/voix", licencie(async (ctx, c, b) => {
   const cle = process.env.ELEVENLABS_API_KEY;
   if (!cle) return erreur("voix_non_configuree", 503);
   const t = texte(b.texte).trim(), lang = b.lang === "en" ? "en" : "fr";
   if (!t || t.length > 400) return erreur("texte_invalide", 400);
   const { passeId } = await ctx.runMutation(internal.soirees.reserverVoix, { clientId: c._id, evId: texte(b.evId), n: t.length });
-  const voix = process.env.ELEVENLABS_VOICE_ID || "TX3LPaxmHKxFdv7VOQHJ"; // Liam
-  const corps: Record<string, unknown> = { text: t, model_id: process.env.ELEVENLABS_MODEL || "eleven_v3", language_code: lang };
+  // Felix Tabarnak (voix québécoise de la bibliothèque, à ajouter à « Mes voix ») dans les deux langues
+  const voix = (lang === "en" ? process.env.ELEVENLABS_VOICE_ID_EN || "RBhYSNMNu6b2CGZ9Fn1M" : process.env.ELEVENLABS_VOICE_ID || "RBhYSNMNu6b2CGZ9Fn1M");
+  const corps: Record<string, unknown> = { text: t, model_id: process.env.ELEVENLABS_MODEL || "eleven_v4_turbo", language_code: lang };
   if (b.prev) corps.previous_text = texte(b.prev).slice(0, 400);
   if (b.next) corps.next_text = texte(b.next).slice(0, 400);
   if (b.voiceSettings && typeof b.voiceSettings === "object") { // seuls les réglages connus passent à ElevenLabs
