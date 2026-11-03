@@ -32,6 +32,8 @@ async function attrape(fn: () => Promise<Response>) {
   }
 }
 const texte = (x: unknown) => (typeof x === "string" ? x : "");
+// Adresse des liens des courriels (confirmer, désabonner) : https://djvinny.ca, relayée par nginx (deploy/vps/djvinny-site.conf), sinon l'adresse Convex
+const lienBase = () => process.env.ABONNES_BASE_URL || process.env.CONVEX_SITE_URL;
 
 const http = httpRouter();
 const route = (path: string, handler: ReturnType<typeof httpAction>) => {
@@ -159,7 +161,7 @@ route("/abonner", httpAction(async (ctx, req) => {
   if (r.limite) return erreur("trop_de_demandes", 429);
   // Sans Brevo : l'adresse et le consentement sont gardés en « attente » ; la confirmation par courriel partira quand Brevo sera configuré
   if (!process.env.BREVO_API_KEY || !process.env.ABONNES_SECRET) return json({ ok: true, confirmation: false });
-  if (r.envoyer && !(await brevo.confirmation(courriel, lang, `${process.env.CONVEX_SITE_URL}/confirmer?t=${await signer("c", courriel)}`))) return erreur("envoi_echec", 502);
+  if (r.envoyer && !(await brevo.confirmation(courriel, lang, `${lienBase()}/confirmer?t=${await signer("c", courriel)}`))) return erreur("envoi_echec", 502);
   return json({ ok: true }); // même réponse que le courriel soit déjà inscrit ou non
 }));
 http.route({ path: "/confirmer", method: "GET", handler: httpAction(async (ctx, req) => {
@@ -176,7 +178,7 @@ http.route({ path: "/confirmer", method: "GET", handler: httpAction(async (ctx, 
       await brevo.code(c, a.lang, n.code);
     }
   }
-  return page("confirme", a.lang, `${process.env.CONVEX_SITE_URL}/desabonner?t=${await signer("d", c)}`, code);
+  return page("confirme", a.lang, `${lienBase()}/desabonner?t=${await signer("d", c)}`, code);
 }) });
 http.route({ path: "/desabonner", method: "GET", handler: httpAction(async (ctx, req) => {
   const c = await verifier("d", new URL(req.url).searchParams.get("t") || "");

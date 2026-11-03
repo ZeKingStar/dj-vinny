@@ -31,6 +31,10 @@ export async function creerSession(p: { offre: "soiree" | "abonnement"; courriel
     mode: p.offre === "soiree" ? "payment" : "subscription", "line_items[0][price]": prix, "line_items[0][quantity]": "1",
     customer_email: p.courriel, locale: p.lang, success_url: `${portail()}/?merci=1&lang=${p.lang}`, cancel_url: `${portail()}/?offre=${p.offre}&lang=${p.lang}`,
   });
+  // Page de paiement aux couleurs de DJ Vinny seulement pour ces sessions : le compte Stripe sert aussi à d'autres activités de Pop & Show
+  f.set("branding_settings[display_name]", "DJ Vinny");
+  f.set("branding_settings[icon][type]", "url");
+  f.set("branding_settings[icon][url]", "https://djvinny.ca/vinny-512.png");
   if (p.offre === "soiree") { // un client Stripe pour retrouver l'acheteur aux achats suivants ; code promo permis seulement sur la passe (jamais sur l'abonnement)
     f.set("customer_creation", "always");
     f.set("allow_promotion_codes", "true");

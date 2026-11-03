@@ -33,6 +33,7 @@ Le client entre son courriel et l'adresse voulue sur `compte.djvinny.ca` (`deplo
 | `STRIPE_PRICE_SOIREE`, `STRIPE_PRICE_ABONNEMENT` | les `price_…` de la passe 10 $ et de l'abonnement 20 $/mois |
 | `BREVO_API_KEY` | clé API Brevo (expéditeur `invitations@djvinny.ca`) |
 | `STRIPE_COUPON_ESSAI` | facultatif : id du coupon « première soirée gratuite » (voir plus bas) |
+| `ABONNES_BASE_URL` | facultatif, `https://djvinny.ca` : adresse des liens « confirmer » et « se désabonner » (relayés par nginx vers Convex). Absente : l'adresse `convex.site` |
 | `PORTAIL_URL` | facultatif, `https://compte.djvinny.ca` par défaut |
 
 Seules les sessions Checkout portant `metadata.offre` (créées par `/checkout`) et les factures de `STRIPE_PRICE_ABONNEMENT` sont traitées : les autres paiements du compte Stripe de Pop & Show sont ignorés. Après le premier abonnement en mode test, vérifier dans les journaux Convex qu'aucune ligne « invoice.paid ignorée » n'apparaît pour cette facture.
