@@ -13,7 +13,9 @@ export default defineSchema({
     etat: v.union(v.literal("attente"), v.literal("confirme"), v.literal("desabonne")),
     consentiLe: v.number(), // instant de la case cochée (preuve de consentement)
     dernierEnvoi: v.number(), // un courriel de confirmation par 10 minutes au plus
-  }).index("par_courriel", ["courriel"]),
+    codeEssai: v.optional(v.string()), // code promo Stripe (première soirée gratuite), créé à la confirmation du courriel
+    codeExpireLe: v.optional(v.number()),
+  }).index("par_courriel", ["courriel"]).index("par_envoi", ["dernierEnvoi"]),
 
   clients: defineTable({
     courriel: v.string(),
@@ -52,6 +54,7 @@ export default defineSchema({
     expireLe: v.number(), // une passe libre expire ; une passe attachée reste valide jusqu'à sa soirée
     soireeId: v.optional(v.id("soirees")),
     voixCaracteres: v.number(), // compteur de la voix incluse, plafonné
+    plafondVoix: v.optional(v.number()), // absent = PLAFOND_VOIX ; passe gratuite = PLAFOND_VOIX_ESSAI
   })
     .index("par_client_etat", ["clientId", "etat"])
     .index("par_etat", ["etat"]),

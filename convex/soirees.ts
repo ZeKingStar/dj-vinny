@@ -6,6 +6,8 @@ import type { Doc, Id } from "./_generated/dataModel";
 
 export const MARGE = 6 * 3600e3; // une soirée reste ouverte jusqu'à sa fin prévue + 6 h (comme eventStatus du serveur local)
 export const PLAFOND_VOIX = 20000; // caractères de voix incluse par passe
+export const PLAFOND_VOIX_ESSAI = 10000; // passe gratuite (code promo à 100 %) : plafond plus bas
+const plafondDe = (p: Doc<"passes">) => p.plafondVoix ?? PLAFOND_VOIX;
 export const SOUHAITS_PAR_INVITE = 3;
 export const SOUHAITS_PAR_SOIREE = 400;
 const OUVERTES_ABONNEMENT = 2; // abonnement : 1 soirée en cours + les souhaits de la suivante
@@ -52,7 +54,7 @@ export const droits = internalQuery({
       soirees: await Promise.all(soirees.filter(s => !terminee(s, now)).map(async s => {
         const p = await passeDe(ctx, s);
         return { evId: s.evId, nom: s.nom, date: s.date, debut: s.debut, fin: s.fin, lang: s.lang,
-          passe: p ? p.etat : null, ouverte: await ouverte(ctx, s, now), voixRestante: p ? Math.max(0, PLAFOND_VOIX - p.voixCaracteres) : 0 };
+          passe: p ? p.etat : null, ouverte: await ouverte(ctx, s, now), voixRestante: p ? Math.max(0, plafondDe(p) - p.voixCaracteres) : 0 };
       })),
     };
   },
@@ -136,7 +138,7 @@ export const reserverVoix = internalMutation({
   handler: async (ctx, { clientId, evId, n }) => {
     const s = await soireeDuClient(ctx, clientId, evId), p = s && await passeDe(ctx, s);
     if (!s || !p || !(await ouverte(ctx, s, Date.now()))) throw refus("soiree_non_ouverte", 402);
-    if (p.voixCaracteres + n > PLAFOND_VOIX) throw refus("plafond_voix", 429);
+    if (p.voixCaracteres + n > plafondDe(p)) throw refus("plafond_voix", 429);
     await ctx.db.patch(p._id, { voixCaracteres: p.voixCaracteres + n });
     return { passeId: p._id };
   },

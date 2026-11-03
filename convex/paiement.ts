@@ -6,7 +6,7 @@ import { internalAction, internalMutation, internalQuery, type MutationCtx } fro
 import { internal } from "./_generated/api";
 import { genererLicence, sha256, sousDomaineValide } from "./lib";
 import { insererClientDb } from "./admin";
-import { refus } from "./soirees";
+import { refus, PLAFOND_VOIX_ESSAI } from "./soirees";
 
 const JOUR = 24 * 3600e3;
 const PASSES_ABONNEMENT = 4; // par mois de facturation
@@ -31,12 +31,31 @@ export async function creerSession(p: { offre: "soiree" | "abonnement"; courriel
     mode: p.offre === "soiree" ? "payment" : "subscription", "line_items[0][price]": prix, "line_items[0][quantity]": "1",
     customer_email: p.courriel, locale: p.lang, success_url: `${portail()}/?merci=1&lang=${p.lang}`, cancel_url: `${portail()}/?offre=${p.offre}&lang=${p.lang}`,
   });
-  if (p.offre === "soiree") f.set("customer_creation", "always"); // un client Stripe pour retrouver l'acheteur aux achats suivants
+  if (p.offre === "soiree") { // un client Stripe pour retrouver l'acheteur aux achats suivants ; code promo permis seulement sur la passe (jamais sur l'abonnement)
+    f.set("customer_creation", "always");
+    f.set("allow_promotion_codes", "true");
+  }
   for (const [k, x] of Object.entries(meta)) f.set(`metadata[${k}]`, x);
   const r = await fetch("https://api.stripe.com/v1/checkout/sessions", { method: "POST", headers: { Authorization: `Bearer ${cle}`, "Content-Type": "application/x-www-form-urlencoded" }, body: f });
   const s: any = await r.json().catch(() => ({}));
   if (!r.ok || !s.url) throw new Error("Stripe " + r.status + " " + JSON.stringify(s.error || s).slice(0, 300));
   return s.url as string;
+}
+
+// ---------- Première soirée gratuite ----------
+// Code promo Stripe à usage unique (coupon STRIPE_COUPON_ESSAI : 100 %, une fois, limité au produit « passe soirée »), créé quand le courriel est confirmé.
+// Version d'API fixée : le paramètre « coupon » y est accepté. Renvoie null si Stripe n'est pas configuré ou refuse : la confirmation du courriel passe quand même.
+export async function creerCodeEssai(courriel: string) {
+  const cle = process.env.STRIPE_SECRET_KEY, coupon = process.env.STRIPE_COUPON_ESSAI;
+  if (!cle || !coupon) return null;
+  const code = "VINNY-" + Array.from(crypto.getRandomValues(new Uint8Array(8)), b => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
+  const expireLe = Date.now() + 30 * JOUR;
+  const f = new URLSearchParams({ coupon, code, max_redemptions: "1", expires_at: String(Math.floor(expireLe / 1000)), "metadata[courriel]": courriel });
+  try {
+    const r = await fetch("https://api.stripe.com/v1/promotion_codes", { method: "POST", headers: { Authorization: `Bearer ${cle}`, "Content-Type": "application/x-www-form-urlencoded", "Stripe-Version": "2024-06-20" }, body: f });
+    if (!r.ok) { console.error("code essai", r.status, (await r.text()).slice(0, 300)); return null; }
+  } catch (e) { console.error("code essai", e); return null; }
+  return { code, expireLe };
 }
 
 // ---------- Webhook ----------
@@ -71,12 +90,15 @@ export function normaliser(e: any) {
     const courriel = String(o.customer_details?.email || o.customer_email || "").trim().toLowerCase();
     if (!courriel || (o.payment_status !== "paid" && o.payment_status !== "no_payment_required")) return null;
     const base = { courriel, customer: o.customer || undefined, sousDomaine: String(o.metadata?.sousDomaine || ""), lang: o.metadata?.lang === "en" ? "en" as const : "fr" as const, devise: String(o.currency || "cad") };
-    if (o.mode === "payment") return sans({ ...base, stripeId: o.id, genre: "passe" as const, montant: o.amount_total ?? 0, nbPasses: 1, expireLe: Date.now() + 365 * JOUR });
-    if (o.mode === "subscription") return sans({ ...base, stripeId: o.id, genre: "client" as const, montant: 0, nbPasses: 0, expireLe: 0 });
+    // Le compte Stripe est celui de Pop & Show : seules les sessions créées par creerSession (metadata.offre) comptent
+    if (o.mode === "payment" && o.metadata?.offre === "soiree") return sans({ ...base, stripeId: o.id, genre: "passe" as const, montant: o.amount_total ?? 0, nbPasses: 1, expireLe: Date.now() + 365 * JOUR });
+    if (o.mode === "subscription" && o.metadata?.offre === "abonnement") return sans({ ...base, stripeId: o.id, genre: "client" as const, montant: 0, nbPasses: 0, expireLe: 0 });
     return null;
   }
   if (e.type === "invoice.paid") {
     if (!(o.subscription || o.parent?.subscription_details?.subscription) || !o.customer) return null;
+    const prix = process.env.STRIPE_PRICE_ABONNEMENT; // facture d'un autre abonnement du compte : ignorée (les deux formes de l'API Stripe)
+    if (!prix || !(o.lines?.data ?? []).some((l: any) => l?.price?.id === prix || l?.pricing?.price_details?.price === prix)) { console.warn("invoice.paid ignorée (prix inconnu)", o.id); return null; }
     const fin = Number(o.lines?.data?.[0]?.period?.end) * 1000;
     // un abonnement crée un nouveau client Stripe : si l'identifiant est inconnu, le courriel de la facture retrouve le client
     return sans({
@@ -115,7 +137,8 @@ export const appliquer = internalMutation({
     if (a.genre !== "client") {
       const achatId = await ctx.db.insert("achats", { clientId: client._id, type: a.genre, stripeId: a.stripeId, montant: a.montant, devise: a.devise, date: Date.now() });
       for (let i = 0; i < a.nbPasses; i++) {
-        await ctx.db.insert("passes", { clientId: client._id, origine: a.genre === "passe" ? "achat" : "abonnement", achatId, etat: "libre", expireLe: a.expireLe, voixCaracteres: 0 });
+        const gratuite = a.genre === "passe" && a.montant === 0; // code promo à 100 % : voix plafonnée plus bas
+        await ctx.db.insert("passes", { clientId: client._id, origine: a.genre === "passe" ? "achat" : "abonnement", achatId, etat: "libre", expireLe: a.expireLe, voixCaracteres: 0, plafondVoix: gratuite ? PLAFOND_VOIX_ESSAI : undefined });
       }
     }
     return { cree, sousDomaine: client.sousDomaine };

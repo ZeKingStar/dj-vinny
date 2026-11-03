@@ -4,6 +4,8 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 
 const PAUSE = 10 * 60_000;
+const HEURE = 3600e3;
+const LIMITE_HORAIRE = 60; // courriels de confirmation par heure, tous visiteurs confondus
 type Lang = "fr" | "en";
 
 const enc = new TextEncoder();
@@ -19,21 +21,34 @@ export const verifier = async (but: "c" | "d", t: string) => {
   if (!a || !sig || !process.env.ABONNES_SECRET) return null;
   let c = "";
   try { c = new TextDecoder().decode(Uint8Array.from(atob(a.replace(/-/g, "+").replace(/_/g, "/")), x => x.charCodeAt(0))); } catch { return null; }
-  return sig === (await hmac(but + c)) ? c : null;
+  return egal(sig, await hmac(but + c)) ? c : null;
+};
+const egal = (a: string, b: string) => { // comparaison en temps constant
+  if (a.length !== b.length) return false;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return d === 0;
 };
 
 export const inscrire = internalMutation({
   args: { courriel: v.string(), lang: v.union(v.literal("fr"), v.literal("en")), majs: v.boolean(), payant: v.boolean() },
   handler: async (ctx, a) => {
-    const maintenant = Date.now();
+    const maintenant = Date.now(), non = { envoyer: false, limite: false };
+    // plafond global : sans lui, des milliers d'adresses différentes feraient envoyer des confirmations depuis le domaine
+    const trop = async () => (await ctx.db.query("abonnes").withIndex("par_envoi", q => q.gt("dernierEnvoi", maintenant - HEURE)).take(LIMITE_HORAIRE)).length >= LIMITE_HORAIRE;
     const ex = await ctx.db.query("abonnes").withIndex("par_courriel", q => q.eq("courriel", a.courriel)).unique();
-    if (!ex) { await ctx.db.insert("abonnes", { ...a, etat: "attente", consentiLe: maintenant, dernierEnvoi: maintenant }); return { envoyer: true }; }
+    if (!ex) {
+      if (await trop()) return { envoyer: false, limite: true };
+      await ctx.db.insert("abonnes", { ...a, etat: "attente", consentiLe: maintenant, dernierEnvoi: maintenant });
+      return { envoyer: true, limite: false };
+    }
     // déjà confirmé et rien de nouveau : rien à renvoyer ; sinon nouvelle confirmation (au plus un envoi par 10 min)
-    if (ex.etat === "confirme" && (!a.majs || ex.majs) && (!a.payant || ex.payant)) return { envoyer: false };
-    if (maintenant - ex.dernierEnvoi < PAUSE) return { envoyer: false };
+    if (ex.etat === "confirme" && (!a.majs || ex.majs) && (!a.payant || ex.payant)) return non;
+    if (maintenant - ex.dernierEnvoi < PAUSE) return non;
+    if (await trop()) return { envoyer: false, limite: true };
     const garde = ex.etat === "confirme";
     await ctx.db.patch(ex._id, { lang: a.lang, majs: a.majs || (garde && ex.majs), payant: a.payant || (garde && ex.payant), etat: "attente", consentiLe: maintenant, dernierEnvoi: maintenant });
-    return { envoyer: true };
+    return { envoyer: true, limite: false };
   },
 });
 
@@ -43,7 +58,18 @@ export const confirmer = internalMutation({
     const ex = await ctx.db.query("abonnes").withIndex("par_courriel", q => q.eq("courriel", a.courriel)).unique();
     if (!ex) return null;
     await ctx.db.patch(ex._id, { etat: "confirme" });
-    return { courriel: ex.courriel, lang: ex.lang, majs: ex.majs, payant: ex.payant };
+    return { courriel: ex.courriel, lang: ex.lang, majs: ex.majs, payant: ex.payant, codeEssai: ex.codeEssai, codeExpireLe: ex.codeExpireLe };
+  },
+});
+
+// Un seul code par courriel : le lien de confirmation cliqué deux fois ne fait pas créer un deuxième code
+export const memoriserCode = internalMutation({
+  args: { courriel: v.string(), code: v.string(), expireLe: v.number() },
+  handler: async (ctx, a) => {
+    const ex = await ctx.db.query("abonnes").withIndex("par_courriel", q => q.eq("courriel", a.courriel)).unique();
+    if (!ex || ex.codeEssai) return false;
+    await ctx.db.patch(ex._id, { codeEssai: a.code, codeExpireLe: a.expireLe });
+    return true;
   },
 });
 
@@ -76,6 +102,15 @@ export const brevo = {
       htmlContent: `<p>${t.p}</p><p><a href="${lien}">${t.b}</a></p><p style="color:#777">Pop &amp; Show</p>`,
     });
   },
+  code: (courriel: string, lang: Lang, code: string) => {
+    const t = lang === "en"
+      ? { sujet: "Your free DJ Vinny night", p: "Your first night is on us. Enter this code at checkout on compte.djvinny.ca (valid 30 days, one use):" }
+      : { sujet: "Ta première soirée DJ Vinny est gratuite", p: "Ta première soirée est offerte. Entre ce code au paiement sur compte.djvinny.ca (valide 30 jours, un seul usage) :" };
+    return appel("/smtp/email", "POST", {
+      sender: { name: "DJ Vinny", email: process.env.BREVO_SENDER }, to: [{ email: courriel }], subject: t.sujet,
+      htmlContent: `<p>${t.p}</p><p style="font:800 24px Consolas,monospace">${code}</p><p style="color:#777">Pop &amp; Show</p>`,
+    });
+  },
   ajouter: (a: { courriel: string; lang: Lang; majs: boolean; payant: boolean }) =>
     appel("/contacts", "POST", { email: a.courriel, listIds: [Number(process.env.BREVO_LIST_ID)], updateEnabled: true, emailBlacklisted: false, attributes: { LANG: a.lang, MAJS: a.majs, PAYANT: a.payant } }),
   retirer: (courriel: string) => appel(`/contacts/${encodeURIComponent(courriel)}`, "PUT", { emailBlacklisted: true }),
@@ -83,12 +118,12 @@ export const brevo = {
 
 // ---------- Pages de réponse des liens ----------
 const TEXTES = {
-  fr: { confirme: "C'est confirmé. Merci!", desabonne: "Tu es désabonné. Aucun autre courriel ne te sera envoyé.", lien: "Ce lien n'est pas valide.", erreur: "Un problème est survenu. Réessaie dans un moment.", des: "Se désabonner" },
-  en: { confirme: "Confirmed. Thanks!", desabonne: "You're unsubscribed. No more emails will be sent.", lien: "This link is not valid.", erreur: "Something went wrong. Please try again in a moment.", des: "Unsubscribe" },
+  fr: { code: "Ta première soirée est gratuite. Ton code, à entrer au paiement sur compte.djvinny.ca (valide 30 jours) :", confirme: "C'est confirmé. Merci!", desabonne: "Tu es désabonné. Aucun autre courriel ne te sera envoyé.", lien: "Ce lien n'est pas valide.", erreur: "Un problème est survenu. Réessaie dans un moment.", des: "Se désabonner" },
+  en: { code: "Your first night is free. Your code, to enter at checkout on compte.djvinny.ca (valid 30 days):", confirme: "Confirmed. Thanks!", desabonne: "You're unsubscribed. No more emails will be sent.", lien: "This link is not valid.", erreur: "Something went wrong. Please try again in a moment.", des: "Unsubscribe" },
 };
-export const page = (cas: "confirme" | "desabonne" | "lien" | "erreur", lang: Lang, desabo?: string) => {
+export const page = (cas: "confirme" | "desabonne" | "lien" | "erreur", lang: Lang, desabo?: string, code?: string | null) => {
   const t = TEXTES[lang];
-  const lien = desabo ? `<p><a style="color:#B3A9D9" href="${desabo}">${t.des}</a></p>` : "";
+  const lien = (code ? `<p>${t.code}</p><p style="font:800 30px Consolas,monospace;color:#FFD23F">${code}</p>` : "") + (desabo ? `<p><a style="color:#B3A9D9" href="${desabo}">${t.des}</a></p>` : "");
   return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DJ Vinny</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#15102E;color:#FFF6E5;font:18px system-ui,sans-serif;text-align:center;padding:16px"><main><h1 style="font-size:28px">DJ Vinny</h1><p>${t[cas]}</p>${lien}<p><a style="color:#FFD23F" href="https://djvinny.ca/?lang=${lang}">djvinny.ca</a></p></main>`,
     { status: cas === "lien" ? 400 : cas === "erreur" ? 502 : 200, headers: { "Content-Type": "text/html; charset=utf-8", "Referrer-Policy": "no-referrer" } });
 };

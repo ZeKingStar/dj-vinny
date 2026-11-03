@@ -32,7 +32,12 @@ Le client entre son courriel et l'adresse voulue sur `compte.djvinny.ca` (`deplo
 | `STRIPE_WEBHOOK_SECRET` | secret de signature du webhook (`whsec_…`) |
 | `STRIPE_PRICE_SOIREE`, `STRIPE_PRICE_ABONNEMENT` | les `price_…` de la passe 10 $ et de l'abonnement 20 $/mois |
 | `BREVO_API_KEY` | clé API Brevo (expéditeur `invitations@djvinny.ca`) |
+| `STRIPE_COUPON_ESSAI` | facultatif : id du coupon « première soirée gratuite » (voir plus bas) |
 | `PORTAIL_URL` | facultatif, `https://compte.djvinny.ca` par défaut |
+
+Seules les sessions Checkout portant `metadata.offre` (créées par `/checkout`) et les factures de `STRIPE_PRICE_ABONNEMENT` sont traitées : les autres paiements du compte Stripe de Pop & Show sont ignorés. Après le premier abonnement en mode test, vérifier dans les journaux Convex qu'aucune ligne « invoice.paid ignorée » n'apparaît pour cette facture.
+
+**Première soirée gratuite.** Dans Stripe, créer un coupon : 100 %, « une fois », limité au produit de la passe soirée (jamais l'abonnement), puis mettre son id dans `STRIPE_COUPON_ESSAI`. Quand un visiteur confirme son courriel, `/confirmer` crée un code promo (`VINNY-XXXXXXXX`, un seul usage, 30 jours), l'affiche et l'envoie par courriel. Le Checkout de la passe accepte les codes ; la passe obtenue (montant 0) a un plafond de voix de 10 000 caractères au lieu de 20 000. Sans la variable, la confirmation fonctionne sans code.
 
 Webhook Stripe : adresse `https://<déploiement>.convex.site/stripe`, événements `checkout.session.completed` et `invoice.paid`. Clé perdue ou courriel non reçu : `npx convex run paiement:nouvelleCle '{"courriel":"client@exemple.ca"}'` (remplace la clé). Remboursements et annulations : à faire dans Stripe, puis `admin:suspendre` si besoin ; les passes d'un abonnement annulé expirent seules.
 
@@ -60,7 +65,7 @@ Serveur local du client : `POST`, corps JSON, en-tête `Authorization: Bearer dj
 | `/attacher-passe` | `evId` | `passeId` |
 | `/detacher-passe` | `evId` | `ok` (avant le début, sans souhait reçu) |
 | `/souhaits` | — | souhaits pas encore remis, remis une seule fois |
-| `/voix` | `evId, texte, lang, prev?, next?, voiceSettings?` | MP3 (20 000 caractères par passe) |
+| `/voix` | `evId, texte, lang, prev?, next?, voiceSettings?` | MP3 (20 000 caractères par passe, 10 000 pour une passe gratuite) |
 
 VPS : `GET /vps/clients` avec `Authorization: Bearer <VPS_TOKEN>` (sous-domaine, port, clé SSH, ouvert ou non).
 
@@ -70,4 +75,4 @@ Erreurs : `{ "error": "<code>" }` avec le statut HTTP. Codes : `licence_absente`
 
 ## Courriel facultatif (page de vente)
 
-`POST /abonner` (`{courriel, majs, payant, consentement: true, lang}`), puis les liens signés `GET /confirmer?t=` et `GET /desabonner?t=` des courriels. Double confirmation : le contact n'entre dans la liste Brevo qu'au clic de confirmation; le désabonnement le met sur liste noire. À brancher : définir les 5 variables ci-dessus, créer la liste dans Brevo (attributs `LANG`, `MAJS`, `PAYANT`), puis mettre `https://<déploiement>.convex.site/abonner` dans `LIENS.courriel` de `deploy/vps/site/index.html` (vide = formulaire caché). Courriels de mise à jour : ajouter le lien `/desabonner` de chaque contact (obligatoire, LCAP).
+`POST /abonner` (`{courriel, majs, payant, consentement: true, lang}`), puis les liens signés `GET /confirmer?t=` et `GET /desabonner?t=` des courriels. Au plus 60 confirmations par heure en tout (`trop_de_demandes`, 429). Double confirmation : le contact n'entre dans la liste Brevo qu'au clic de confirmation, et c'est là que le code de la première soirée gratuite est créé; le désabonnement le met sur liste noire. À brancher : définir les 5 variables ci-dessus, créer la liste dans Brevo (attributs `LANG`, `MAJS`, `PAYANT`), puis mettre `https://<déploiement>.convex.site/abonner` dans `LIENS.courriel` de `deploy/vps/site/index.html` (vide = formulaire caché). Courriels de mise à jour : ajouter le lien `/desabonner` de chaque contact (obligatoire, LCAP).

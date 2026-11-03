@@ -16,7 +16,7 @@ if ($manque) {
   exit 1
 }
 $cible = if ($Prod) { "--prod" } else { $null }
-foreach ($n in $requises) {
+foreach ($n in ($requises + ("STRIPE_COUPON_ESSAI" | Where-Object { $vars[$_] }))) {
   if ($cible) { npx convex env set $cible $n $vars[$n] | Out-Null } else { npx convex env set $n $vars[$n] | Out-Null }
   Write-Host "OK $n"
 }

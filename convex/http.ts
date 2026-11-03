@@ -7,7 +7,7 @@ import { httpAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { sha256, sousDomaineValide } from "./lib";
-import { creerSession, normaliser, signatureValide } from "./paiement";
+import { creerSession, creerCodeEssai, normaliser, signatureValide } from "./paiement";
 import { signer, verifier, page, brevo } from "./abonnes";
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization" };
@@ -67,7 +67,12 @@ route("/voix", licencie(async (ctx, c, b) => {
   const corps: Record<string, unknown> = { text: t, model_id: process.env.ELEVENLABS_MODEL || "eleven_v3", language_code: lang };
   if (b.prev) corps.previous_text = texte(b.prev).slice(0, 400);
   if (b.next) corps.next_text = texte(b.next).slice(0, 400);
-  if (b.voiceSettings && typeof b.voiceSettings === "object") corps.voice_settings = b.voiceSettings;
+  if (b.voiceSettings && typeof b.voiceSettings === "object") { // seuls les réglages connus passent à ElevenLabs
+    const vs: Record<string, unknown> = {};
+    for (const k of ["stability", "similarity_boost", "style", "speed"]) if (typeof b.voiceSettings[k] === "number" && isFinite(b.voiceSettings[k])) vs[k] = b.voiceSettings[k];
+    if (typeof b.voiceSettings.use_speaker_boost === "boolean") vs.use_speaker_boost = b.voiceSettings.use_speaker_boost;
+    corps.voice_settings = vs;
+  }
   let r: Response | null = null;
   try {
     r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voix}?output_format=mp3_44100_128`, {
@@ -150,6 +155,7 @@ route("/abonner", httpAction(async (ctx, req) => {
   if (!majs && !payant) return erreur("choix_requis", 400);
   const lang = b.lang === "en" ? "en" : "fr";
   const r = await ctx.runMutation(internal.abonnes.inscrire, { courriel, lang, majs, payant });
+  if (r.limite) return erreur("trop_de_demandes", 429);
   // Sans Brevo : l'adresse et le consentement sont gardés en « attente » ; la confirmation par courriel partira quand Brevo sera configuré
   if (!process.env.BREVO_API_KEY || !process.env.ABONNES_SECRET) return json({ ok: true, confirmation: false });
   if (r.envoyer && !(await brevo.confirmation(courriel, lang, `${process.env.CONVEX_SITE_URL}/confirmer?t=${await signer("c", courriel)}`))) return erreur("envoi_echec", 502);
@@ -160,7 +166,16 @@ http.route({ path: "/confirmer", method: "GET", handler: httpAction(async (ctx, 
   const a = c && await ctx.runMutation(internal.abonnes.confirmer, { courriel: c });
   if (!c || !a) return page("lien", "fr");
   if (!(await brevo.ajouter(a))) return page("erreur", a.lang);
-  return page("confirme", a.lang, `${process.env.CONVEX_SITE_URL}/desabonner?t=${await signer("d", c)}`);
+  // Première soirée gratuite : un code Stripe par courriel confirmé, montré sur la page et envoyé par courriel (une seule fois)
+  let code: string | null = a.codeEssai && (a.codeExpireLe ?? 0) > Date.now() ? a.codeEssai : null;
+  if (!a.codeEssai) {
+    const n = await creerCodeEssai(c);
+    if (n && await ctx.runMutation(internal.abonnes.memoriserCode, { courriel: c, code: n.code, expireLe: n.expireLe })) {
+      code = n.code;
+      await brevo.code(c, a.lang, n.code);
+    }
+  }
+  return page("confirme", a.lang, `${process.env.CONVEX_SITE_URL}/desabonner?t=${await signer("d", c)}`, code);
 }) });
 http.route({ path: "/desabonner", method: "GET", handler: httpAction(async (ctx, req) => {
   const c = await verifier("d", new URL(req.url).searchParams.get("t") || "");
