@@ -66,21 +66,34 @@
   .wrap button.ib { min-height: 22px; width: 22px; padding: 0; border-radius: 50%; font-size: 13px; font-style: italic; font-family: Georgia, serif; background: var(--chip); color: var(--muted); border: 1.5px solid var(--line); box-shadow: none; flex: none; }
   .card.showinfo button.ib { background: var(--accent); color: var(--ink); border-color: var(--accent); }
   .card:not(.showinfo) .info { display: none; } .info { margin: 0 0 8px; padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--chip); border-radius: 0 10px 10px 0; }
+  body.simple .adv, body.simple #nav, .tabs[hidden], .tabs button[hidden] { display: none !important; }
+  .menuwrap { position: relative; } .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 16px; background: var(--card); border: 2px solid var(--line); min-width: 190px; } .menu[hidden] { display: none; } .menu button { text-align: left; }
+  .steps { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; } .steps span { padding: 4px 12px; border-radius: 999px; background: var(--chip); border: 2px solid var(--line); font-weight: 700; font-size: 14px; } .steps span.ok { border-color: var(--accent); }
+  .bigbtn { min-height: 64px; font-size: 20px; width: 100%; }
+  @media (pointer: coarse) { .wrap button { min-height: 44px; } }
+  .busy { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 8px 0; padding: 10px 14px; border-radius: 14px; background: var(--chip); border: 2px solid var(--accent); font-weight: 700; } .busy[hidden] { display: none; }
+  .busy .spin { width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
+  .busy .bar { flex-basis: 100%; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; } .busy .bar b { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+  .modeSw { flex: none; width: 250px; max-width: 100%; position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; padding: 0; min-height: 46px; border-radius: 999px; background: var(--chip); border: 2px solid var(--line); box-shadow: none; color: var(--text); overflow: hidden; }
+  .modeSw span { position: relative; z-index: 1; padding: 0 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; white-space: nowrap; transition: color .2s; }
+  .modeSw .knob { position: absolute; top: 0; bottom: 0; left: 0; width: 50%; border-radius: 999px; background: var(--accent); transition: transform .25s; }
+  .modeSw[aria-checked="true"] .knob { transform: translateX(100%); }
+  .modeSw[aria-checked="true"] #modeParty, .modeSw[aria-checked="false"] #modeCalm { color: #1c1240; font-weight: 800; }
   details.dt > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 700; margin-top: 8px; } details.dt[open] > summary { margin-bottom: 2px; }
   #remoteDlg { background: var(--card); color: var(--text); border: 2px solid var(--line); border-radius: 24px; padding: 20px; width: min(420px, 94vw); } #remoteDlg::backdrop { background: rgba(10, 6, 30, .75); }
   .phbox { padding: 8px 10px; margin-top: 6px; border-radius: 14px; } .phbox input[type=text], .phbox input[type=color] { height: 38px; }
 </style></head>
 <body><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><span class="modes"><button id="modeCalm" data-i18n="c.modeCalm" data-i18n-title="h.modeCalmTip">🍽️ Souper</button><button id="modeParty" data-i18n="c.modeParty" data-i18n-title="h.modePartyTip">🪩 Soirée</button></span><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Remote</button><span id="tunnelBadge" hidden></span><button class="ghost" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost" id="logout" data-i18n="h.logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><button id="modeSw" class="modeSw" role="switch" aria-checked="true"><i class="knob"></i><span id="modeCalm" data-i18n="c.modeCalm">🍽️ Souper</span><span id="modeParty" data-i18n="c.modeParty">🪩 Soirée</span></button><span class="menuwrap"><button class="ghost" id="btnShare" aria-haspopup="true" data-i18n="h.share">📡 Partager</button><span id="shareMenu" class="menu" hidden><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Télécommande</button></span></span><button class="ghost" id="licPill" hidden></button><span id="tunnelBadge" hidden></span><button class="ghost adv" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="uiMode"></button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost adv" id="logout" data-i18n="h.logout">Déconnexion</button></div>
 
-  <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
+  <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements" class="adv"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
   <div id="tab-soiree">
   <nav id="nav" data-i18n-aria="h.navAria"></nav>
 
   <div class="card" id="player">
-    <div id="startBox"><p class="muted" id="startText"></p>
-      <button class="ghost" id="spConnect" data-i18n="h.spConnect">Connecter Spotify</button> <button id="start" data-i18n="h.start">Démarrer la soirée</button> <span id="startErr" class="muted"></span></div>
+    <div id="startBox"><div class="steps" id="steps"></div><p class="muted adv" id="startText"></p>
+      <button class="bigbtn" id="spConnect" data-i18n="h.spConnect">Connecter Spotify</button> <button class="bigbtn" id="start" data-i18n="h.start">Démarrer la soirée</button> <span id="startErr" class="muted"></span></div>
     <div id="playBox" hidden>
       <div class="np"><div class="cover" id="cover"></div>
         <div class="t" style="flex:1"><span class="eq"><i></i><i></i><i></i><i></i></span><div><b id="title">—</b></div><div class="muted" id="artist"></div><div class="muted" id="src"></div></div>
@@ -90,14 +103,14 @@
       <div class="inline">
         <button id="rateUp" data-i18n="h.rateUp">Ça danse</button><button class="ghost" id="rateDown" data-i18n="h.rateDown">Ça vide la piste</button>
         <button class="ghost" id="volDown" data-i18n="h.volDown" data-i18n-title="h.volDownTip">🔉 Trop fort</button><button class="ghost" id="volUp" data-i18n="h.volUp" data-i18n-title="h.volUpTip">🔊 Trop faible</button>
-        <button class="ghost" id="trimStart" data-i18n="h.trimStart">Début ici</button><button class="ghost" id="trimEnd" data-i18n="h.trimEnd">Fin ici</button><button class="ghost" id="trimClear" data-i18n="h.trimClear">Effacer les repères</button>
-        <details class="dt" style="width:100%"><summary data-i18n="h.mixSummary">Fondu, musique de transition, fin anticipée</summary><div class="inline">
+        <button class="ghost adv" id="trimStart" data-i18n="h.trimStart">Début ici</button><button class="ghost adv" id="trimEnd" data-i18n="h.trimEnd">Fin ici</button><button class="ghost adv" id="trimClear" data-i18n="h.trimClear">Effacer les repères</button>
+        <details class="dt adv" style="width:100%"><summary data-i18n="h.mixSummary">Fondu, musique de transition, fin anticipée</summary><div class="inline">
         <select id="fadeSec"><option value="0" data-i18n="h.fade0">Fondu : aucun</option><option value="1.5" data-i18n="h.fade15">Fondu de 1,5 s</option><option value="2" data-i18n="h.fade2">Fondu de 2 s</option><option value="3" data-i18n="h.fade3">Fondu de 3 s</option></select>
         <select id="transSound"><option value="" data-i18n="h.trans0">Musique de transition : aucune</option><option value="beats" data-i18n="h.transRandom">Transition : beat (au hasard)</option><option value="beat_hiphop">Beat hip-hop</option><option value="beat_molly">Beat Molly</option><option value="beat_trill">Beat Trill</option><option value="beat_trap">Beat trap</option><option value="beat_mustard">Beat Mustard</option><option value="beat_astro">Beat Astrology</option></select>
         <select id="endCut"><option value="0" data-i18n="h.cut0">Fin anticipée : aucune</option><option value="4" data-i18n="h.cut4">Couper les 4 dernières s</option><option value="8" data-i18n="h.cut8">Couper les 8 dernières s</option><option value="12" data-i18n="h.cut12">Couper les 12 dernières s</option></select>
         </div></details>
       </div>
-      <p class="muted" id="trimNote"></p><p class="muted" id="volNote"></p>
+      <p class="muted adv" id="trimNote"></p><p class="muted" id="volNote"></p>
     </div>
   </div>
 
@@ -110,34 +123,40 @@
         <div class="inline"><button class="ghost" id="clear" data-i18n="h.clear">Vider la file</button>
           <label class="sw"><input type="checkbox" id="reqOpen"> <span data-i18n="c.reqOpen">Demandes des invités ouvertes</span></label></div>
       </div>
+      <div class="card" data-k="qr" style="text-align:center"><h2 data-i18n="h.qr">QR invités</h2>
+        <img src="/api/qr.png" alt="QR" style="width:200px;border-radius:12px;background:#fff"><br>
+        <a href="/api/qr.png" target="_blank" class="muted" data-i18n="h.qrBig">Ouvrir en grand</a><br><button class="ghost" id="qrRotate" style="margin-top:8px" data-i18n="h.qrRotate">Nouveau code de soirée</button><p class="muted info" data-i18n="h.qrInfo">Le QR contient un code secret : seuls les invités qui l'ont scanné peuvent chercher et demander. « Nouveau code » rend les anciens QR inutilisables.</p>
+      </div>
     </div>
     <div>
-      <div class="card" data-k="periodes"><h2 data-i18n="h.periods">Périodes</h2>
+      <div class="card adv" data-k="periodes"><h2 data-i18n="h.periods">Périodes</h2>
         <p class="muted info" data-i18n="h.periodsInfo">Une période règle l'ambiance (calme ou dansante), la couleur des écrans, la liste de chansons de l'autopilote, les demandes des invités et ce que Vinny dit au début. Tu passes de l'une à l'autre avec les boutons Souper / Soirée en haut.</p>
         <div id="phases"></div>
         <div class="inline"><button class="ghost" id="phAddCalm" data-i18n="h.phAddCalm">+ Période calme (souper)</button><button class="ghost" id="phAddParty" data-i18n="h.phAddParty">+ Période dansante</button></div>
       </div>
       <div class="card" data-k="autopilote"><h2 data-i18n="h.autopilot">DJ Vinny autopilote</h2>
-        <p class="muted" id="apStatus"></p>
-        <label class="sw"><span data-i18n="h.autoCount">Titres « auto » gardés dans la file :</span> <input type="number" id="autoCount" min="1" max="30" style="width:84px"></label>
+        <div id="apBusy" class="busy" hidden><i class="spin"></i><span id="apBusyTxt"></span><b class="bar"><b id="apBusyBar"></b></b></div>
+        <p class="muted adv" id="apStatus"></p>
+        <label class="sw adv"><span data-i18n="h.autoCount">Titres « auto » gardés dans la file :</span> <input type="number" id="autoCount" min="1" max="30" style="width:84px"></label>
         <p class="muted info" data-i18n="h.autoInfo">Quand personne ne demande rien, Vinny pige dans la liste de la période et remplit la file jusqu'à ce nombre. Tu peux réordonner ou retirer ces titres dans la file.</p>
         <div class="inline"><select id="apSel"></select><button class="ghost" id="apDel" hidden data-i18n="h.apDel">Supprimer cette liste</button></div>
-        <p class="muted" id="apSum"></p>
-        <div class="inline" id="apTools"><button id="curResolve" data-i18n="h.curResolve">Chercher les titres sur Spotify</button><button class="ghost" id="curSafe" data-i18n="h.curSafe" data-i18n-title="h.curSafeTip">Valider les titres sûrs</button></div>
-        <div id="apItems" style="max-height:300px;overflow:auto;margin-top:8px"></div>
+        <p class="muted adv" id="apSum"></p>
+        <button class="ghost adv" id="apAll" hidden></button>
+        <div class="inline adv" id="apTools"><button id="curResolve" data-i18n="h.curResolve">Chercher les titres sur Spotify</button><button class="ghost" id="curSafe" data-i18n="h.curSafe" data-i18n-title="h.curSafeTip">Valider les titres sûrs</button></div>
+        <div id="apItems" class="adv" style="max-height:300px;overflow:auto;margin-top:8px"></div>
         <div id="apAddBox" hidden><div class="inline"><input type="text" id="apAdd" placeholder="Ajouter un titre à cette liste…" data-i18n-ph="h.apAdd"></div><div id="apAddRes"></div></div>
-        <h2 style="margin-top:16px;font-size:18px" data-i18n="h.import">Importer une playlist Spotify</h2>
-        <p class="muted info" data-i18n="h.importInfo">Copie une de tes playlists dans l'app pour en faire une liste de l'autopilote (la copie ne suit pas les changements faits ensuite dans Spotify).</p>
-        <div class="inline"><select id="impPl"><option data-i18n="h.impWait">Démarre la soirée pour voir tes playlists…</option></select></div>
-        <div class="inline"><input type="text" id="impName" placeholder="Nom de la liste" data-i18n-ph="h.impName"><button id="impGo" data-i18n="h.impGo">Importer</button></div>
+        <h2 class="adv" style="margin-top:16px;font-size:18px" data-i18n="h.import">Importer une playlist Spotify</h2>
+        <p class="muted info adv" data-i18n="h.importInfo">Copie une de tes playlists dans l'app pour en faire une liste de l'autopilote (la copie ne suit pas les changements faits ensuite dans Spotify).</p>
+        <div class="inline adv"><select id="impPl"><option data-i18n="h.impWait">Démarre la soirée pour voir tes playlists…</option></select></div>
+        <div class="inline adv"><input type="text" id="impName" placeholder="Nom de la liste" data-i18n-ph="h.impName"><button id="impGo" data-i18n="h.impGo">Importer</button></div>
       </div>
-      <div class="card" data-k="ligne"><h2 data-i18n="h.line">Danse en ligne</h2>
+      <div class="card adv" data-k="ligne"><h2 data-i18n="h.line">Danse en ligne</h2>
         <p class="muted" id="lineNote"></p>
         <div class="inline"><button id="lineNow" data-i18n="h.lineNow">Une danse en ligne, la prochaine</button>
           <select id="lineEvery"><option value="0" data-i18n="h.lineEvery0">Sur demande seulement</option><option value="20" data-i18n="h.lineEvery20">Auto : toutes les 20 min</option><option value="30" data-i18n="h.lineEvery30">Auto : toutes les 30 min</option><option value="45" data-i18n="h.lineEvery45">Auto : toutes les 45 min</option></select></div>
         <div id="lineList" style="max-height:240px;overflow:auto;margin-top:8px"></div>
       </div>
-      <div class="card" data-k="boutons"><h2 data-i18n="c.djButtons">Boutons DJ</h2>
+      <div class="card adv" data-k="boutons"><h2 data-i18n="c.djButtons">Boutons DJ</h2>
         <div class="fx">
           <button id="btnNext" data-i18n="h.btnNext">Annoncer le prochain titre</button>
           <button id="btnJingle" class="b2" data-i18n="h.btnJingle">Phrase de la période</button>
@@ -151,20 +170,20 @@
         <div class="inline"><button class="ghost" id="calloutNow" data-i18n="h.calloutNow">Rappel du QR maintenant</button><button class="ghost" id="vOpen" data-i18n="h.vOpen">Vinny : mot d’ouverture</button><button class="ghost" id="vClose" data-i18n="h.vClose">Vinny : mot de clôture</button></div>
         <div class="inline"><input type="text" id="say" maxlength="300" placeholder="Message de Vinny (ex. À table, c’est prêt !)" data-i18n-ph="h.sayPh"><button id="sayGo" data-i18n="h.sayGo">🔊 Dire</button></div>
       </div>
-      <div class="card" data-k="annonces"><h2 data-i18n="h.announces">Annonces de Vinny</h2>
+      <div class="card adv" data-k="annonces"><h2 data-i18n="h.announces">Annonces de Vinny</h2>
         <p class="muted" id="ttsNote"></p>
         <label class="sw"><input type="checkbox" id="announce"> <span data-i18n="h.announceAuto">Annonces vocales automatiques (titres invités, danse en ligne, phrase de période)</span></label>
         <label class="sw"><input type="checkbox" id="autoFx"> <span data-i18n="h.autoFx">Animations et jingles sonores automatiques (confettis, mode fête, ding)</span></label>
         <div class="inline"><select id="calloutEvery"><option value="0" data-i18n="h.callout0">Rappel du QR : jamais</option><option value="8" data-i18n="h.callout8">Rappel du QR après 8 titres sans demande</option><option value="10" data-i18n="h.callout10">Rappel du QR après 10 titres sans demande</option><option value="15" data-i18n="h.callout15">Rappel du QR après 15 titres sans demande</option></select></div>
         <p class="muted info" data-i18n="h.voiceInfo">La voix de Vinny se choisit dans ⚙ Réglages.</p>
       </div>
-      <div class="card" data-k="memoire"><h2 data-i18n="h.memory">Mémoire des soirées</h2>
+      <div class="card adv" data-k="memoire"><h2 data-i18n="h.memory">Mémoire des soirées</h2>
         <p class="muted" id="memNote" data-i18n="h.memNote">Cliquez « Ça danse » ou « Ça vide la piste » pendant la lecture pour bâtir votre propre liste.</p>
         <div id="memList"></div>
         <p class="muted info" style="margin-top:10px"><span data-i18n="h.logInfo">Chaque soirée est gardée dans un journal (titres joués, demandes, notes, mouvement de la caméra, sans nom ni image).</span> <a href="/api/soirees/today" id="logLink" data-i18n="h.logLink">Télécharger le journal du jour</a></p>
         <label class="sw" style="margin-top:10px"><input type="checkbox" id="learn"> <span data-i18n="h.learn">L'autopilote apprend : il favorise les titres qui font danser et les artistes demandés par les invités</span></label>
       </div>
-      <div class="card" data-k="camera"><h2 data-i18n="h.camera">Piste de danse (caméra, essai)</h2>
+      <div class="card adv" data-k="camera"><h2 data-i18n="h.camera">Piste de danse (caméra, essai)</h2>
         <p class="muted info" data-i18n="h.camInfo">La vidéo reste dans ce navigateur : rien n'est enregistré ni envoyé. Prévenez les invités par une affiche. L'app mesure le mouvement dans l'image, elle ne compte pas les personnes.</p>
         <div class="inline"><button class="ghost" id="camStart" data-i18n="h.camStart">Activer la caméra</button><button class="ghost" id="camStop" hidden data-i18n="h.camStop">Arrêter</button></div>
         <div id="camBox" hidden>
@@ -175,10 +194,6 @@
           <p id="camAlert" style="color:var(--accent);font-weight:700" hidden></p>
           <button id="camSkip" hidden data-i18n="h.camSkip">Suivant maintenant</button>
         </div>
-      </div>
-      <div class="card" data-k="qr" style="text-align:center"><h2 data-i18n="h.qr">QR invités</h2>
-        <img src="/api/qr.png" alt="QR" style="width:200px;border-radius:12px;background:#fff"><br>
-        <a href="/api/qr.png" target="_blank" class="muted" data-i18n="h.qrBig">Ouvrir en grand</a><br><button class="ghost" id="qrRotate" style="margin-top:8px" data-i18n="h.qrRotate">Nouveau code de soirée</button><p class="muted info" data-i18n="h.qrInfo">Le QR contient un code secret : seuls les invités qui l'ont scanné peuvent chercher et demander. « Nouveau code » rend les anciens QR inutilisables.</p>
       </div>
     </div>
   </div>
@@ -267,7 +282,7 @@ const artUrl = a => (a && a.url ? a.url.replace('{w}', 300).replace('{h}', 300) 
 // ---------- Rendu ----------
 function render() {
   applyTheme(state.theme);
-  document.body.className = state.phase ? state.phase.intensity : '';
+  for (const k of ['calm', 'party']) document.body.classList.toggle(k, !!state.phase && state.phase.intensity === k); // sans écraser « simple » ni « arrange »
   $('phaseBadge').innerHTML = state.phase ? `<span class="phase-badge">${esc(state.phase.name)}</span>` : '';
   renderTop();
   const n = state.nowPlaying;
@@ -641,7 +656,7 @@ async function initSpotify() {
 $('spConnect').hidden = true;
 $('spConnect').onclick = async () => {
   if (!SP.load().access) return SP.login().catch(e => { $('startErr').textContent = e.message; });
-  try { await shareSpotify(); $('spConnect').textContent = t('h.spConnected'); $('spConnect').disabled = true; $('startErr').textContent = ''; }
+  try { await shareSpotify(); $('spConnect').hidden = true; $('start').hidden = false; $('startErr').textContent = ''; }
   catch (e) { $('startErr').textContent = e.message; }
 };
 $('start').onclick = async () => {
@@ -665,14 +680,15 @@ $('start').onclick = async () => {
 (async () => {
   cfg = await (await fetch('/api/config')).json();
   const spotify = cfg.provider === 'spotify';
+  if (spotify) $('start').hidden = true; // un seul gros bouton à la fois : Connecter Spotify, puis Démarrer
   $('startText').textContent = spotify
     ? t('h.startSpotify', { url: SP.redirect() }) + (location.hostname === '127.0.0.1' ? '' : '  ' + t('h.use127', { port: location.port || 80 }))
     : t('h.startApple');
   if (!spotify) return;
-  if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('start').disabled = true; return; }
+  if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('start').hidden = false; $('start').disabled = true; return; }
   preloadSpotifySdk();
   try { await SP.callback(); } catch (e) { $('startErr').textContent = e.message; }
-  $('spConnect').hidden = false;
+  $('spConnect').hidden = !!SP.load().access; $('start').hidden = !SP.load().access;
   if (SP.load().access) $('spConnect').click(); // déjà autorisé : l'accès est partagé avec le serveur sans démarrer la soirée
 })();
 $('pp').onclick = () => (music.isPlaying ? music.pause() : music.play());
@@ -944,7 +960,7 @@ loadMemory().catch(console.error); loadWishes().catch(console.error); setInterva
 
 // ---------- Liste commentée et danse en ligne ----------
 // ---------- DJ Vinny autopilote : listes (40+ intégrées, playlists importées) et danse en ligne ----------
-let cur = null, apCustom = null;
+let cur = null, apCustom = null, apAll = false;
 const STATUS = { ok: '✓', uncertain: '?', missing: '✗', pending: '…' }; // origine du titre (qc, fr, en) : h.origin.<code>
 async function loadCurated() { cur = await api('/api/curated', 'GET'); renderCurated(); }
 const entryRow = e => '<div class="row" style="opacity:' + (e.off ? .4 : 1) + '"><div class="t"><b>' + esc(e.title) + '</b><span class="muted">' + esc(e.artist) + ' · ' + t('h.origin.' + e.lang) + '</span>'
@@ -953,14 +969,31 @@ const entryRow = e => '<div class="row" style="opacity:' + (e.off ? .4 : 1) + '"
 function renderApStatus() {
   const a = state.activeList, ph = state.phase;
   $('apStatus').textContent = (ph ? t('h.ap.phase', { name: ph.name }) : t('h.ap.noPhase')) + t('h.ap.picks', { list: a ? a.name : '?', n: a ? a.count : 0 }) + (a && !a.count ? t('h.ap.empty') : '.') + (state.prepare ? ' ' + t('h.ap.preparing') : '');
+  const er = state.prepareError, erKey = er ? er.name + er.msg : '';
+  if (erKey !== apErrSeen) { apErrSeen = erKey; if (er) toast(t('h.ap.listFail', { name: er.name })); }
+  const pr = state.prepare;
+  $('apBusy').hidden = !pr;
+  if (pr) {
+    $('apBusyTxt').textContent = pr.label ? t('h.ap.busyList', { name: pr.label, done: pr.done, total: pr.total }) : t('h.ap.preparing');
+    $('apBusyBar').style.width = pr.total ? Math.round(pr.done / pr.total * 100) + '%' : '30%';
+  }
   if (document.activeElement !== $('autoCount')) $('autoCount').value = state.autoCount;
   const sig = JSON.stringify((state.lists || []).map(l => [l.id, l.name, l.count]));
   if (sig !== apListSig) { apListSig = sig; fillApSelect(); }
+  else if (a && document.activeElement !== $('apSel') && $('apSel').value !== a.id && [...$('apSel').options].some(o => o.value === a.id)) { $('apSel').value = a.id; renderCurated(); }
 }
 let apListSig = '';
-function fillApSelect() {
-  const sel = $('apSel'), keep = sel.value || 'builtin:dance';
-  sel.innerHTML = (state.lists || []).map(l => '<option value="' + esc(l.id) + '">' + esc(l.name) + ' (' + l.count + ')</option>').join('');
+let apPresets = [], apSeq = 0, apErrSeen = '';
+async function fillApSelect() {
+  const my = ++apSeq;
+  try { apPresets = await api('/api/presets', 'GET'); } catch { apPresets = []; }
+  const sel = $('apSel');
+  if (my !== apSeq || document.activeElement === sel) return; // une reconstruction plus récente est en route, ou le menu est en cours d'utilisation
+  const keep = (state.activeList && state.activeList.id) || sel.value || 'builtin:dance';
+  const opt = (v, n) => '<option value="' + esc(v) + '">' + esc(n) + '</option>';
+  const html = (state.lists || []).map(l => opt(l.id, l.name + ' (' + l.count + ')')).join('')
+    + (apPresets.length ? '<optgroup label="' + t('h.ap.more') + '">' + apPresets.map(p => opt('preset:' + p.slug, p.name)).join('') + '</optgroup>' : '');
+  if (sel.innerHTML !== html) sel.innerHTML = html;
   sel.value = (state.lists || []).some(l => l.id === keep) ? keep : 'builtin:dance';
   renderCurated();
 }
@@ -968,12 +1001,15 @@ async function renderCurated() {
   if (!cur || !state) return;
   const id = $('apSel').value || 'builtin:dance', builtin = id.startsWith('builtin:'), group = id === 'builtin:souper' ? 'souper' : 'dance';
   const c = cur.counts;
-  $('apTools').hidden = !builtin; $('apAddBox').hidden = builtin; $('apDel').hidden = builtin;
+  $('apTools').hidden = !builtin || !c.pending; $('apAddBox').hidden = builtin; $('apDel').hidden = builtin;
   if (builtin) {
     const mine = cur.entries.filter(e => e.group === group), n = mine.filter(e => !e.off && e.status !== 'pending' && e.status !== 'missing').length;
-    $('apSum').textContent = t('h.ap.sumBuiltin', { n, total: mine.length, ok: c.ok, unc: c.uncertain, miss: c.missing, pend: c.pending });
-    $('apItems').innerHTML = mine.map(entryRow).join('');
+    const aRevoir = mine.filter(e => e.status === 'uncertain' || e.status === 'missing');
+    $('apSum').textContent = t('h.ap.sumBuiltin', { n }) + (aRevoir.length && !document.body.classList.contains('simple') ? ' · ' + t('h.ap.review', { x: aRevoir.length }) : '');
+    $('apAll').hidden = !aRevoir.length; $('apAll').textContent = t(apAll ? 'h.ap.showReview' : 'h.ap.showAll');
+    $('apItems').innerHTML = (apAll || !aRevoir.length ? (apAll ? mine : []) : aRevoir).map(entryRow).join('');
   } else {
+    $('apAll').hidden = true;
     try { apCustom = await api('/api/lists/' + id, 'GET'); } catch { apCustom = null; }
     if (!apCustom) { $('apItems').innerHTML = ''; return; }
     const n = apCustom.tracks.filter(t => !t.off).length;
@@ -984,7 +1020,26 @@ async function renderCurated() {
   $('lineList').innerHTML = line.map(entryRow).join('');
   $('lineNote').textContent = t('h.lineNote', { n: state.line.count, total: line.length }) + (state.line.count ? '.' : t('h.lineNoteEmpty'));
 }
-$('apSel').onchange = () => renderCurated();
+// Choisir une liste = l'utiliser pour la période en cours ; les titres sûrs sont cherchés et approuvés tout seuls
+$('apSel').onchange = async () => {
+  const id = $('apSel').value;
+  if (id.startsWith('preset:')) { // liste toute faite : préparée en arrière-plan puis appliquée à la période
+    $('apSel').value = (state.activeList && state.activeList.id) || 'builtin:dance';
+    toast(t('h.ap.prepare'));
+    await api('/api/presets/' + id.slice(7) + '/add', 'POST', { phaseId: state.phase && state.phase.id }).catch(e => toast(e.message));
+    return;
+  }
+  renderCurated();
+  if (state.phase) await api('/api/phases/' + state.phase.id, 'PUT', { listId: id }).catch(() => {});
+  if (id.startsWith('builtin:')) {
+    try {
+      if (cur && cur.counts.pending) cur = await api('/api/curated/resolve');
+      const v = await api('/api/curated/validate', 'POST', { group: id === 'builtin:souper' ? 'souper' : 'dance' }); cur = v;
+    } catch {}
+    renderCurated();
+  }
+};
+$('apAll').onclick = () => { apAll = !apAll; renderCurated(); };
 $('autoCount').onchange = e => api('/api/settings', 'POST', { autoCount: Number(e.target.value) });
 $('curResolve').onclick = async () => { toast(t('h.searching')); cur = await api('/api/curated/resolve'); renderCurated(); toast(t('h.searchDone')); };
 $('curSafe').onclick = async () => { const id = $('apSel').value, g = id === 'builtin:souper' ? 'souper' : 'dance', v = await api('/api/curated/validate', 'POST', { group: g }); cur = v; renderCurated(); toast(t('h.validated', { n: v.validated })); };
@@ -1022,7 +1077,10 @@ let prevPrep = false;
 function renderTop() {
   $('eventBadge').innerHTML = state.event ? '<span class="phase-badge" title="' + t('h.activeEvent') + '">📅 ' + esc(state.event.name) + '</span>' : '';
   const cur = state.phase && state.phase.intensity;
-  $('modeCalm').classList.toggle('on', cur === 'calm'); $('modeParty').classList.toggle('on', cur === 'party');
+  const a = state.activeList, spOk = cfg && cfg.provider !== 'spotify' ? true : !!SP.load().access;
+  $('steps').innerHTML = [[spOk, 'h.step.spotify'], [!!(a && a.count), 'h.step.list'], [!!state.requestsOpen, 'h.step.qr']].map(([ok, k], i) => '<span class="' + (ok ? 'ok' : '') + '">' + (ok ? '✓' : i + 1) + ' ' + t(k) + '</span>').join('');
+  document.title = state.nowPlaying ? '▶ ' + state.nowPlaying.title + ' · DJ Vinny' : 'DJ Vinny';
+  $('modeSw').setAttribute('aria-checked', cur === 'party' ? 'true' : 'false');
   if (prevPrep && !state.prepare) loadCurated().catch(() => {}); // les listes viennent d'être préparées : on les relit
   prevPrep = !!state.prepare;
 }
@@ -1032,7 +1090,7 @@ const modeGo = kind => async () => {
   if (!p) p = await api('/api/phases/ensure', 'POST', { intensity: kind }); // la période par défaut est créée si elle manque
   await launchPhase(p.id);
 };
-$('modeCalm').onclick = modeGo('calm'); $('modeParty').onclick = modeGo('party');
+$('modeSw').onclick = () => modeGo(state.phase && state.phase.intensity === 'party' ? 'calm' : 'party')();
 
 const TABS = ['soiree', 'souhaits', 'evenements'];
 function showTab(t) {
@@ -1042,6 +1100,18 @@ function showTab(t) {
   try { localStorage.djTab = t; } catch {}
   if (t === 'souhaits') { loadWishes().catch(() => {}); loadLinks(); }
   if (t === 'evenements') loadEvents().catch(() => {});
+}
+// Souhaits seulement avec une passe ou un code (licence active) ; une seule vue visible : pas de barre d'onglets
+$('btnShare').onclick = e => { e.stopPropagation(); $('shareMenu').hidden = !$('shareMenu').hidden; };
+document.addEventListener('click', () => { $('shareMenu').hidden = true; });
+$('licPill').onclick = () => lic && lic.portal && window.open(lic.portal, '_blank', 'noopener');
+function syncTabs() {
+  $('licPill').hidden = !lic; if (lic) $('licPill').textContent = t(lic.on ? 'h.lic.pillOn' : 'h.lic.pillFree');
+  const wishes = document.querySelector('#tabs button[data-tab="souhaits"]');
+  wishes.hidden = !(lic && lic.on);
+  if (wishes.hidden && !$('tab-souhaits').hidden) showTab('soiree');
+  const n = [...document.querySelectorAll('#tabs button')].filter(b => !b.hidden && getComputedStyle(b).display !== 'none').length;
+  $('tabs').hidden = n < 2;
 }
 $('tabs').onclick = e => { const b = e.target.closest('button[data-tab]'); if (b) showTab(b.dataset.tab); };
 
@@ -1088,7 +1158,7 @@ $('wishEv').onchange = () => { wishSel = $('wishEv').value; loadWishes(); loadLi
 const fmtEv = e => { try { return new Date(e.date + 'T12:00:00').toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch { return e.date; } };
 let lic = null;
 async function loadEvents() {
-  evData = await api('/api/evts', 'GET'); lic = await api('/api/licence', 'GET').catch(() => null);
+  evData = await api('/api/evts', 'GET'); lic = await api('/api/licence', 'GET').catch(() => null); syncTabs();
   const l = $('licLine'); l.hidden = !(lic && lic.on);
   if (!l.hidden) l.textContent = lic.error ? t('h.lic.err', { msg: lic.error }) : t('h.lic.on', { domain: lic.domain, achat: lic.free ? lic.free.achat : 0, abo: lic.free ? lic.free.abonnement : 0 });
   renderEvents(); fillWishEv();
@@ -1313,7 +1383,7 @@ $('setSave').onclick = async () => {
 // ---------- Disposition du dashboard : menu collant, cartes repliables / déplaçables (mémorisé dans ce navigateur) ----------
 (() => {
   // [clé de la carte (data-k), repliée par défaut] ; nom dans le menu : h.nav.<clé>
-  const DEF = [['file', 0], ['periodes', 0], ['autopilote', 1], ['ligne', 1], ['boutons', 0], ['annonces', 1], ['memoire', 1], ['camera', 1], ['qr', 1]];
+  const DEF = [['file', 0], ['qr', 0], ['periodes', 0], ['autopilote', 0], ['ligne', 1], ['boutons', 0], ['annonces', 1], ['memoire', 1], ['camera', 1]];
   const KEY = 'djLayout', cols = [...document.querySelectorAll('.grid > div')], cards = {};
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
   const store = o => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch {} };
@@ -1356,8 +1426,8 @@ $('setSave').onclick = async () => {
   });
   // menu collant
   const nav = document.getElementById('nav');
-  nav.innerHTML = '<a href="#player">' + t('h.nav.player') + '</a>' + DEF.filter(d => cards[d[0]]).map(d => `<a href="#c-${d[0]}">${t('h.nav.' + d[0])}</a>`).join('')
-    + '<span class="sp"></span><button class="ghost" id="arrBtn" title="' + t('h.lay.arrangeTip') + '">' + t('h.lay.arrange') + '</button><button class="ghost" id="arrReset" hidden>' + t('h.lay.reset') + '</button>';
+  nav.innerHTML = '<a href="#player">' + t('h.nav.player') + '</a>' + DEF.filter(d => cards[d[0]]).map(d => `<a href="#c-${d[0]}"${cards[d[0]].classList.contains('adv') ? ' class="adv"' : ''}>${t('h.nav.' + d[0])}</a>`).join('')
+    + '<span class="sp"></span><button class="ghost adv" id="arrBtn" title="' + t('h.lay.arrangeTip') + '">' + t('h.lay.arrange') + '</button><button class="ghost" id="arrReset" hidden>' + t('h.lay.reset') + '</button>';
   nav.addEventListener('click', e => {
     const a = e.target.closest('a');
     if (a) { e.preventDefault(); const c = document.querySelector(a.getAttribute('href')); if (!c) return;
@@ -1366,6 +1436,25 @@ $('setSave').onclick = async () => {
     if (e.target.id === 'arrBtn') { const on = document.body.classList.toggle('arrange'); document.getElementById('arrReset').hidden = !on; }
     if (e.target.id === 'arrReset' && confirm(t('h.lay.resetQ'))) { try { localStorage.removeItem(KEY); } catch {} location.reload(); }
   });
+})();
+
+// ---------- Mode simple (par défaut) ou avancé : les éléments .adv sont cachés en simple (mémorisé dans ce navigateur) ----------
+(() => {
+  const b = document.getElementById('uiMode');
+  const get = () => { try { return localStorage.getItem('djUi') === 'adv' ? 'adv' : 'simple'; } catch { return 'simple'; } };
+  const apply = m => {
+    document.body.classList.toggle('simple', m === 'simple');
+    b.dataset.i18n = m === 'simple' ? 'h.ui.advanced' : 'h.ui.simple'; b.textContent = t(b.dataset.i18n); // data-i18n : suit aussi un changement de langue
+    if (m === 'simple' && !$('tab-evenements').hidden) showTab('soiree');
+    syncTabs();
+    if (typeof renderCurated === 'function') renderCurated();
+  };
+  b.onclick = () => { const m = document.body.classList.contains('simple') ? 'adv' : 'simple'; try { localStorage.setItem('djUi', m); } catch {} apply(m); };
+  // un autre onglet ou une autre fenêtre change le mode : on suit, et on se resynchronise au retour sur cette fenêtre
+  window.addEventListener('storage', e => { if (e.key === 'djUi') apply(get()); });
+  window.addEventListener('focus', () => apply(get()));
+  apply(get());
+  api('/api/licence', 'GET').then(l => { lic = l; }).catch(() => {}).finally(syncTabs);
 })();
 
 // ---------- Aide : une ligne sous chaque titre + bouton « i » pour le détail ----------

@@ -97,6 +97,7 @@ if (!state.eventToken) { state.eventToken = crypto.randomBytes(9).toString('base
 // ---------- Événements (soirées datées) ----------
 // Un événement = nom, date, heures, lieu, messages, code propre et programme (périodes). Un seul est « actif » : ses périodes sont les périodes
 // en direct et son code est le code de la soirée. Sans événement, l'app fonctionne comme avant (code unique).
+let presetJob = null, presetError = null; // liste toute faite en cours de préparation / dernière erreur
 const prep = { running: false }; // préparation automatique des listes (recherche Spotify)
 const OLD_FLOOR_JINGLE = '[excited] Mesdames et messieurs, la piste de danse est ouverte ! Allez, la gang, tout le monde sur la piste !';
 const PH_BASE = {
@@ -170,7 +171,7 @@ const publicState = () => ({
   phase: state.phases.find(p => p.id === state.activePhaseId) || null,
   pool: { name: state.poolName, count: state.pool.length },
   line: { count: state.linePool.length, every: state.lineEvery }, dinner: { count: state.dinnerPool.length },
-  event: (() => { const e = activeEvent(); return e ? publicEvent(e) : null; })(), prepare: prep.running,
+  event: (() => { const e = activeEvent(); return e ? publicEvent(e) : null; })(), prepare: presetJob ? { label: presetJob.name, done: presetJob.done, total: presetJob.total } : prep.running ? { label: '', done: 0, total: 0 } : false, prepareError: presetError,
   qrRev: state.qrRev, trims: state.trims, gains: state.gains, endCut: state.endCut, fade: state.fade, transSound: state.transSound, calloutEvery: state.calloutEvery, learn: state.learn,
 });
 function fx(type) { // animation ponctuelle poussée sur tous les écrans (invités + dashboard)
@@ -513,12 +514,20 @@ function rebuildPools() {
 }
 rebuildPools();
 app.get('/api/curated', requireHost, (req, res) => res.json(curatedView()));
+// Cherche un titre sur Spotify et choisit la meilleure correspondance ; 429 / erreur serveur : jusqu'à 3 essais
+async function spotifyMatch(e) {
+  for (let n = 1; ; n++) {
+    try {
+      const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${STOREFRONT.toUpperCase()}&q=${encodeURIComponent(e.title + ' ' + e.artist)}`);
+      return pickMatch(e, (r.tracks && r.tracks.items) || []);
+    } catch (err) { if (n >= 3 || err.key || !err.code) throw err; await new Promise(ok => setTimeout(ok, 2000 * n)); }
+  }
+}
 async function resolveCurated() {
   for (const e of curatedFile().entries) {
     const key = entryKey(e), prev = state.curated[key];
     if (prev && prev.status !== 'missing' && !(prev.status === 'ok' && isBad(prev.title, prev.artist, '', e.cover ? 'cover' : e.remix ? 'remix' : null))) continue;
-    const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${STOREFRONT.toUpperCase()}&q=${encodeURIComponent(e.title + ' ' + e.artist)}`);
-    const m = pickMatch(e, (r.tracks && r.tracks.items) || []);
+    const m = await spotifyMatch(e);
     state.curated[key] = m.c ? { ...fromSpotify(m.c), status: m.status } : { status: 'missing' };
     await new Promise(ok => setTimeout(ok, 120));
   }
@@ -585,6 +594,40 @@ app.post('/api/curated/use', requireHost, (req, res) => { // conservé pour comp
 });
 // Listes de l'autopilote : les deux listes intégrées (40+) et les playlists Spotify importées (copiées dans l'app)
 app.get('/api/lists', requireHost, (req, res) => res.json(listsView()));
+// Listes toutes faites (curated/listes.json) : titres cherchés sur Spotify, gardés seulement quand la recherche est sûre, puis copiés comme liste de l'app.
+// Une liste à la fois (file d'attente) ; les titres déjà trouvés sont gardés en mémoire si une erreur interrompt la recherche (on reprend où on s'était arrêté).
+let presetCache; const presetFile = () => presetCache || (presetCache = JSON.parse(fs.readFileSync(path.join(__dirname, 'curated', 'listes.json'), 'utf8')));
+const presetQueue = [], presetFound = new Map();
+const presetTaken = slug => presetJob && presetJob.slug === slug || presetQueue.some(q => q.slug === slug) || state.lists.some(l => l.preset === slug);
+app.get('/api/presets', requireHost, (req, res) => res.json(!SPOTIFY ? [] : presetFile().filter(p => !presetTaken(p.slug)).map(p => ({ slug: p.slug, name: p.name, group: p.group, count: p.tracks.length }))));
+async function runPresets() {
+  if (presetJob) return;
+  while (presetQueue.length) {
+    const q = presetQueue.shift(), p = presetFile().find(x => x.slug === q.slug), found = presetFound.get(p.slug) || new Map();
+    presetFound.set(p.slug, found); presetJob = { slug: p.slug, name: p.name, done: found.size, total: p.tracks.length }; presetError = null; commit();
+    try {
+      for (const e of p.tracks) {
+        const k = norm(e.title) + '|' + norm(e.artist);
+        if (!found.has(k)) { const m = await spotifyMatch(e); found.set(k, m.status === 'ok' ? plainTrack(fromSpotify(m.c)) : null); await new Promise(ok => setTimeout(ok, 120)); }
+        if (++presetJob.done % 5 === 0) commit();
+      }
+      const seen = new Set(), tracks = [...found.values()].filter(t => t && !seen.has(t.songId) && seen.add(t.songId));
+      if (!tracks.length) throw new Error('aucun titre trouvé');
+      const l = { id: crypto.randomUUID(), name: p.name, preset: p.slug, tracks }; state.lists.push(l); presetFound.delete(p.slug);
+      // période visée : celle choisie, sinon les périodes du même genre (souper = calme, sinon dansante)
+      const kind = p.group === 'souper' ? 'calm' : 'party', target = state.phases.filter(x => x.id === q.phaseId);
+      for (const ph of target.length ? target : state.phases.filter(x => x.intensity === kind)) ph.listId = l.id;
+    } catch (e) { console.error('liste ' + p.slug + ' :', e.message); presetError = { name: p.name, msg: e.message }; }
+  }
+  presetJob = null; commit();
+}
+app.post('/api/presets/:slug/add', requireHost, wrap(async (req, res) => {
+  const p = presetFile().find(x => x.slug === req.params.slug);
+  if (!p) throw E('err.listNotFound', 404);
+  if (!SPOTIFY) throw E('err.spotifyOff', 503);
+  if (!presetTaken(p.slug)) { presetQueue.push({ slug: p.slug, phaseId: req.body && req.body.phaseId }); runPresets(); }
+  res.json({ ok: true });
+}));
 app.get('/api/lists/:id', requireHost, (req, res) => {
   const l = state.lists.find(x => x.id === req.params.id);
   l ? res.json({ id: l.id, name: l.name, tracks: l.tracks }) : fail(req, res, 404, 'err.listNotFound');
@@ -1054,7 +1097,7 @@ setInterval(licSync, 60e3).unref();
 setTimeout(licSync, 1500).unref();
 app.get('/api/licence', requireHost, wrap(async (req, res) => {
   if (req.query.refresh === '1') await licSync();
-  res.json({ on: licenced(), error: licErr ? tr(reqLang(req), licErr) : '', at: lastSync, free: droits ? droits.passesLibres : null, domain: droits ? droits.sousDomaine : '',
+  res.json({ on: licenced(), portal: process.env.PORTAIL_URL || 'https://compte.djvinny.ca', error: licErr ? tr(reqLang(req), licErr) : '', at: lastSync, free: droits ? droits.passesLibres : null, domain: droits ? droits.sousDomaine : '',
     events: Object.fromEntries((droits ? droits.soirees : []).map(s => [s.evId, { pass: s.passe, open: s.ouverte, voice: s.voixRestante }])) });
 }));
 const licEv = req => { const ev = state.events.find(e => e.id === (req.body && req.body.ev)); if (!ev) throw E('err.eventNotFound', 404); return ev; };

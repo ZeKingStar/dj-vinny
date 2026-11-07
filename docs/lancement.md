@@ -19,8 +19,12 @@ Branche `claude/commercial-3a1b01`, dossier `.claude/worktrees/commercial-3a1b01
 6. **Test du ZIP** sur un autre PC.
 7. **Plus tard** : 50 % sur la deuxième soirée (code envoyé après le premier achat).
 
-## Courriel à ElevenLabs (à envoyer)
+## Courriel à ElevenLabs (à envoyer, en anglais)
 
-> Objet : Confirmation d'usage de l'API pour une application (voix incluse)
+> Subject: Confirmation of API usage for an application (voice included)
 >
-> Bonjour, Pop & Show (Québec) distribue DJ Vinny, un logiciel qui anime des soirées. Nos clients l'installent sur leur PC. Quand un invité demande une chanson, notre service génère par l'API ElevenLabs, avec notre clé et une voix de la bibliothèque (Felix Tabarnak), une courte annonce (moins de 400 caractères) et ne renvoie que le fichier MP3 au logiciel du client. Le client n'a jamais accès à notre clé ni à l'API, ne choisit ni le modèle ni la voix, et chaque soirée a un plafond de caractères. Pouvez-vous confirmer que cet usage est permis sous les ElevenAPI Terms (Customer Application) avec notre forfait payant ? Merci.
+> Hello,
+>
+> Pop & Show (Quebec, Canada) distributes DJ Vinny, software that hosts live parties. Our customers install it on their own PC. When a guest requests a song, our service calls the ElevenLabs API with our own API key and a voice from the Voice Library (Felix Tabarnak) to generate a short announcement (under 400 characters), and returns only the resulting MP3 file to the customer's software. The customer never has access to our API key or to the API itself, cannot choose the model or the voice, and each party has a character cap.
+>
+> Could you please confirm that this use is permitted under the ElevenAPI Terms (Customer Application) with our paid plan? Thank you.
