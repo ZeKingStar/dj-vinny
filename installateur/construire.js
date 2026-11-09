@@ -15,7 +15,7 @@ const FFMPEG_URL = 'https://github.com/BtbN/FFmpeg-Builds/releases/download/late
 const TAR = process.platform === 'win32' ? path.join(process.env.SystemRoot, 'System32', 'tar.exe') : 'tar'; // bsdtar lit et écrit les .zip
 
 // Partie payante, déploiement, docs internes et vidéos : pas dans le ZIP gratuit
-const HORS_ZIP = /^(convex|deploy|docs|video)\/|^curated\/(idees\/|soiree-v1\.json)/;
+const HORS_ZIP = /^(convex|deploy|docs|video)\//;
 const COMPLET = process.argv.includes('--complet');
 const version = require(path.join(RACINE, 'package.json')).version;
 const nom = 'DJ Vinny';

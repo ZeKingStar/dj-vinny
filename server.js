@@ -3,42 +3,32 @@ const crypto = require('crypto');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const jwt = require('jsonwebtoken');
 const QRCode = require('qrcode');
 
-// Démarrage seulement (.env) : mot de passe, port, secret de session, clés Apple. Le reste se règle dans l'app (⚙ Réglages) et passe avant le .env.
+// Démarrage seulement (.env) : mot de passe, port, secret de session. Le reste se règle dans l'app (⚙ Réglages) et passe avant le .env.
 const {
-  PORT = 3000, HOST_PASSWORD, SESSION_SECRET, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY_PATH,
+  PORT = 3000, HOST_PASSWORD, SESSION_SECRET,
 } = process.env;
 const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aide : locales/<langue>.json (set.CLÉ, set.CLÉ.help)
-  MUSIC_PROVIDER: ['select:spotify,apple', 'spotify', v => ['spotify', 'apple'].includes(v)],
   SPOTIFY_CLIENT_ID: ['text', '', v => /^[A-Za-z0-9]{0,64}$/.test(v)],
-  STOREFRONT: ['text', 'ca', v => /^[a-z]{2}$/i.test(v)],
-  PUBLIC_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   MAX_PENDING_PER_GUEST: ['number:1:20', '3', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
   REQ_PER_PERIOD: ['number:1:50', '2', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
   LOCK_MINUTES: ['number:0:240', '0', v => /^\d+$/.test(v) && v <= 240],
-  TTS_MODEL: ['text', 'elevenlabs/eleven-v3', v => /^[\w./:-]{1,80}$/.test(v)],
-  TTS_BASE_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
 };
-let overrides = {}, PUBLIC_URL, STOREFRONT, MAX_PENDING, PER_PERIOD, LOCK_MIN, TTS_MODEL, TTS_VOICE, MUSIC_PROVIDER, SPOTIFY_CLIENT_ID, TTS_BASE_URL, TTS_LOCAL, TTS_BASE, TTS_LIVE, SPOTIFY, LICENCE_KEY, CONVEX_URL;
+const MARKET = 'CA'; // catalogue Spotify : Canada
+let overrides = {}, MAX_PENDING, PER_PERIOD, LOCK_MIN, SPOTIFY_CLIENT_ID, TTS_LIVE, LICENCE_KEY, CONVEX_URL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
 const CONVEX_DEFAUT = 'https://shocking-marten-220.convex.site'; // service de Pop & Show : le client colle seulement sa clé de licence
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 function applySettings() {
   const g = settingValue;
-  PUBLIC_URL = g('PUBLIC_URL').replace(/\/$/, ''); STOREFRONT = g('STOREFRONT').toLowerCase();
   MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2); LOCK_MIN = Math.min(240, Number(g('LOCK_MINUTES')) || 0);
-  TTS_MODEL = g('TTS_MODEL'); TTS_VOICE = process.env.TTS_VOICE || 'george'; // TTS_VOICE (.env) : seulement pour un serveur de voix local
-  MUSIC_PROVIDER = g('MUSIC_PROVIDER'); SPOTIFY_CLIENT_ID = g('SPOTIFY_CLIENT_ID'); TTS_BASE_URL = g('TTS_BASE_URL');
-  // Version gratuite : clips prégénérés (voix/). Voix en direct : serveur local TTS_BASE_URL (compatible OpenAI /v1/audio/speech) ou passe payante (Convex).
-  TTS_LOCAL = !!TTS_BASE_URL;
-  TTS_BASE = TTS_BASE_URL.replace(/\/$/, '');
+  SPOTIFY_CLIENT_ID = g('SPOTIFY_CLIENT_ID');
+  // Version gratuite : clips prégénérés (voix/). Voix en direct (Felix) : passe payante, via Convex.
   LICENCE_KEY = g('LICENCE_KEY'); CONVEX_URL = (g('CONVEX_URL') || CONVEX_DEFAUT).replace(/\/$/, '');
-  TTS_LIVE = TTS_LOCAL || !!(LICENCE_KEY && CONVEX_URL);
-  SPOTIFY = MUSIC_PROVIDER === 'spotify';
+  TTS_LIVE = !!(LICENCE_KEY && CONVEX_URL);
 }
 // Adresses du PC sur le réseau local (sans les cartes VPN / WSL / virtuelles), pour le QR des invités
 const lanUrls = () => Object.entries(os.networkInterfaces())
@@ -167,7 +157,6 @@ const publicState = () => ({
   lists: listsView(), activeList: activeListInfo(), autoCount: state.autoCount,
   phases: state.phases, autoPhases: state.autoPhases,
   lockMin: LOCK_MIN, announce: state.announce, tts: TTS_LIVE || hasClips(), ttsLive: TTS_LIVE, autoFx: state.autoFx,
-  provider: SPOTIFY ? 'spotify' : 'apple',
   phase: state.phases.find(p => p.id === state.activePhaseId) || null,
   pool: { name: state.poolName, count: state.pool.length },
   line: { count: state.linePool.length, every: state.lineEvery }, dinner: { count: state.dinnerPool.length },
@@ -236,30 +225,8 @@ function commit() {
 }
 setInterval(() => { for (const res of clients) res.write(': ping\n\n'); }, 25000);
 
-// ---------- Apple Music ----------
-let cachedToken = null;
-function devToken() {
-  if (cachedToken && cachedToken.exp > Date.now() + 3600e3) return cachedToken.token;
-  if (!APPLE_TEAM_ID || !APPLE_KEY_ID || !APPLE_PRIVATE_KEY_PATH) throw E('err.appleKeys', 500);
-  const key = fs.readFileSync(APPLE_PRIVATE_KEY_PATH, 'utf8');
-  const token = jwt.sign({}, key, {
-    algorithm: 'ES256', expiresIn: '12h', issuer: APPLE_TEAM_ID, header: { alg: 'ES256', kid: APPLE_KEY_ID },
-  });
-  cachedToken = { token, exp: Date.now() + 12 * 3600e3 };
-  return token;
-}
-async function appleGet(p) {
-  const r = await fetch('https://api.music.apple.com' + p, { headers: { Authorization: 'Bearer ' + devToken() } });
-  if (!r.ok) throw new Error('Apple API ' + r.status);
-  return r.json();
-}
-const art = a => (a && a.url ? a.url.replace('{w}', 300).replace('{h}', 300) : '');
-const toSong = (d, extra = {}) => ({
-  uid: crypto.randomUUID(), songId: d.id, title: d.attributes.name,
-  artist: d.attributes.artistName, artwork: art(d.attributes.artwork), ...extra,
-});
 const ID_RE = /^[\w.-]{1,64}$/;
-const SONG_ID_RE = /^[A-Za-z0-9]{5,40}$/; // identifiant de titre Spotify (base 62) ou Apple (chiffres)
+const SONG_ID_RE = /^[A-Za-z0-9]{5,40}$/; // identifiant de titre Spotify (base 62)
 
 // Spotify : le token vient du navigateur de l'hôte (PKCE), le serveur n'a pas de secret.
 let spotifyToken = null;
@@ -275,22 +242,13 @@ const fromSpotify = t => ({
   artwork: ((t.album && t.album.images) || [])[1]?.url || ((t.album && t.album.images) || [])[0]?.url || '',
 });
 async function searchSongs(q) {
-  if (SPOTIFY) {
-    const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${STOREFRONT.toUpperCase()}&q=${encodeURIComponent(q)}`);
-    return ((r.tracks && r.tracks.items) || []).map(fromSpotify);
-  }
-  const r = await appleGet(`/v1/catalog/${STOREFRONT}/search?types=songs&limit=15&term=${encodeURIComponent(q)}`);
-  return ((r.results.songs && r.results.songs.data) || []).map(d => ({ songId: d.id, title: d.attributes.name, artist: d.attributes.artistName, artwork: art(d.attributes.artwork) }));
+  const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${MARKET}&q=${encodeURIComponent(q)}`);
+  return ((r.tracks && r.tracks.items) || []).map(fromSpotify);
 }
 async function lookupSong(songId, extra) {
   if (!SONG_ID_RE.test(songId)) throw E('err.badId', 400);
-  if (SPOTIFY) {
-    const t = await spotifyGet(`/v1/tracks/${songId}?market=${STOREFRONT.toUpperCase()}`);
-    return { uid: crypto.randomUUID(), ...fromSpotify(t), ...extra };
-  }
-  const r = await appleGet(`/v1/catalog/${STOREFRONT}/songs/${songId}`);
-  if (!r.data || !r.data[0]) throw E('err.trackNotFound', 404);
-  return toSong(r.data[0], extra);
+  const t = await spotifyGet(`/v1/tracks/${songId}?market=${MARKET}`);
+  return { uid: crypto.randomUUID(), ...fromSpotify(t), ...extra };
 }
 
 // ---------- Auth hôte ----------
@@ -342,7 +300,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/login', (req, res) => {
   if (limited('login:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
   if (!safeEq(req.body.password || '', HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
-  const secure = req.secure || (PUBLIC_URL || '').startsWith('https') ? '; Secure' : '';
+  const secure = req.secure ? '; Secure' : '';
   res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
   res.json({ ok: true });
 });
@@ -408,7 +366,7 @@ app.get('/api/search', wrap(async (req, res) => {
   if (searchCache.size > 500) searchCache.clear();
   searchCache.set(ck, { t: Date.now(), data }); res.json(data);
 }));
-app.get('/api/config', (req, res) => res.json({ provider: SPOTIFY ? 'spotify' : 'apple', spotifyClientId: SPOTIFY_CLIENT_ID || '', storefront: STOREFRONT }));
+app.get('/api/config', (req, res) => res.json({ spotifyClientId: SPOTIFY_CLIENT_ID || '' }));
 app.post('/api/request', wrap(async (req, res) => {
   needEvent(req); needLive();
   // tentatives (réussies ou non) : protège le quota Spotify de l'hôte
@@ -459,7 +417,7 @@ function pickLine() {
 }
 const TRANS_SOUNDS = ['', 'beats', 'beat_hiphop', 'beat_molly', 'beat_trill', 'beat_trap', 'beat_mustard', 'beat_astro']; // musique de transition (sounds/)
 if (!TRANS_SOUNDS.includes(state.transSound)) state.transSound = ''; // ancien réglage (effets sonores) : retiré
-let advanceWhy = 'end'; // comment le titre précédent s'est terminé : end | skip | camera (fourni par le dashboard)
+let advanceWhy = 'end'; // comment le titre précédent s'est terminé : end | skip (fourni par le dashboard)
 function advance() {
   if (state.nowPlaying) { state.history.push(state.nowPlaying.songId); state.history = state.history.slice(-30); }
   // danse en ligne automatique : toutes les N minutes, avant la file (c'est un rendez-vous de la soirée)
@@ -518,7 +476,7 @@ app.get('/api/curated', requireHost, (req, res) => res.json(curatedView()));
 async function spotifyMatch(e) {
   for (let n = 1; ; n++) {
     try {
-      const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${STOREFRONT.toUpperCase()}&q=${encodeURIComponent(e.title + ' ' + e.artist)}`);
+      const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${MARKET}&q=${encodeURIComponent(e.title + ' ' + e.artist)}`);
       return pickMatch(e, (r.tracks && r.tracks.items) || []);
     } catch (err) { if (n >= 3 || err.key || !err.code) throw err; await new Promise(ok => setTimeout(ok, 2000 * n)); }
   }
@@ -543,7 +501,7 @@ function validateSafe(g) { // active les titres sûrs d'un groupe ou de tous
 // Rien à valider à la main : dès que Spotify est connecté, on cherche les titres pas encore cherchés, puis on active tous les titres sûrs.
 // Les titres incertains (?) attendent l'hôte, et ceux qu'il a retirés ne reviennent pas.
 async function autoPrepare() {
-  if (prep.running || !SPOTIFY) return;
+  if (prep.running) return;
   const v = curatedView(), pending = v.entries.some(e => e.status === 'pending');
   if (!pending && !v.entries.some(e => safeToValidate(e))) return;
   prep.running = true; commit();
@@ -559,10 +517,10 @@ async function autoPrepare() {
 const DEFAULT_OPENER = [{ title: 'Levels Radio Edit', artist: 'Avicii', q: 'Levels Radio Edit Avicii' }, { title: 'Levels', artist: 'Avicii', q: 'Levels Avicii' }];
 const needsOpener = () => [...state.phases, ...state.events.flatMap(e => e.phases || [])].filter(p => p.intensity === 'party' && !p.open && !p.openDefaulted);
 async function ensureDefaultOpener() {
-  if (!SPOTIFY || !spotifyToken || !needsOpener().length) return;
+  if (!spotifyToken || !needsOpener().length) return;
   let found = null;
   for (const e of DEFAULT_OPENER) {
-    const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${STOREFRONT.toUpperCase()}&q=${encodeURIComponent(e.q)}`);
+    const r = await spotifyGet(`/v1/search?type=track&limit=10&market=${MARKET}&q=${encodeURIComponent(e.q)}`);
     const m = pickMatch(e, (r.tracks && r.tracks.items) || []);
     if (m.status === 'ok') { found = fromSpotify(m.c); break; }
   }
@@ -599,7 +557,7 @@ app.get('/api/lists', requireHost, (req, res) => res.json(listsView()));
 let presetCache; const presetFile = () => presetCache || (presetCache = JSON.parse(fs.readFileSync(path.join(__dirname, 'curated', 'listes.json'), 'utf8')));
 const presetQueue = [], presetFound = new Map();
 const presetTaken = slug => presetJob && presetJob.slug === slug || presetQueue.some(q => q.slug === slug) || state.lists.some(l => l.preset === slug);
-app.get('/api/presets', requireHost, (req, res) => res.json(!SPOTIFY ? [] : presetFile().filter(p => !presetTaken(p.slug)).map(p => ({ slug: p.slug, name: p.name, group: p.group, count: p.tracks.length }))));
+app.get('/api/presets', requireHost, (req, res) => res.json(presetFile().filter(p => !presetTaken(p.slug)).map(p => ({ slug: p.slug, name: p.name, group: p.group, count: p.tracks.length }))));
 async function runPresets() {
   if (presetJob) return;
   while (presetQueue.length) {
@@ -624,7 +582,6 @@ async function runPresets() {
 app.post('/api/presets/:slug/add', requireHost, wrap(async (req, res) => {
   const p = presetFile().find(x => x.slug === req.params.slug);
   if (!p) throw E('err.listNotFound', 404);
-  if (!SPOTIFY) throw E('err.spotifyOff', 503);
   if (!presetTaken(p.slug)) { presetQueue.push({ slug: p.slug, phaseId: req.body && req.body.phaseId }); runPresets(); }
   res.json({ ok: true });
 }));
@@ -734,9 +691,8 @@ app.post('/api/spotify/token', requireHost, (req, res) => {
   ensureDefaultOpener().catch(e => console.error('chanson d’ouverture :', e.message));
   autoPrepare().catch(() => {});
 });
-app.get('/api/dev-token', requireHost, wrap(async (req, res) => res.json({ token: devToken(), storefront: STOREFRONT })));
 app.post('/api/next', requireHost, (req, res) => {
-  advanceWhy = ['skip', 'camera', 'start', 'phase'].includes(req.body && req.body.why) ? req.body.why : 'end';
+  advanceWhy = ['skip', 'start', 'phase'].includes(req.body && req.body.why) ? req.body.why : 'end';
   const nowPlaying = advance(), callout = calloutPending; calloutPending = false;
   res.json({ nowPlaying, callout });
 });
@@ -775,13 +731,6 @@ app.post('/api/gain', requireHost, (req, res) => {
 app.post('/api/clientlog', requireHost, (req, res) => { // incidents de lecture vus par le dashboard (titre qui ne démarre pas, fin non détectée…), pour comprendre après coup
   if (limited('clog', 60, 60e3)) return fail(req, res, 429, 'err.tooManyEvents');
   logEvent('client', { kind: String(req.body.kind || '').slice(0, 40), detail: String(req.body.detail || '').slice(0, 200), songId: state.nowPlaying ? state.nowPlaying.songId : null });
-  res.json({ ok: true });
-});
-app.post('/api/motion', requireHost, (req, res) => { // mesure de mouvement (nombre seulement) envoyée par le dashboard quand la caméra est active
-  const lvl = Number(req.body.level), avg = Number(req.body.avg90);
-  if (!Number.isFinite(lvl) || !Number.isFinite(avg)) return fail(req, res, 400, 'err.badMeasure');
-  const n = state.nowPlaying;
-  logEvent('motion', { level: Math.round(lvl * 10) / 10, avg90: Math.round(avg * 10) / 10, songId: n ? n.songId : null, elapsed: n && state.nowStartedAt ? Math.round((Date.now() - state.nowStartedAt) / 1000) : null });
   res.json({ ok: true });
 });
 app.get('/api/soirees', requireHost, (req, res) => res.json(fs.existsSync(LOG_DIR) ? fs.readdirSync(LOG_DIR).filter(f => f.endsWith('.jsonl')).sort().reverse().map(f => f.slice(0, -6)) : []));
@@ -1112,7 +1061,7 @@ app.post('/api/licence/detacher', requireHost, wrap(async (req, res) => {
 
 // ---------- Voix & jingles ----------
 // Gratuit : clips prégénérés dans voix/<langue>/ (phrases sans titre ni prénom, voir voix/generer.js).
-// Voix en direct (titre, artiste, prénom) : passe payante (Convex) ou serveur de voix local (TTS_BASE_URL).
+// Voix en direct (titre, artiste, prénom) : passe payante (Convex).
 const TTS_DIR = path.join(DATA_DIR, 'tts');
 const VOIX_DIR = path.join(__dirname, 'voix');
 const sha = parts => crypto.createHash('sha1').update(parts.join('|')).digest('hex').slice(0, 24);
@@ -1127,35 +1076,18 @@ const clipFor = (lang, intensity, cats) => {
 
 // Synthèse d'un morceau de texte, avec cache disque : un même texte n'est facturé qu'une fois.
 // o : voiceSettings, prev/next (contexte de prosodie ElevenLabs), lang
-const voiceLive = () => TTS_LOCAL || voiceViaPass();
+const voiceLive = voiceViaPass;
 async function synth(text, o = {}) {
   if (voiceViaPass() && text.length <= 400) { // voix incluse avec la passe : Convex choisit le modèle et la voix
     const lang = okLang(o.lang || evLang()), hash = sha(['convex', text, lang, JSON.stringify(o.voiceSettings || null)]), file = path.join(TTS_DIR, hash + '.mp3');
     if (!fs.existsSync(file)) {
-      try {
-        const mp3 = await convex('/voix', { evId: activeEvent().id, texte: text, lang, prev: o.prev, next: o.next, voiceSettings: o.voiceSettings || undefined }, true);
-        fs.mkdirSync(TTS_DIR, { recursive: true }); fs.writeFileSync(file, mp3);
-      } catch (e) { if (!TTS_LOCAL) throw e; console.warn('Voix incluse indisponible, repli :', e.key); return synthLocal(text, o); }
+      const mp3 = await convex('/voix', { evId: activeEvent().id, texte: text, lang, prev: o.prev, next: o.next, voiceSettings: o.voiceSettings || undefined }, true);
+      fs.mkdirSync(TTS_DIR, { recursive: true }); fs.writeFileSync(file, mp3);
       licSync(); // met à jour les caractères restants
     }
     return { hash, file };
   }
-  if (!TTS_LOCAL) throw E('err.ttsNeedPass', 402);
-  return synthLocal(text, o);
-}
-async function synthLocal(text, o) {
-  const lang = okLang(o.lang || evLang());
-  const hash = sha([TTS_BASE, TTS_MODEL, TTS_VOICE, text, lang]);
-  const file = path.join(TTS_DIR, hash + '.mp3');
-  if (!fs.existsSync(file)) {
-    let r;
-    try { r = await fetch(TTS_BASE + '/audio/speech', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: TTS_MODEL, input: text, voice: TTS_VOICE, response_format: 'mp3', language: lang }), signal: AbortSignal.timeout(20000) }); }
-    catch { throw E('err.ttsUnreachable', 502, { url: TTS_BASE }); }
-    if (!r.ok) throw new Error('TTS ' + r.status);
-    fs.mkdirSync(TTS_DIR, { recursive: true });
-    fs.writeFileSync(file, Buffer.from(await r.arrayBuffer()));
-  }
-  return { hash, file };
+  throw E('err.ttsNeedPass', 402);
 }
 app.post('/api/tts', requireHost, wrap(async (req, res) => {
   const text = String(req.body.text || '').trim().slice(0, 300);
@@ -1314,9 +1246,9 @@ async function syncTunnel(tu, cleConnue) {
   autoTarget = target;
   stopTunnel(); startTunnel();
 }
-// Adresse des invités (QR, liens) : l'adresse publique quand le tunnel automatique est ouvert, sinon PUBLIC_URL ou le réseau local (repli)
+// Adresse des invités (QR, liens) : l'adresse publique quand le tunnel automatique est ouvert, sinon le réseau local (repli)
 const guestBase = req => (autoTarget && tunnelState === 'up' && droits && droits.tunnel ? droits.tunnel.adresse
-  : PUBLIC_URL || lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+  : lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
 app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!tunnelTarget(), state: tunnelState, address: droits && droits.tunnel ? droits.tunnel.adresse : '' }));
 
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)
@@ -1325,10 +1257,6 @@ app.listen(PORT, BIND, () => {
   console.log(`DJ Vinny : dashboard http://127.0.0.1:${PORT}/host`);
   console.log('Fermeture automatique prévue à ' + hhmm(shutdownAt) + ' (avis 60 s avant, « Encore 1 h » pour prolonger).');
   if (BIND) console.log(`Écoute limitée à ${BIND} (BIND) : les appareils du réseau local ne peuvent pas joindre ce serveur directement.`);
-  const lan = lanUrls(), pub = PUBLIC_URL || lan[0] || '(aucune adresse trouvée)';
+  const lan = lanUrls(), pub = lan[0] || '(aucune adresse trouvée)';
   console.log('Adresse des invités (QR) :', pub);
-  // PUBLIC_URL qui est une adresse IP locale absente du PC : le QR ne marchera pas (erreur de saisie fréquente)
-  const m = /^https?:\/\/(\d+\.\d+\.\d+\.\d+)/.exec(PUBLIC_URL || '');
-  if (m && !Object.values(os.networkInterfaces()).flat().some(i => i.address === m[1]))
-    console.warn(`⚠ PUBLIC_URL (${PUBLIC_URL}) ne correspond à aucune adresse de ce PC. Adresses possibles : ${lan.join(' ') || 'aucune'}`);
 });

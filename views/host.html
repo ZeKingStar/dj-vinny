@@ -83,9 +83,9 @@
   #remoteDlg { background: var(--card); color: var(--text); border: 2px solid var(--line); border-radius: 24px; padding: 20px; width: min(420px, 94vw); } #remoteDlg::backdrop { background: rgba(10, 6, 30, .75); }
   .phbox { padding: 8px 10px; margin-top: 6px; border-radius: 14px; } .phbox input[type=text], .phbox input[type=color] { height: 38px; }
 </style></head>
-<body><div class="bg-anim"></div>
+<body class="simple"><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><button id="modeSw" class="modeSw" role="switch" aria-checked="true"><i class="knob"></i><span id="modeCalm" data-i18n="c.modeCalm">🍽️ Souper</span><span id="modeParty" data-i18n="c.modeParty">🪩 Soirée</span></button><span class="menuwrap"><button class="ghost" id="btnShare" aria-haspopup="true" data-i18n="h.share">📡 Partager</button><span id="shareMenu" class="menu" hidden><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Télécommande</button></span></span><button class="ghost" id="licPill" hidden></button><span id="tunnelBadge" hidden></span><button class="ghost adv" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="uiMode"></button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost adv" id="logout" data-i18n="h.logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0;flex-wrap:wrap"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1;min-width:150px">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><button id="modeSw" class="modeSw" role="switch" aria-checked="true"><i class="knob"></i><span id="modeCalm" data-i18n="c.modeCalm">🍽️ Souper</span><span id="modeParty" data-i18n="c.modeParty">🪩 Soirée</span></button><span class="menuwrap"><button class="ghost" id="btnShare" aria-haspopup="true" data-i18n="h.share">📡 Partager</button><span id="shareMenu" class="menu" hidden><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Télécommande</button></span></span><button class="ghost adv" id="licPill" hidden></button><span id="tunnelBadge" hidden></span><button class="ghost adv" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost adv" id="logout" data-i18n="h.logout">Déconnexion</button></div>
 
   <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements" class="adv"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
   <div id="tab-soiree">
@@ -150,7 +150,7 @@
         <div class="inline adv"><select id="impPl"><option data-i18n="h.impWait">Démarre la soirée pour voir tes playlists…</option></select></div>
         <div class="inline adv"><input type="text" id="impName" placeholder="Nom de la liste" data-i18n-ph="h.impName"><button id="impGo" data-i18n="h.impGo">Importer</button></div>
       </div>
-      <div class="card adv" data-k="ligne"><h2 data-i18n="h.line">Danse en ligne</h2>
+      <div class="card" data-k="ligne"><h2 data-i18n="h.line">Danse en ligne</h2>
         <p class="muted" id="lineNote"></p>
         <div class="inline"><button id="lineNow" data-i18n="h.lineNow">Une danse en ligne, la prochaine</button>
           <select id="lineEvery"><option value="0" data-i18n="h.lineEvery0">Sur demande seulement</option><option value="20" data-i18n="h.lineEvery20">Auto : toutes les 20 min</option><option value="30" data-i18n="h.lineEvery30">Auto : toutes les 30 min</option><option value="45" data-i18n="h.lineEvery45">Auto : toutes les 45 min</option></select></div>
@@ -175,25 +175,12 @@
         <label class="sw"><input type="checkbox" id="announce"> <span data-i18n="h.announceAuto">Annonces vocales automatiques (titres invités, danse en ligne, phrase de période)</span></label>
         <label class="sw"><input type="checkbox" id="autoFx"> <span data-i18n="h.autoFx">Animations et jingles sonores automatiques (confettis, mode fête, ding)</span></label>
         <div class="inline"><select id="calloutEvery"><option value="0" data-i18n="h.callout0">Rappel du QR : jamais</option><option value="8" data-i18n="h.callout8">Rappel du QR après 8 titres sans demande</option><option value="10" data-i18n="h.callout10">Rappel du QR après 10 titres sans demande</option><option value="15" data-i18n="h.callout15">Rappel du QR après 15 titres sans demande</option></select></div>
-        <p class="muted info" data-i18n="h.voiceInfo">La voix de Vinny se choisit dans ⚙ Réglages.</p>
       </div>
       <div class="card adv" data-k="memoire"><h2 data-i18n="h.memory">Mémoire des soirées</h2>
         <p class="muted" id="memNote" data-i18n="h.memNote">Cliquez « Ça danse » ou « Ça vide la piste » pendant la lecture pour bâtir votre propre liste.</p>
         <div id="memList"></div>
-        <p class="muted info" style="margin-top:10px"><span data-i18n="h.logInfo">Chaque soirée est gardée dans un journal (titres joués, demandes, notes, mouvement de la caméra, sans nom ni image).</span> <a href="/api/soirees/today" id="logLink" data-i18n="h.logLink">Télécharger le journal du jour</a></p>
+        <p class="muted info" style="margin-top:10px"><span data-i18n="h.logInfo">Chaque soirée est gardée dans un journal (titres joués, demandes, notes, sans nom ni image).</span> <a href="/api/soirees/today" id="logLink" data-i18n="h.logLink">Télécharger le journal du jour</a></p>
         <label class="sw" style="margin-top:10px"><input type="checkbox" id="learn"> <span data-i18n="h.learn">L'autopilote apprend : il favorise les titres qui font danser et les artistes demandés par les invités</span></label>
-      </div>
-      <div class="card adv" data-k="camera"><h2 data-i18n="h.camera">Piste de danse (caméra, essai)</h2>
-        <p class="muted info" data-i18n="h.camInfo">La vidéo reste dans ce navigateur : rien n'est enregistré ni envoyé. Prévenez les invités par une affiche. L'app mesure le mouvement dans l'image, elle ne compte pas les personnes.</p>
-        <div class="inline"><button class="ghost" id="camStart" data-i18n="h.camStart">Activer la caméra</button><button class="ghost" id="camStop" hidden data-i18n="h.camStop">Arrêter</button></div>
-        <div id="camBox" hidden>
-          <div class="bar" style="height:14px"><div id="camBar"></div></div>
-          <p class="muted" id="camNote"></p>
-          <label class="sw"><span data-i18n="h.camThr">Seuil « piste calme »</span> <input type="range" id="camThr" min="1" max="30" value="6" style="flex:1"></label>
-          <label class="sw" style="margin-top:6px"><input type="checkbox" id="camAuto"> <span data-i18n="h.camAuto">Passer au titre suivant automatiquement (expérimental)</span></label>
-          <p id="camAlert" style="color:var(--accent);font-weight:700" hidden></p>
-          <button id="camSkip" hidden data-i18n="h.camSkip">Suivant maintenant</button>
-        </div>
       </div>
     </div>
   </div>
@@ -276,8 +263,7 @@ const api = async (url, method = 'POST', body) => {
   if (!r.ok) { toast(j.error || t('c.error')); throw new Error(j.error); }
   return j;
 };
-let wishSel = null, evData = null, evEditing = null, autoPhOff = false, failStreak = 0, cfg = { provider: 'spotify' }, state = null, music = null, started = false, advancing = false, endedUid = null, playlists = [], phaseBusy = false;
-const artUrl = a => (a && a.url ? a.url.replace('{w}', 300).replace('{h}', 300) : '');
+let wishSel = null, evData = null, evEditing = null, autoPhOff = false, failStreak = 0, cfg = {}, state = null, music = null, started = false, advancing = false, endedUid = null, playlists = [], phaseBusy = false;
 
 // ---------- Rendu ----------
 function render() {
@@ -465,7 +451,7 @@ async function playNext(why) {
   try {
     const peek = state.queue[0], announced = peek && (peek.source === 'guest' || peek.source === 'line'); // une annonce remplit déjà le creux
     if (state.transSound && !announced && why !== 'start' && why !== 'phase') playTransition();
-    if ((why === 'skip' || why === 'camera') && state.fade > 0 && music.isPlaying) await fadeTo(0, state.fade);
+    if (why === 'skip' && state.fade > 0 && music.isPlaying) await fadeTo(0, state.fade);
     if (why === 'phase' && music.isPlaying) await fadeTo(0, 4); // le souper s'éteint doucement avant l'ouverture de la piste
     const { nowPlaying: n, callout } = await api('/api/next', 'POST', { why });
     endedUid = null;
@@ -516,24 +502,6 @@ try {
 } catch (e) { console.error('Worker indisponible', e); setInterval(() => { if (endTickFn) endTickFn(); }, 250); }
 function handleEnded() {
   if (state && state.nowPlaying && endedUid !== state.nowPlaying.uid) { endedUid = state.nowPlaying.uid; playNext(); }
-}
-
-// --- Apple Music (MusicKit JS) ---
-async function initApple() {
-  if (!window.MusicKit) await new Promise(ok => {
-    document.addEventListener('musickitloaded', ok, { once: true });
-    const s = document.createElement('script'); s.src = 'https://js-cdn.music.apple.com/musickit/v3/musickit.js'; document.head.appendChild(s);
-  });
-  const { token, storefront } = await api('/api/dev-token', 'GET');
-  await MusicKit.configure({ developerToken: token, app: { name: 'DJ Vinny', build: '1.0' }, storefrontId: storefront });
-  music = MusicKit.getInstance();
-  music.addEventListener('playbackStateDidChange', ({ state: s }) => {
-    const P = MusicKit.PlaybackStates;
-    if (s === P.ended || s === P.completed) handleEnded();
-    if (state) $('player').classList.toggle('playing', music.isPlaying);
-  });
-  music.addEventListener('playbackProgressDidChange', ({ progress }) => { $('prog').style.width = Math.round(progress * 100) + '%'; });
-  await music.authorize();
 }
 
 // --- Spotify (Authorization Code + PKCE, Web Playback SDK) : nécessite Premium ---
@@ -661,7 +629,7 @@ $('spConnect').onclick = async () => {
 };
 $('start').onclick = async () => {
   try {
-    if (cfg.provider === 'spotify') await initSpotify(); else { if (!music) await initApple(); }
+    await initSpotify();
     if (!music) return; // redirection Spotify en cours
     started = true; $('startBox').hidden = true; $('playBox').hidden = false;
     await loadPlaylists();
@@ -679,12 +647,8 @@ $('start').onclick = async () => {
 };
 (async () => {
   cfg = await (await fetch('/api/config')).json();
-  const spotify = cfg.provider === 'spotify';
-  if (spotify) $('start').hidden = true; // un seul gros bouton à la fois : Connecter Spotify, puis Démarrer
-  $('startText').textContent = spotify
-    ? t('h.startSpotify', { url: SP.redirect() }) + (location.hostname === '127.0.0.1' ? '' : '  ' + t('h.use127', { port: location.port || 80 }))
-    : t('h.startApple');
-  if (!spotify) return;
+  $('start').hidden = true; // un seul gros bouton à la fois : Connecter Spotify, puis Démarrer
+  $('startText').textContent = t('h.startSpotify', { url: SP.redirect() }) + (location.hostname === '127.0.0.1' ? '' : '  ' + t('h.use127', { port: location.port || 80 }));
   if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('start').hidden = false; $('start').disabled = true; return; }
   preloadSpotifySdk();
   try { await SP.callback(); } catch (e) { $('startErr').textContent = e.message; }
@@ -713,43 +677,25 @@ $('trimClear').onclick = async () => { if (state.nowPlaying) { await api('/api/t
 // ---------- Playlists (importées comme listes de l'autopilote) ----------
 async function loadPlaylists() {
   playlists = []; let offset = 0;
-  if (cfg.provider === 'spotify') {
-    for (;;) {
-      const r = await SP.get(`/v1/me/playlists?limit=50&offset=${offset}`);
-      playlists.push(...(r.items || []).filter(Boolean).map(p => ({ id: p.id, name: p.name })));
-      if (!r.next || !(r.items || []).length) break; offset += 50;
-    }
-  } else for (;;) {
-    const r = await music.api.music('v1/me/library/playlists', { limit: 100, offset });
-    const items = r.data.data || [];
-    playlists.push(...items.map(p => ({ id: p.id, name: p.attributes.name })));
-    if (!r.data.next || !items.length) break; offset += 100;
+  for (;;) {
+    const r = await SP.get(`/v1/me/playlists?limit=50&offset=${offset}`);
+    playlists.push(...(r.items || []).filter(Boolean).map(p => ({ id: p.id, name: p.name })));
+    if (!r.next || !(r.items || []).length) break; offset += 50;
   }
   $('impPl').innerHTML = playlists.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('') || '<option>' + t('h.noPlaylist') + '</option>';
   if (playlists[0]) $('impName').placeholder = playlists[0].name;
 }
 async function fetchTracks(playlistId) {
   const out = []; let offset = 0;
-  if (cfg.provider === 'spotify') { // endpoint /items depuis février 2026 (anciennement /tracks)
-    for (;;) {
-      const r = await SP.get(`/v1/playlists/${playlistId}/items?limit=100&offset=${offset}`);
-      for (const it of r.items || []) {
-        const t = it && (it.item || it.track);
-        if (!t || t.type !== 'track' || t.is_local || !t.id) continue;
-        out.push({ songId: t.id, title: t.name, artist: (t.artists || []).map(a => a.name).join(', '), artwork: ((t.album && t.album.images) || [])[1]?.url || '' });
-      }
-      if (!r.next || !(r.items || []).length) break; offset += 100;
-    }
-    return out;
-  }
+  // endpoint /items depuis février 2026 (anciennement /tracks)
   for (;;) {
-    const r = await music.api.music(`v1/me/library/playlists/${playlistId}/tracks`, { limit: 100, offset });
-    const items = r.data.data || [];
-    for (const it of items) {
-      const pp = it.attributes.playParams || {}; const id = pp.catalogId || pp.id;
-      if (id) out.push({ songId: id, title: it.attributes.name, artist: it.attributes.artistName, artwork: artUrl(it.attributes.artwork) });
+    const r = await SP.get(`/v1/playlists/${playlistId}/items?limit=100&offset=${offset}`);
+    for (const it of r.items || []) {
+      const t = it && (it.item || it.track);
+      if (!t || t.type !== 'track' || t.is_local || !t.id) continue;
+      out.push({ songId: t.id, title: t.name, artist: (t.artists || []).map(a => a.name).join(', '), artwork: ((t.album && t.album.images) || [])[1]?.url || '' });
     }
-    if (!r.data.next || !items.length) break; offset += 100;
+    if (!r.next || !(r.items || []).length) break; offset += 100;
   }
   return out;
 }
@@ -885,59 +831,6 @@ $('calloutEvery').onchange = e => api('/api/settings', 'POST', { calloutEvery: N
 $('calloutNow').onclick = async () => { await api('/api/fx', 'POST', { type: 'callout' }); if (state.tts) await speakCallout(); };
 $('learn').onchange = e => api('/api/settings', 'POST', { learn: e.target.checked });
 
-// ---------- Caméra : activité sur la piste (suggestion, tout reste local) ----------
-const cam = { stream: null, video: null, canvas: document.createElement('canvas'), prev: null, ema: 0, hist: [], timer: null, songUid: null, songStart: 0, lastSkip: 0 };
-const CW = 80, CH = 45;
-$('camStart').onclick = async () => {
-  try {
-    cam.stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 180 }, audio: false });
-    cam.video = document.createElement('video'); cam.video.srcObject = cam.stream; cam.video.muted = true; await cam.video.play();
-    cam.canvas.width = CW; cam.canvas.height = CH; cam.prev = null; cam.hist = [];
-    cam.timer = setInterval(camTick, 250);
-    $('camStart').hidden = true; $('camStop').hidden = false; $('camBox').hidden = false;
-  } catch (e) { toast(t('h.camFail', { msg: e.message })); }
-};
-function camStop() {
-  clearInterval(cam.timer); if (cam.stream) cam.stream.getTracks().forEach(t => t.stop());
-  cam.stream = null; $('camStart').hidden = false; $('camStop').hidden = true; $('camBox').hidden = true;
-}
-$('camStop').onclick = camStop;
-function camTick() {
-  const ctx = cam.canvas.getContext('2d', { willReadFrequently: true });
-  ctx.drawImage(cam.video, 0, 0, CW, CH);
-  const d = ctx.getImageData(0, 0, CW, CH).data, gray = new Float32Array(CW * CH);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) gray[p] = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
-  let moving = 0;
-  if (cam.prev) {
-    let shift = 0; for (let p = 0; p < gray.length; p++) shift += gray[p] - cam.prev[p];
-    shift /= gray.length; // changement d'éclairage global (jeux de lumière) : on le retire pour ne pas le prendre pour du mouvement
-    for (let p = 0; p < gray.length; p++) if (Math.abs(gray[p] - cam.prev[p] - shift) > 18) moving++;
-  }
-  cam.prev = gray;
-  cam.ema = cam.ema * 0.8 + Math.min(100, (moving / gray.length) * 400) * 0.2;
-  cam.sum = (cam.sum || 0) + cam.ema; cam.cnt = (cam.cnt || 0) + 1;
-  if (cam.cnt >= 60) { // toutes les 15 s : un seul nombre envoyé au journal (aucune image)
-    const lvl = cam.sum / cam.cnt; cam.sum = cam.cnt = 0;
-    api('/api/motion', 'POST', { level: lvl, avg90: cam.hist.length ? cam.hist.reduce((a, b) => a + b, 0) / cam.hist.length : lvl }).catch(() => {});
-  }
-  cam.hist.push(cam.ema); if (cam.hist.length > 360) cam.hist.shift(); // 90 s à 4 images par seconde
-  const avg = cam.hist.reduce((a, b) => a + b, 0) / cam.hist.length, thr = Number($('camThr').value);
-  const calm = cam.hist.length >= 240 && avg < thr; // au moins 60 s de mesure
-  $('camBar').style.width = Math.min(100, cam.ema * 2) + '%';
-  $('camNote').textContent = t('h.camNote', { a: cam.ema.toFixed(1), avg: avg.toFixed(1), thr }) + (calm ? t('h.camCalm') : '');
-  camDecide(calm);
-}
-function camDecide(calm) {
-  const n = state && state.nowPlaying, now = Date.now();
-  if (n && cam.songUid !== n.uid) { cam.songUid = n.uid; cam.songStart = now; }
-  const dinner = state && state.phase && state.phase.intensity === 'calm';
-  const suggest = calm && started && n && !dinner && now - cam.songStart > 60e3;
-  $('camAlert').hidden = $('camSkip').hidden = !suggest;
-  if (suggest) $('camAlert').textContent = t('h.camSuggest');
-  if (suggest && $('camAuto').checked && now - cam.lastSkip > 180e3) { cam.lastSkip = now; cam.hist = []; playNext('camera'); }
-}
-$('camSkip').onclick = () => { cam.lastSkip = Date.now(); cam.hist = []; playNext('camera'); };
-
 // ---------- Mémoire des soirées et souhaits ----------
 const rate = vote => async () => {
   const n = state.nowPlaying; if (!n) return toast(t('c.nothingPlaying'));
@@ -979,11 +872,12 @@ function renderApStatus() {
   }
   if (document.activeElement !== $('autoCount')) $('autoCount').value = state.autoCount;
   const sig = JSON.stringify((state.lists || []).map(l => [l.id, l.name, l.count]));
+  if (pr) apBusySeen = true; else if (apPending && apBusySeen) { apPending = ''; apBusySeen = false; apListSig = ''; }
   if (sig !== apListSig) { apListSig = sig; fillApSelect(); }
-  else if (a && document.activeElement !== $('apSel') && $('apSel').value !== a.id && [...$('apSel').options].some(o => o.value === a.id)) { $('apSel').value = a.id; renderCurated(); }
+  else if (a && !apPending && document.activeElement !== $('apSel') && $('apSel').value !== a.id && [...$('apSel').options].some(o => o.value === a.id)) { $('apSel').value = a.id; renderCurated(); }
 }
 let apListSig = '';
-let apPresets = [], apSeq = 0, apErrSeen = '';
+let apPresets = [], apSeq = 0, apErrSeen = '', apPending = '', apBusySeen = false;
 async function fillApSelect() {
   const my = ++apSeq;
   try { apPresets = await api('/api/presets', 'GET'); } catch { apPresets = []; }
@@ -994,7 +888,7 @@ async function fillApSelect() {
   const html = (state.lists || []).map(l => opt(l.id, l.name + ' (' + l.count + ')')).join('')
     + (apPresets.length ? '<optgroup label="' + t('h.ap.more') + '">' + apPresets.map(p => opt('preset:' + p.slug, p.name)).join('') + '</optgroup>' : '');
   if (sel.innerHTML !== html) sel.innerHTML = html;
-  sel.value = (state.lists || []).some(l => l.id === keep) ? keep : 'builtin:dance';
+  sel.value = apPending || ((state.lists || []).some(l => l.id === keep) ? keep : 'builtin:dance');
   renderCurated();
 }
 async function renderCurated() {
@@ -1005,7 +899,7 @@ async function renderCurated() {
   if (builtin) {
     const mine = cur.entries.filter(e => e.group === group), n = mine.filter(e => !e.off && e.status !== 'pending' && e.status !== 'missing').length;
     const aRevoir = mine.filter(e => e.status === 'uncertain' || e.status === 'missing');
-    $('apSum').textContent = t('h.ap.sumBuiltin', { n }) + (aRevoir.length && !document.body.classList.contains('simple') ? ' · ' + t('h.ap.review', { x: aRevoir.length }) : '');
+    $('apSum').textContent = t('h.ap.sumBuiltin', { n });
     $('apAll').hidden = !aRevoir.length; $('apAll').textContent = t(apAll ? 'h.ap.showReview' : 'h.ap.showAll');
     $('apItems').innerHTML = (apAll || !aRevoir.length ? (apAll ? mine : []) : aRevoir).map(entryRow).join('');
   } else {
@@ -1024,9 +918,10 @@ async function renderCurated() {
 $('apSel').onchange = async () => {
   const id = $('apSel').value;
   if (id.startsWith('preset:')) { // liste toute faite : préparée en arrière-plan puis appliquée à la période
-    $('apSel').value = (state.activeList && state.activeList.id) || 'builtin:dance';
+    apPending = id; apBusySeen = false; $('apSel').blur(); // le menu garde le nom choisi pendant la préparation
     toast(t('h.ap.prepare'));
-    await api('/api/presets/' + id.slice(7) + '/add', 'POST', { phaseId: state.phase && state.phase.id }).catch(e => toast(e.message));
+    const r = await api('/api/presets/' + id.slice(7) + '/add', 'POST', { phaseId: state.phase && state.phase.id }).catch(e => { toast(e.message); return { ready: true }; });
+    if (r && r.ready) { apPending = ''; apListSig = ''; renderApStatus(); }
     return;
   }
   renderCurated();
@@ -1077,7 +972,7 @@ let prevPrep = false;
 function renderTop() {
   $('eventBadge').innerHTML = state.event ? '<span class="phase-badge" title="' + t('h.activeEvent') + '">📅 ' + esc(state.event.name) + '</span>' : '';
   const cur = state.phase && state.phase.intensity;
-  const a = state.activeList, spOk = cfg && cfg.provider !== 'spotify' ? true : !!SP.load().access;
+  const a = state.activeList, spOk = !!SP.load().access;
   $('steps').innerHTML = [[spOk, 'h.step.spotify'], [!!(a && a.count), 'h.step.list'], [!!state.requestsOpen, 'h.step.qr']].map(([ok, k], i) => '<span class="' + (ok ? 'ok' : '') + '">' + (ok ? '✓' : i + 1) + ' ' + t(k) + '</span>').join('');
   document.title = state.nowPlaying ? '▶ ' + state.nowPlaying.title + ' · DJ Vinny' : 'DJ Vinny';
   $('modeSw').setAttribute('aria-checked', cur === 'party' ? 'true' : 'false');
@@ -1106,7 +1001,7 @@ $('btnShare').onclick = e => { e.stopPropagation(); $('shareMenu').hidden = !$('
 document.addEventListener('click', () => { $('shareMenu').hidden = true; });
 $('licPill').onclick = () => lic && lic.portal && window.open(lic.portal, '_blank', 'noopener');
 function syncTabs() {
-  $('licPill').hidden = !lic; if (lic) $('licPill').textContent = t(lic.on ? 'h.lic.pillOn' : 'h.lic.pillFree');
+  $('licPill').hidden = !lic; if (lic) $('licPill').classList.toggle('adv', !!lic.on); if (lic) $('licPill').textContent = t(lic.on ? 'h.lic.pillOn' : 'h.lic.pillFree');
   const wishes = document.querySelector('#tabs button[data-tab="souhaits"]');
   wishes.hidden = !(lic && lic.on);
   if (wishes.hidden && !$('tab-souhaits').hidden) showTab('soiree');
@@ -1274,12 +1169,12 @@ es.onmessage = e => { state = JSON.parse(e.data); syncQr(state); render(); };
 // commandes de la télécommande (/remote) : le son se joue ici, sur l'ordinateur de la soirée
 // le dashboard dit à la télécommande où il en est (connecté à Spotify ? soirée démarrée ? page déjà touchée par un clic ?)
 const reportStatus = () => fetch('/api/remote/ack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
-  started, ready: cfg.provider !== 'spotify' || !!(typeof SP !== 'undefined' && SP.load().access), active: !!(navigator.userActivation && navigator.userActivation.hasBeenActive) }) }).catch(() => {});
+  started, ready: !!(typeof SP !== 'undefined' && SP.load().access), active: !!(navigator.userActivation && navigator.userActivation.hasBeenActive) }) }).catch(() => {});
 setInterval(reportStatus, 4000); setTimeout(reportStatus, 1500);
 es.addEventListener('cmd', async e => {
   const c = JSON.parse(e.data);
   try {
-    if (c.cmd === 'start') { if (!started && !$('start').disabled && (cfg.provider !== 'spotify' || SP.load().access)) $('start').click(); }
+    if (c.cmd === 'start') { if (!started && !$('start').disabled && SP.load().access) $('start').click(); }
     else if (c.cmd === 'next') { if (started) playNext('skip'); else toast(t('h.startFirst')); }
     else if (c.cmd === 'pause') { if (music) music.isPlaying ? music.pause() : music.play(); }
     else if (c.cmd === 'say') await speak(c.text);
@@ -1344,8 +1239,9 @@ function paintSettings() {
       : '<input type="' + (f.type.startsWith('number') ? 'number' : 'text') + '" data-k="' + f.key + '" value="' + esc(f.value || '') + '" placeholder="' + esc(f.def) + '">';
     return '<div class="sf"><label>' + esc(t('set.' + f.key)) + src + '</label><div class="inline">' + ctl + '<button type="button" class="mini" data-reset="' + f.key + '" title="' + t('set.resetTip') + '">↺</button></div><span class="muted">' + esc(t('set.' + f.key + '.help')) + '</span></div>';
   };
-  const paid = setView.filter(f => PAID.includes(f.key));
-  $('setFields').innerHTML = setView.filter(f => !PAID.includes(f.key)).map(row).join('')
+  const paid = setView.filter(f => PAID.includes(f.key)), sp = setView.filter(f => f.key === 'SPOTIFY_CLIENT_ID');
+  $('setFields').innerHTML = setView.filter(f => !PAID.includes(f.key) && f.key !== 'SPOTIFY_CLIENT_ID').map(row).join('')
+    + '<details class="sf"><summary>Spotify</summary>' + sp.map(row).join('') + '</details>'
     + '<details class="sf"' + (paid.some(f => f.set || f.value) ? ' open' : '') + '><summary>' + t('set.paid') + '</summary><p class="muted">' + t('set.paidInfo') + '</p>' + paid.map(row).join('') + '</details>';
 }
 $('openSettings').onclick = async () => {
@@ -1370,20 +1266,21 @@ $('setSave').onclick = async () => {
   const body = {};
   for (const f of setView) {
     const el = $('setFields').querySelector('[data-k="' + f.key + '"]');
+    if (!el) continue;
     if (setReset.has(f.key)) body[f.key] = null;
     else if (f.type === 'secret') { if (el.value) body[f.key] = el.value; }
     else if (el.value.trim() !== String(f.value || '')) body[f.key] = el.value.trim();
   }
   if (!Object.keys(body).length) return dlg.close();
   try { await api('/api/app-settings', 'POST', body); } catch { return; }
-  dlg.close(); toast(t(/MUSIC_PROVIDER|SPOTIFY_CLIENT_ID|STOREFRONT/.test(Object.keys(body).join()) ? 'set.savedReload' : 'set.saved'));
+  dlg.close(); toast(t(/SPOTIFY_CLIENT_ID/.test(Object.keys(body).join()) ? 'set.savedReload' : 'set.saved'));
 };
 </script>
 <script>
 // ---------- Disposition du dashboard : menu collant, cartes repliables / déplaçables (mémorisé dans ce navigateur) ----------
 (() => {
   // [clé de la carte (data-k), repliée par défaut] ; nom dans le menu : h.nav.<clé>
-  const DEF = [['file', 0], ['qr', 0], ['periodes', 0], ['autopilote', 0], ['ligne', 1], ['boutons', 0], ['annonces', 1], ['memoire', 1], ['camera', 1]];
+  const DEF = [['file', 0], ['qr', 0], ['periodes', 0], ['autopilote', 0], ['ligne', 1], ['boutons', 0], ['annonces', 1], ['memoire', 1]];
   const KEY = 'djLayout', cols = [...document.querySelectorAll('.grid > div')], cards = {};
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
   const store = o => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch {} };
@@ -1438,24 +1335,7 @@ $('setSave').onclick = async () => {
   });
 })();
 
-// ---------- Mode simple (par défaut) ou avancé : les éléments .adv sont cachés en simple (mémorisé dans ce navigateur) ----------
-(() => {
-  const b = document.getElementById('uiMode');
-  const get = () => { try { return localStorage.getItem('djUi') === 'adv' ? 'adv' : 'simple'; } catch { return 'simple'; } };
-  const apply = m => {
-    document.body.classList.toggle('simple', m === 'simple');
-    b.dataset.i18n = m === 'simple' ? 'h.ui.advanced' : 'h.ui.simple'; b.textContent = t(b.dataset.i18n); // data-i18n : suit aussi un changement de langue
-    if (m === 'simple' && !$('tab-evenements').hidden) showTab('soiree');
-    syncTabs();
-    if (typeof renderCurated === 'function') renderCurated();
-  };
-  b.onclick = () => { const m = document.body.classList.contains('simple') ? 'adv' : 'simple'; try { localStorage.setItem('djUi', m); } catch {} apply(m); };
-  // un autre onglet ou une autre fenêtre change le mode : on suit, et on se resynchronise au retour sur cette fenêtre
-  window.addEventListener('storage', e => { if (e.key === 'djUi') apply(get()); });
-  window.addEventListener('focus', () => apply(get()));
-  apply(get());
-  api('/api/licence', 'GET').then(l => { lic = l; }).catch(() => {}).finally(syncTabs);
-})();
+api('/api/licence', 'GET').then(l => { lic = l; }).catch(() => {}).finally(syncTabs);
 
 // ---------- Aide : une ligne sous chaque titre + bouton « i » pour le détail ----------
 function addHelp(card, short, long) {
