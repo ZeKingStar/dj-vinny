@@ -617,6 +617,8 @@
  "lic.voix_non_configuree": "Voix incluse non configurée côté service",
  "lic.voix_echec": "La voix incluse a échoué",
  "set.quit": "⏻ Fermer DJ Vinny",
+ "set.logoutAll": "Déconnecter tous les appareils",
+ "set.logoutAllQ": "Tous les ordinateurs et téléphones connectés au dashboard seront déconnectés, y compris celui-ci. Continuer ?",
  "set.quitQ": "Fermer DJ Vinny ? La musique, l’écran de la soirée, la télécommande et le tunnel s’arrêtent.",
  "h.tunnel.tip": "Adresse publique des invités (tunnel vers le VPS)",
  "h.tunnel.up": "🌐 En ligne",

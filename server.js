@@ -252,7 +252,7 @@ async function lookupSong(songId, extra) {
 }
 
 // ---------- Auth hôte ----------
-const sign = () => crypto.createHmac('sha256', secret).update('host-session').digest('hex');
+const sign = () => crypto.createHmac('sha256', secret).update('host-session:' + (state.sessionRev || 0)).digest('hex'); // sessionRev change = tous les appareils déconnectés
 const safeEq = (a, b) => {
   const x = crypto.createHash('sha256').update(String(a)).digest();
   const y = crypto.createHash('sha256').update(String(b)).digest();
@@ -311,6 +311,14 @@ app.post('/api/verify', requireHost, (req, res) => {
   res.json({ ok: true });
 });
 app.post('/logout', (req, res) => {
+  res.setHeader('Set-Cookie', 'host=; HttpOnly; Path=/; Max-Age=0');
+  res.json({ ok: true });
+});
+// Déconnexion de tous les appareils : change la révision de session (les cookies déjà émis cessent de valoir), y compris celui-ci
+app.post('/logout/all', requireHost, (req, res) => {
+  state.sessionRev = (state.sessionRev || 0) + 1; save();
+  console.log('Déconnexion de tous les appareils.');
+  for (const r of dashClients) { try { r.end(); } catch {} } dashClients.clear();
   res.setHeader('Set-Cookie', 'host=; HttpOnly; Path=/; Max-Age=0');
   res.json({ ok: true });
 });

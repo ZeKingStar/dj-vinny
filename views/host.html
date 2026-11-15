@@ -242,7 +242,7 @@
   <h2 data-i18n="set.title">Réglages</h2>
   <p class="muted" data-i18n="set.intro">Ces valeurs sont gardées dans l'app (data/settings.json) et passent avant le fichier .env. Le mot de passe, le port, le secret de session et les clés Apple restent dans le .env.</p>
   <div id="setFields"></div>
-  <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="quitApp" style="margin-right:auto" data-i18n="set.quit">⏻ Fermer DJ Vinny</button><button type="button" class="ghost" id="setCancel" data-i18n="c.close">Fermer</button><button type="button" id="setSave" data-i18n="c.save">Enregistrer</button></div>
+  <div class="inline" style="justify-content:flex-end"><button type="button" class="ghost" id="logoutAll" data-i18n="set.logoutAll">Déconnecter tous les appareils</button><button type="button" class="ghost" id="quitApp" style="margin-right:auto" data-i18n="set.quit">⏻ Fermer DJ Vinny</button><button type="button" class="ghost" id="setCancel" data-i18n="c.close">Fermer</button><button type="button" id="setSave" data-i18n="c.save">Enregistrer</button></div>
 </form></dialog>
 <div id="lockScreen" role="dialog" aria-modal="true" aria-labelledby="lockTitle" hidden style="position:fixed;inset:0;z-index:2147483647;background:var(--bg,#15102E);align-items:center;justify-content:center;padding:16px">
   <form id="lockForm" class="card" style="max-width:340px;width:100%;text-align:center"><img src="/vinny.svg" width="56" height="56" alt="">
@@ -1281,6 +1281,7 @@ $('btnScreen').onclick = () => { // même nom de fenêtre = l'écran déjà ouve
 };
 $('remoteCopy').onclick = async () => { try { await navigator.clipboard.writeText($('remoteUrl').value); toast(t('h.addrCopied')); } catch { $('remoteUrl').select(); toast(t('h.selectedCtrlC')); } };
 $('setCancel').onclick = () => dlg.close();
+$('logoutAll').onclick = async () => { if (!confirm(t('set.logoutAllQ'))) return; await api('/logout/all', 'POST').catch(() => {}); location.href = '/login.html'; };
 $('quitApp').onclick = async () => { if (!confirm(t('set.quitQ'))) return; serverClosed = true; dlg.close(); await api('/api/shutdown').catch(() => {}); };
 $('setFields').onclick = e => { const b = e.target.closest('button[data-reset]'); if (!b) return; setReset.add(b.dataset.reset); const i = $('setFields').querySelector('[data-k="' + b.dataset.reset + '"]'); if (i) i.value = ''; paintSettings(); };
 $('setSave').onclick = async () => {
