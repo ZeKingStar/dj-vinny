@@ -19,5 +19,13 @@ Party Noël STI le 12 déc. 2026 : DJ Vinny tourne **seulement sur le VPS**, htt
 ## À faire
 Voir la mémoire `djvinny-vps-serveur-12-dec` : diagnostiquer le « ça ne fonctionne pas » de Pat (0 événement dans `state.json` du VPS au 15 nov.), tester la voix avec prénom, commiter, `npx convex deploy` (« fete » réservé), patch nginx resolver Convex.
 
+## Avant tout déploiement ou changement sur le VPS
+1. **Lire l'existant d'abord** : `docs/modele-affaires.md`, `deploy/`, config live (`ssh monvps`). Ne pas répondre sur l'architecture ou les prix de mémoire. Le VPS sert déjà un relais multi-client (`<client>.djvinny.ca` → tunnel SSH vers le PC du client, généré par `djvinny-sync`). `fete.djvinny.ca` est un serveur complet à part, pas multi-client.
+2. **Demander avant de réutiliser** un domaine, un vhost, un service ou un cert existant (korvia.ca : jamais pour DJ Vinny).
+3. **nginx est partagé avec d'autres sites** : tester `nginx -t` avant tout rechargement, résoudre les noms externes à l'exécution (`resolver` + variable), prévoir le retour arrière. Pat lance le sudo.
+4. **Vérifier l'environnement cible** : fuseau (VPS en UTC, service en TZ=America/Toronto), Convex prod `shocking-marten-220` et non le test, passe attachée à l'événement actif, adresse publique (`PUBLIC_URL`).
+5. **Commandes pour Pat** : complètes, sans valeur à remplacer (`TON_…`), avec le dossier de départ, JSON entre guillemets simples sous PowerShell. Ce que je ne peux pas remplir (clé, mot de passe) est dit clairement, en une étape.
+6. **Après coup** : vérifier par le journal (`journalctl`), les lignes `Annonce :`, les comptes dans `data/state.json`, jamais en lisant `.env`.
+
 ## Style
 Français québécois, étapes très simples avec exemples pour Pat. Solution complète, tester une fois, pas de sur-ingénierie.
