@@ -1,0 +1,30 @@
+[Unit]
+Description=DJ Vinny : serveur complet (dashboard + invités)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/djvinny-app
+EnvironmentFile=/home/deploy/djvinny-app/.env
+Environment=PORT=3011
+Environment=BIND=127.0.0.1
+Environment=TRUST_PROXY=1
+Environment=NO_TUNNEL=1
+Environment=TZ=America/Toronto
+Environment=PUBLIC_URL=https://fete.djvinny.ca
+ExecStart=/usr/bin/node server.js
+# « Fermer DJ Vinny » et la fermeture de 1 h du matin arrêtent le processus : on le relance (état dans data/)
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+MemoryMax=512M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=djvinny-serveur
+
+[Install]
+WantedBy=multi-user.target

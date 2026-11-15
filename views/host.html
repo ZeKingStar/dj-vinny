@@ -85,7 +85,7 @@
 </style></head>
 <body class="simple"><div class="bg-anim"></div>
 <div class="wrap">
-  <div class="row" style="padding-top:0;flex-wrap:wrap"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1;min-width:150px">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><button id="modeSw" class="modeSw" role="switch" aria-checked="true"><i class="knob"></i><span id="modeCalm" data-i18n="c.modeCalm">🍽️ Souper</span><span id="modeParty" data-i18n="c.modeParty">🪩 Soirée</span></button><span class="menuwrap"><button class="ghost" id="btnShare" aria-haspopup="true" data-i18n="h.share">📡 Partager</button><span id="shareMenu" class="menu" hidden><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Télécommande</button></span></span><button class="ghost adv" id="licPill" hidden></button><span id="tunnelBadge" hidden></span><button class="ghost adv" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost adv" id="logout" data-i18n="h.logout">Déconnexion</button></div>
+  <div class="row" style="padding-top:0;flex-wrap:wrap"><span class="logo" style="background:none"><img src="/vinny.svg" width="44" height="44" alt="Vinny"></span><h1 style="flex:1;min-width:150px">DJ Vinny <span class="muted" style="font-size:16px;font-weight:600">Dashboard</span></h1><span id="eventBadge"></span><span id="phaseBadge"></span><button id="modeSw" class="modeSw" role="switch" aria-checked="true"><i class="knob"></i><span id="modeCalm" data-i18n="c.modeCalm">🍽️ Souper</span><span id="modeParty" data-i18n="c.modeParty">🪩 Soirée</span></button><span class="menuwrap"><button class="ghost" id="btnShare" aria-haspopup="true" data-i18n="h.share">📡 Partager</button><span id="shareMenu" class="menu" hidden><button class="ghost" id="btnScreen" data-i18n="h.screen" data-i18n-title="h.screenTip">🖥 Écran</button><button class="ghost" id="btnRemote" data-i18n="h.remote" data-i18n-title="h.remoteTip">📱 Télécommande</button></span></span><button class="ghost adv" id="licPill" hidden></button><span id="tunnelBadge" hidden></span><button class="ghost adv" id="btnLock" data-i18n="h.lock">🔒 Verrouiller</button><button class="ghost" id="uiMode"></button><button class="ghost" id="openSettings" data-i18n="h.settings">⚙ Réglages</button><button class="ghost adv" id="logout" data-i18n="h.logout">Déconnexion</button></div>
 
   <div class="tabs" id="tabs"><button data-tab="soiree" class="on"><span data-i18n="h.tab.party">🎧 Soirée</span></button><button data-tab="souhaits"><span data-i18n="h.tab.wishes">💌 Souhaits</span><span id="wishBadge"></span></button><button data-tab="evenements" class="adv"><span data-i18n="h.tab.events">📅 Événements</span></button></div>
   <div id="tab-soiree">
@@ -627,6 +627,26 @@ $('spConnect').onclick = async () => {
   try { await shareSpotify(); $('spConnect').hidden = true; $('start').hidden = false; $('startErr').textContent = ''; }
   catch (e) { $('startErr').textContent = e.message; }
 };
+// Démarrer la soirée garantit un événement en cours : sans événement actif, on en crée un pour ce soir (nom daté, début maintenant, 24 h),
+// on le démarre et, si la licence a une passe libre, on y attache une passe (voix en direct avec titre et prénom).
+async function ensureEvent() {
+  try {
+    const d = await api('/api/evts', 'GET'), act = d.events.find(e => e.id === d.activeId);
+    let id = act && act.status !== 'ended' ? act.id : null;
+    if (!id) {
+      const n = new Date(), p2 = x => String(x).padStart(2, '0'), day = n.getFullYear() + '-' + p2(n.getMonth() + 1) + '-' + p2(n.getDate());
+      const end = new Date(n.getTime() - 60e3);
+      const r = await api('/api/evts', 'POST', { name: t('h.autoEvent', { date: day }), date: day, start: p2(n.getHours()) + ':' + p2(n.getMinutes()), end: p2(end.getHours()) + ':' + p2(end.getMinutes()), lang: LANG });
+      id = r.id;
+    }
+    const cur = d.events.find(e => e.id === id);
+    if (!cur || cur.status !== 'live' || !cur.startedAt) await api('/api/evts/' + id + '/start'); // active l'événement et le met en cours
+    const l = await api('/api/licence', 'GET').catch(() => null);
+    const free = l && l.free ? (l.free.achat || 0) + (l.free.abonnement || 0) : 0;
+    const hasPass = l && l.events && l.events[id] && l.events[id].pass === 'attachee';
+    if (l && l.on && free > 0 && !hasPass) { await api('/api/licence/attacher', 'POST', { ev: id }); toast(t('h.lic.used')); }
+  } catch (e) { toast(e.message || t('h.connFail')); } // un souci d'événement ou de passe n'empêche pas la soirée de démarrer
+}
 $('start').onclick = async () => {
   try {
     await initSpotify();
@@ -636,6 +656,7 @@ $('start').onclick = async () => {
     // page rechargée en pleine soirée : on reprend le titre en cours ; sinon on lance la soirée (avec le mot d'ouverture)
     if (state.nowPlaying) await startTrack(state.nowPlaying);
     else {
+      await ensureEvent();
       // une soirée commence toujours en Souper (une Soirée laissée active par un essai ne doit pas ouvrir la piste) ; sans jingle : le mot d'ouverture suffit
       if (!state.phase || state.phase.intensity !== 'calm') {
         const p = state.phases.find(x => x.intensity === 'calm') || await api('/api/phases/ensure', 'POST', { intensity: 'calm' });
@@ -649,7 +670,7 @@ $('start').onclick = async () => {
   cfg = await (await fetch('/api/config')).json();
   $('start').hidden = true; // un seul gros bouton à la fois : Connecter Spotify, puis Démarrer
   $('startText').textContent = t('h.startSpotify', { url: SP.redirect() }) + (location.hostname === '127.0.0.1' ? '' : '  ' + t('h.use127', { port: location.port || 80 }));
-  if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('start').hidden = false; $('start').disabled = true; return; }
+  if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('startErr').style.cursor = 'pointer'; $('startErr').onclick = () => $('openSettings').click(); $('start').hidden = false; $('start').disabled = true; return; }
   preloadSpotifySdk();
   try { await SP.callback(); } catch (e) { $('startErr').textContent = e.message; }
   $('spConnect').hidden = !!SP.load().access; $('start').hidden = !SP.load().access;
@@ -1241,7 +1262,7 @@ function paintSettings() {
   };
   const paid = setView.filter(f => PAID.includes(f.key)), sp = setView.filter(f => f.key === 'SPOTIFY_CLIENT_ID');
   $('setFields').innerHTML = setView.filter(f => !PAID.includes(f.key) && f.key !== 'SPOTIFY_CLIENT_ID').map(row).join('')
-    + '<details class="sf"><summary>Spotify</summary>' + sp.map(row).join('') + '</details>'
+    + '<details class="sf"' + (sp.some(f => f.value) ? '' : ' open') + '><summary>Spotify</summary>' + sp.map(row).join('') + '<span class="muted">Redirect URI : <b>' + esc(SP.redirect()) + '</b></span></details>'
     + '<details class="sf"' + (paid.some(f => f.set || f.value) ? ' open' : '') + '><summary>' + t('set.paid') + '</summary><p class="muted">' + t('set.paidInfo') + '</p>' + paid.map(row).join('') + '</details>';
 }
 $('openSettings').onclick = async () => {
@@ -1273,7 +1294,8 @@ $('setSave').onclick = async () => {
   }
   if (!Object.keys(body).length) return dlg.close();
   try { await api('/api/app-settings', 'POST', body); } catch { return; }
-  dlg.close(); toast(t(/SPOTIFY_CLIENT_ID/.test(Object.keys(body).join()) ? 'set.savedReload' : 'set.saved'));
+  dlg.close();
+  if (/SPOTIFY_CLIENT_ID/.test(Object.keys(body).join())) { toast(t('set.savedReload')); setTimeout(() => location.reload(), 900); } else toast(t('set.saved'));
 };
 </script>
 <script>
@@ -1336,6 +1358,21 @@ $('setSave').onclick = async () => {
 })();
 
 api('/api/licence', 'GET').then(l => { lic = l; }).catch(() => {}).finally(syncTabs);
+// ---------- Mode simple (par défaut) ou avancé : les éléments .adv sont cachés en simple (mémorisé dans ce navigateur) ----------
+(() => {
+  const b = $('uiMode');
+  const get = () => { try { return localStorage.getItem('djUi') === 'adv' ? 'adv' : 'simple'; } catch { return 'simple'; } };
+  const apply = m => {
+    document.body.classList.toggle('simple', m === 'simple');
+    b.dataset.i18n = m === 'simple' ? 'h.ui.advanced' : 'h.ui.simple'; b.textContent = t(b.dataset.i18n);
+    if (m === 'simple' && !$('tab-evenements').hidden) showTab('soiree');
+    syncTabs();
+    if (typeof renderCurated === 'function') renderCurated();
+  };
+  b.onclick = () => apply(document.body.classList.contains('simple') ? 'adv' : 'simple'); // pas d'écoute de « focus » ni de « storage » : le mode ne change que par ce bouton
+  b.addEventListener('click', () => { try { localStorage.setItem('djUi', document.body.classList.contains('simple') ? 'simple' : 'adv'); } catch {} });
+  apply(get());
+})();
 
 // ---------- Aide : une ligne sous chaque titre + bouton « i » pour le détail ----------
 function addHelp(card, short, long) {

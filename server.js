@@ -955,7 +955,7 @@ app.delete('/api/evts/:id', requireHost, (req, res) => {
   commit(); res.json({ ok: true });
 });
 app.post('/api/evts/:id/activate', requireHost, (req, res) => { const ev = evById(req, res); if (!ev) return; activateEvent(ev); commit(); res.json({ ok: true }); });
-app.post('/api/evts/:id/start', requireHost, (req, res) => { const ev = evById(req, res); if (!ev) return; ev.startedAt = Date.now(); delete ev.endedAt; activateEvent(ev); commit(); res.json({ ok: true }); });
+app.post('/api/evts/:id/start', requireHost, (req, res) => { const ev = evById(req, res); if (!ev) return; ev.startedAt = Date.now(); delete ev.endedAt; snoozeMs = 0; activateEvent(ev); commit(); res.json({ ok: true }); });
 app.post('/api/evts/:id/end', requireHost, (req, res) => {
   const ev = evById(req, res); if (!ev) return;
   ev.endedAt = Date.now(); ev.closed = true; if (ev.id === state.activeEventId) state.requestsOpen = false;
@@ -1077,12 +1077,17 @@ const clipFor = (lang, intensity, cats) => {
 // Synthèse d'un morceau de texte, avec cache disque : un même texte n'est facturé qu'une fois.
 // o : voiceSettings, prev/next (contexte de prosodie ElevenLabs), lang
 const voiceLive = voiceViaPass;
+const VOIX_MAX = Number(process.env.VOIX_MAX_CARACTERES) || 10000; // caractères de voix en direct par événement (en plus du plafond de la passe)
+const voixUsed = () => (activeEvent() || {}).voixCar || 0;
 async function synth(text, o = {}) {
   if (voiceViaPass() && text.length <= 400) { // voix incluse avec la passe : Convex choisit le modèle et la voix
     const lang = okLang(o.lang || evLang()), hash = sha(['convex', text, lang, JSON.stringify(o.voiceSettings || null)]), file = path.join(TTS_DIR, hash + '.mp3');
     if (!fs.existsSync(file)) {
+      const ev = activeEvent();
+      if (voixUsed() + text.length > VOIX_MAX) throw E('err.voiceCap', 429);
       const mp3 = await convex('/voix', { evId: activeEvent().id, texte: text, lang, prev: o.prev, next: o.next, voiceSettings: o.voiceSettings || undefined }, true);
       fs.mkdirSync(TTS_DIR, { recursive: true }); fs.writeFileSync(file, mp3);
+      ev.voixCar = voixUsed() + text.length; commit();
       licSync(); // met à jour les caractères restants
     }
     return { hash, file };
@@ -1116,16 +1121,19 @@ app.post('/api/announce', requireHost, wrap(async (req, res) => {
   const name = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   // prénom -> « demande spéciale de X » ; demande sans prénom -> « en demande spéciale » ; autre titre -> annonce simple
   const tpls = phaseLine ? [phaseLine] : moment && c[moment] ? c[moment] : isCallout ? c.callout : req.body.source === 'line' && c.line ? c.line : name ? c.named : req.body.source === 'guest' ? c.anon : c.plain;
-  if (!voiceLive()) { // gratuit : clip générique prégénéré (sans titre ni prénom)
+  const freeClip = () => { // gratuit (ou plafond de voix atteint) : clip générique prégénéré (sans titre ni prénom)
     const intensity = phase && phase.intensity === 'calm' ? 'calm' : 'party', src = req.body.source;
     const cats = phaseLine ? ['phase'] : moment ? [moment] : isCallout ? ['callout'] : src === 'line' ? ['line', 'plain'] : src === 'guest' ? ['anon', 'plain'] : ['plain', 'anon'];
     const url = clipFor(lang, intensity, cats) || clipFor(lang, intensity === 'calm' ? 'party' : 'calm', cats);
     if (!url) throw E('err.ttsNeedPass', 402);
     return res.json({ url, text: '' });
-  }
+  };
+  if (!voiceLive() || voixUsed() >= VOIX_MAX) return freeClip();
   const text = fill(pick(tpls), { title, artist, name });
   console.log('Annonce :', text);
-  const { file } = await synth(text, { voiceSettings: c.voiceSettings || null, lang });
+  let file;
+  try { ({ file } = await synth(text, { voiceSettings: c.voiceSettings || null, lang })); }
+  catch (e) { if (e.key === 'err.voiceCap') { console.warn('Plafond de voix atteint (' + voixUsed() + '/' + VOIX_MAX + ') : clips gratuits'); return freeClip(); } throw e; }
 
   const key = sha(['v2', file, c.tempo, c.reverb, c.ratio, c.presence, c.lufs]);
   const out = path.join(TTS_DIR, key + '.mp3');
@@ -1160,33 +1168,44 @@ app.get('/api/tts/:name', requireHost, (req, res) => {
 });
 app.use((err, req, res, next) => res.status(err.status || 500).json({ error: err.type === 'entity.parse.failed' ? 'JSON invalide' : 'Erreur serveur' }));
 
-// ---------- Fermeture automatique à 1 h du matin (évite un serveur et un tunnel oubliés ouverts) ----------
+// ---------- Fermeture automatique : 24 h après le début de l'événement actif (évite un serveur oublié ouvert) ----------
+// Le décompte part de « Démarrer maintenant », sinon de l'heure de début de l'événement quand il est en cours. Pas d'événement en cours : aucune fermeture.
 // 60 s avant, le dashboard et la télécommande affichent un avis avec « Encore 1 h » (autant de fois que voulu).
-// SHUTDOWN_TEST_SEC : pour les essais, fermeture N secondes après le démarrage au lieu de 1 h.
-const WARN_SEC = 60;
-const nextClose = () => { const d = new Date(); d.setHours(1, 0, 0, 0); if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); return d.getTime(); };
-let shutdownAt = process.env.SHUTDOWN_TEST_SEC ? Date.now() + Number(process.env.SHUTDOWN_TEST_SEC) * 1000 : nextClose(), warned = false, closing = false;
+// SHUTDOWN_TEST_SEC : pour les essais, fermeture N secondes après le démarrage du serveur.
+const WARN_SEC = 60, FERME_APRES = 24 * 3600e3, bootAt = Date.now();
+let snoozeMs = 0, warned = false, closing = false;
+const closeAt = () => {
+  if (process.env.SHUTDOWN_TEST_SEC) return bootAt + Number(process.env.SHUTDOWN_TEST_SEC) * 1000;
+  const ev = activeEvent();
+  if (!ev || eventStatus(ev) !== 'live') return null;
+  return (ev.startedAt || evTimes(ev).start) + FERME_APRES + snoozeMs;
+};
 const sendShutdown = data => { const msg = `event: shutdown\ndata: ${JSON.stringify(data)}\n\n`; for (const res of clients) res.write(msg); };
 const hhmm = t => new Date(t).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
 // Fermeture (automatique, ou bouton « Fermer DJ Vinny » du dashboard) : avis aux pages, sauvegarde, tunnel arrêté, puis sortie
 function closeServer(why) {
   if (closing) return;
   closing = true; console.log('Fermeture ' + why + ' (' + hhmm(Date.now()) + ').'); logEvent('shutdown', { why });
+  const ev = activeEvent();
+  if (why === 'automatique' && ev && !ev.endedAt) { ev.endedAt = Date.now(); ev.closed = true; state.requestsOpen = false; } // 24 h écoulées : événement terminé (le service redémarré ne reboucle pas)
   sendShutdown({ closed: true });
   clearTimeout(saveTimer); fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(STATE_FILE, JSON.stringify(state)); // pas de sauvegarde perdue
   stopTunnel();
   setTimeout(() => process.exit(0), 1500);
 }
 setInterval(() => {
-  const left = shutdownAt - Date.now();
   if (closing) return;
+  const at = closeAt();
+  if (!at) { warned = false; return; }
+  const left = at - Date.now();
   if (left <= 0) closeServer('automatique');
   else if (left <= WARN_SEC * 1000 && !warned) { warned = true; console.log('Fermeture dans 60 s, sauf « Encore 1 h ».'); sendShutdown({ left: Math.round(left / 1000) }); }
 }, 1000);
 app.post('/api/shutdown/snooze', requireHost, (req, res) => {
-  shutdownAt = Math.max(shutdownAt, Date.now()) + 3600e3; warned = false;
-  console.log('Fermeture repoussée à ' + hhmm(shutdownAt)); sendShutdown({ until: shutdownAt }); // la page formate l'heure dans sa langue
-  res.json({ until: shutdownAt });
+  snoozeMs += 3600e3; warned = false;
+  const at = closeAt() || Date.now() + 3600e3;
+  console.log('Fermeture repoussée à ' + hhmm(at)); sendShutdown({ until: at }); // la page formate l'heure dans sa langue
+  res.json({ until: at });
 });
 app.post('/api/shutdown', requireHost, (req, res) => { res.json({ ok: true }); setTimeout(() => closeServer('demandée'), 200); });
 
@@ -1234,6 +1253,7 @@ function ensureKey() {
 }
 // Appelé après chaque /droits : publie la clé publique si besoin, puis branche le tunnel sur l'hôte et le port donnés par Convex
 async function syncTunnel(tu, cleConnue) {
+  if (process.env.NO_TUNNEL) return; // serveur hébergé sur le VPS : aucun tunnel vers lui-même
   let target = '';
   if (tu && tu.hote && /^ssh-[\w-]+ [A-Za-z0-9+/=]+$/.test(tu.cleHote || '')) {
     const pub = ensureKey();
@@ -1247,15 +1267,15 @@ async function syncTunnel(tu, cleConnue) {
   stopTunnel(); startTunnel();
 }
 // Adresse des invités (QR, liens) : l'adresse publique quand le tunnel automatique est ouvert, sinon le réseau local (repli)
-const guestBase = req => (autoTarget && tunnelState === 'up' && droits && droits.tunnel ? droits.tunnel.adresse
-  : lanUrls()[0] || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
+const guestBase = req => (process.env.PUBLIC_URL || (autoTarget && tunnelState === 'up' && droits && droits.tunnel ? droits.tunnel.adresse
+  : lanUrls()[0]) || `${req.protocol}://${req.get('host')}`).replace(/\/$/, '');
 app.get('/api/tunnel', requireHost, (req, res) => res.json({ on: !!tunnelTarget(), state: tunnelState, address: droits && droits.tunnel ? droits.tunnel.adresse : '' }));
 
 const BIND = process.env.BIND || undefined; // BIND=127.0.0.1 : seulement ce PC et le tunnel (rien d'autre sur le réseau local)
 app.listen(PORT, BIND, () => {
   startTunnel();
   console.log(`DJ Vinny : dashboard http://127.0.0.1:${PORT}/host`);
-  console.log('Fermeture automatique prévue à ' + hhmm(shutdownAt) + ' (avis 60 s avant, « Encore 1 h » pour prolonger).');
+  console.log("Fermeture automatique : 24 h après le début de l'événement actif (avis 60 s avant, « Encore 1 h » pour prolonger).");
   if (BIND) console.log(`Écoute limitée à ${BIND} (BIND) : les appareils du réseau local ne peuvent pas joindre ce serveur directement.`);
   const lan = lanUrls(), pub = lan[0] || '(aucune adresse trouvée)';
   console.log('Adresse des invités (QR) :', pub);

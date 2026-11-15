@@ -9,5 +9,5 @@ export function genererLicence() {
   return "djv_" + Array.from(crypto.getRandomValues(new Uint8Array(24)), b => b.toString(16).padStart(2, "0")).join("");
 }
 
-const RESERVES = ["www", "app", "compte", "api", "admin"];
+const RESERVES = ["www", "app", "compte", "api", "admin", "fete"];
 export const sousDomaineValide = (s: string) => /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(s) && !RESERVES.includes(s);
