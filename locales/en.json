@@ -520,6 +520,8 @@
  "set.savedReload": "Settings saved: reload the page for the music source",
  "set.SPOTIFY_CLIENT_ID": "Spotify: Client ID",
  "set.SPOTIFY_CLIENT_ID.help": "developer.spotify.com/dashboard → your app → paste the Client ID here and add the Redirect URI below in the Spotify app.",
+ "set.SPOTIFY_GARDER": "Spotify: keep my sign-in on the server",
+ "set.SPOTIFY_GARDER.help": "yes = your Spotify sign-in stays on the server, so a new computer does not need to sign in to Spotify again. Anyone with the dashboard password then controls your Spotify. For your own setup only.",
  "set.MAX_PENDING_PER_GUEST": "Pending requests per guest",
  "set.MAX_PENDING_PER_GUEST.help": "How many requests from the same guest can wait in the queue.",
  "set.REQ_PER_PERIOD": "Requests per guest per period",

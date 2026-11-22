@@ -523,13 +523,20 @@ const SP = {
     const r = await fetch('https://accounts.spotify.com/api/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: cfg.spotifyClientId, ...body }) });
     if (!r.ok) { localStorage.removeItem('sp_auth'); throw new Error(t('h.spRefused', { status: r.status })); }
     const j = await r.json();
-    const a = { access: j.access_token, refresh: j.refresh_token || SP.load().refresh, exp: Date.now() + j.expires_in * 1000 - 60000 };
+    if (cfg.spotifyKeep && j.refresh_token) await SP.keep(j.refresh_token); // le jeton de renouvellement reste sur le serveur
+    const a = { access: j.access_token, refresh: cfg.spotifyKeep ? undefined : j.refresh_token || SP.load().refresh, exp: Date.now() + j.expires_in * 1000 - 60000 };
     localStorage.setItem('sp_auth', JSON.stringify(a)); return a;
   },
   async access() {
     let a = SP.load(); if (!a.access) throw new Error(t('h.spOff'));
-    if (Date.now() > a.exp) a = await SP.token({ grant_type: 'refresh_token', refresh_token: a.refresh });
+    if (Date.now() > a.exp) a = cfg.spotifyKeep ? await SP.session() : await SP.token({ grant_type: 'refresh_token', refresh_token: a.refresh });
     return a.access;
+  },
+  async keep(refresh) { await fetch('/api/spotify/garder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh }) }); },
+  async session() { // jeton d'accès frais, renouvelé par le serveur (option « garder ma connexion Spotify sur le serveur »)
+    const r = await fetch('/api/spotify/session', { method: 'POST' });
+    if (!r.ok) { localStorage.removeItem('sp_auth'); throw new Error(t('h.spOff')); }
+    const j = await r.json(); localStorage.setItem('sp_auth', JSON.stringify(j)); return j;
   },
   async callback() {
     const code = new URLSearchParams(location.search).get('code'); if (!code) return;
@@ -673,6 +680,11 @@ $('start').onclick = async () => {
   if (!cfg.spotifyClientId) { $('startErr').textContent = t('h.noClientId'); $('startErr').style.cursor = 'pointer'; $('startErr').onclick = () => $('openSettings').click(); $('start').hidden = false; $('start').disabled = true; return; }
   preloadSpotifySdk();
   try { await SP.callback(); } catch (e) { $('startErr').textContent = e.message; }
+  if (cfg.spotifyKeep) { // option activée : on migre une connexion déjà faite dans ce navigateur vers le serveur, ou on la récupère du serveur
+    const a = SP.load();
+    if (a.refresh) { await SP.keep(a.refresh).catch(() => {}); localStorage.setItem('sp_auth', JSON.stringify({ access: a.access, exp: a.exp })); }
+    if (!SP.load().access) await SP.session().catch(() => {});
+  }
   $('spConnect').hidden = !!SP.load().access; $('start').hidden = !SP.load().access;
   if (SP.load().access) $('spConnect').click(); // déjà autorisé : l'accès est partagé avec le serveur sans démarrer la soirée
 })();
@@ -1260,8 +1272,8 @@ function paintSettings() {
       : '<input type="' + (f.type.startsWith('number') ? 'number' : 'text') + '" data-k="' + f.key + '" value="' + esc(f.value || '') + '" placeholder="' + esc(f.def) + '">';
     return '<div class="sf"><label>' + esc(t('set.' + f.key)) + src + '</label><div class="inline">' + ctl + '<button type="button" class="mini" data-reset="' + f.key + '" title="' + t('set.resetTip') + '">↺</button></div><span class="muted">' + esc(t('set.' + f.key + '.help')) + '</span></div>';
   };
-  const paid = setView.filter(f => PAID.includes(f.key)), sp = setView.filter(f => f.key === 'SPOTIFY_CLIENT_ID');
-  $('setFields').innerHTML = setView.filter(f => !PAID.includes(f.key) && f.key !== 'SPOTIFY_CLIENT_ID').map(row).join('')
+  const paid = setView.filter(f => PAID.includes(f.key)), sp = setView.filter(f => f.key.startsWith('SPOTIFY_'));
+  $('setFields').innerHTML = setView.filter(f => !PAID.includes(f.key) && !f.key.startsWith('SPOTIFY_')).map(row).join('')
     + '<details class="sf"' + (sp.some(f => f.value) ? '' : ' open') + '><summary>Spotify</summary>' + sp.map(row).join('') + '<span class="muted">Redirect URI : <b>' + esc(SP.redirect()) + '</b></span></details>'
     + '<details class="sf"' + (paid.some(f => f.set || f.value) ? ' open' : '') + '><summary>' + t('set.paid') + '</summary><p class="muted">' + t('set.paidInfo') + '</p>' + paid.map(row).join('') + '</details>';
 }
@@ -1296,7 +1308,7 @@ $('setSave').onclick = async () => {
   if (!Object.keys(body).length) return dlg.close();
   try { await api('/api/app-settings', 'POST', body); } catch { return; }
   dlg.close();
-  if (/SPOTIFY_CLIENT_ID/.test(Object.keys(body).join())) { toast(t('set.savedReload')); setTimeout(() => location.reload(), 900); } else toast(t('set.saved'));
+  if (/SPOTIFY_/.test(Object.keys(body).join())) { toast(t('set.savedReload')); setTimeout(() => location.reload(), 900); } else toast(t('set.saved'));
 };
 </script>
 <script>

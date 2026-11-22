@@ -11,6 +11,7 @@ const {
 } = process.env;
 const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aide : locales/<langue>.json (set.CLÉ, set.CLÉ.help)
   SPOTIFY_CLIENT_ID: ['text', '', v => /^[A-Za-z0-9]{0,64}$/.test(v)],
+  SPOTIFY_GARDER: ['select:non,oui', 'non', v => v === 'non' || v === 'oui'],
   MAX_PENDING_PER_GUEST: ['number:1:20', '3', v => /^\d+$/.test(v) && v >= 1 && v <= 20],
   REQ_PER_PERIOD: ['number:1:50', '2', v => /^\d+$/.test(v) && v >= 1 && v <= 50],
   LOCK_MINUTES: ['number:0:240', '0', v => /^\d+$/.test(v) && v <= 240],
@@ -374,7 +375,8 @@ app.get('/api/search', wrap(async (req, res) => {
   if (searchCache.size > 500) searchCache.clear();
   searchCache.set(ck, { t: Date.now(), data }); res.json(data);
 }));
-app.get('/api/config', (req, res) => res.json({ spotifyClientId: SPOTIFY_CLIENT_ID || '' }));
+const spotifyKeep = () => settingValue('SPOTIFY_GARDER') === 'oui';
+app.get('/api/config', (req, res) => res.json({ spotifyClientId: SPOTIFY_CLIENT_ID || '', spotifyKeep: spotifyKeep() }));
 app.post('/api/request', wrap(async (req, res) => {
   needEvent(req); needLive();
   // tentatives (réussies ou non) : protège le quota Spotify de l'hôte
@@ -693,6 +695,36 @@ app.post('/api/linedance', requireHost, (req, res) => {
   state.queue.unshift(t); commit(); res.json({ ok: true });
 });
 
+// Option « garder ma connexion Spotify sur le serveur » : le jeton de renouvellement vit dans data/spotify.json (lecture réservée au serveur),
+// les navigateurs ne reçoivent que le jeton d'accès (1 h). Désactivée par défaut ; désactivée = fichier supprimé.
+const SPOTIFY_FILE = path.join(DATA_DIR, 'spotify.json');
+const forgetSpotify = () => { try { fs.unlinkSync(SPOTIFY_FILE); } catch {} };
+const readKept = () => { try { return JSON.parse(fs.readFileSync(SPOTIFY_FILE, 'utf8')).refresh || ''; } catch { return ''; } };
+app.post('/api/spotify/garder', requireHost, (req, res) => {
+  if (!spotifyKeep()) { forgetSpotify(); return fail(req, res, 403, 'err.spotifyOff'); }
+  const r = req.body.refresh;
+  if (typeof r !== 'string' || r.length < 20 || r.length > 1000) return fail(req, res, 400, 'err.badToken');
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(SPOTIFY_FILE, JSON.stringify({ refresh: r }), { mode: 0o600 });
+  console.log('Connexion Spotify gardée sur le serveur.');
+  res.json({ ok: true });
+});
+let spotifySession = Promise.resolve();
+app.post('/api/spotify/session', requireHost, (req, res) => {
+  const run = async () => {
+    if (!spotifyKeep()) { forgetSpotify(); throw E('err.spotifyOff', 404); }
+    const refresh = readKept();
+    if (!refresh || !SPOTIFY_CLIENT_ID) throw E('err.spotifyOff', 404);
+    const r = await fetch('https://accounts.spotify.com/api/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refresh, client_id: SPOTIFY_CLIENT_ID }) });
+    if (!r.ok) { if (r.status === 400 || r.status === 401) forgetSpotify(); throw E('err.spotifyExpired', 503); }
+    const j = await r.json();
+    if (j.refresh_token && j.refresh_token !== refresh) fs.writeFileSync(SPOTIFY_FILE, JSON.stringify({ refresh: j.refresh_token }), { mode: 0o600 });
+    return { access: j.access_token, exp: Date.now() + j.expires_in * 1000 - 60000 };
+  };
+  const p = spotifySession.then(run, run); spotifySession = p.catch(() => {}); // une demande à la fois : Spotify peut renouveler le jeton à chaque appel
+  p.then(j => res.json(j), e => res.status(e.code || 500).json({ error: e.key ? tr(reqLang(req), e.key, e.vars) : e.message }));
+});
 app.post('/api/spotify/token', requireHost, (req, res) => {
   if (typeof req.body.token !== 'string' || req.body.token.length > 600) return fail(req, res, 400, 'err.badToken');
   spotifyToken = req.body.token; res.json({ ok: true });

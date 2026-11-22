@@ -520,6 +520,8 @@
  "set.savedReload": "Réglages enregistrés : la page se recharge",
  "set.SPOTIFY_CLIENT_ID": "Spotify : Client ID",
  "set.SPOTIFY_CLIENT_ID.help": "developer.spotify.com/dashboard → ton app → colle le Client ID ici et ajoute le Redirect URI ci-dessous dans l’app Spotify.",
+ "set.SPOTIFY_GARDER": "Spotify : garder ma connexion sur le serveur",
+ "set.SPOTIFY_GARDER.help": "oui = ta connexion Spotify reste sur le serveur : un nouvel ordinateur n’a plus à se reconnecter à Spotify. Quiconque connaît le mot de passe du dashboard contrôle alors ton Spotify. Pour ton installation seulement.",
  "set.MAX_PENDING_PER_GUEST": "Demandes en attente par invité",
  "set.MAX_PENDING_PER_GUEST.help": "Nombre de demandes d’un même invité qui peuvent attendre dans la file.",
  "set.REQ_PER_PERIOD": "Demandes par invité et par période",
