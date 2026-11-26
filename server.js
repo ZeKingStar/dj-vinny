@@ -65,7 +65,7 @@ const defaults = () => ({
   queue: [], nowPlaying: null, history: [], pool: [], poolName: '',
   themes: [], activeThemeId: null, requestsOpen: true, lists: [], autoCount: 10,
   phases: [], activePhaseId: null, autoPhases: false, announce: true, ttsVoice: '', autoFx: true,
-  linePool: [], lineEvery: 0, lastLineAt: 0, curated: {}, curatedOff: [], curatedOn: [], dinnerPool: [], trims: {}, gains: {}, endCut: 0, fade: 0, transSound: '', ratings: {}, wishes: [], calloutEvery: 10, songsSinceRequest: 0, lastCalloutAt: 0, learn: true, artistHeat: {}, eventToken: '', qrRev: 0, nowStartedAt: 0, periodReq: {}, events: [], activeEventId: null,
+  linePool: [], lineEvery: 0, lastLineAt: 0, curated: {}, curatedOff: [], curatedOn: [], dinnerPool: [], trims: {}, gains: {}, endCut: 0, fade: 0, transSound: '', ratings: {}, wishes: [], calloutEvery: 10, songsSinceRequest: 0, lastCalloutAt: 0, learn: true, playedLog: [], artistHeat: {}, eventToken: '', qrRev: 0, nowStartedAt: 0, periodReq: {}, events: [], activeEventId: null,
 });
 let state = defaults();
 try { state = { ...defaults(), ...JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) }; } catch {}
@@ -223,14 +223,24 @@ function enqueue(song) { // après les demandes, avant les titres auto
 }
 // Demandes d'invités : ordre d'arrivée, mais jamais deux de la même personne de suite. Une demande bloquée cède sa place au premier titre suivant
 // (autre demande ou titre auto) ; les titres de l'hôte et de la danse en ligne ne sont pas touchés. Idempotent : refait à chaque commit().
+// Doublons : un titre déjà en cours / dans la file / joué ce soir (12 h). L'hôte (dashboard, télécommande) peut passer outre avec force.
+function dupOf(songId) {
+  if (state.nowPlaying && state.nowPlaying.songId === songId) return { kind: 'now' };
+  if (state.queue.some(s => s.songId === songId && s.source !== 'auto')) return { kind: 'queue' };
+  const p = (state.playedLog || []).findLast(x => x.id === songId && Date.now() - x.t < 12 * 3600e3);
+  return p ? { kind: 'played', min: Math.max(1, Math.round((Date.now() - p.t) / 60000)) } : null;
+}
+function enqueueLater(song, n) { // titre déjà joué que l'invité veut quand même : dans n titres
+  fillAuto(); song.again = true; state.queue.splice(Math.min(n, state.queue.length), 0, song);
+}
 function spaceRequests() {
   const rest = state.queue.slice(), out = [];
-  let last = state.nowPlaying && state.nowPlaying.source === 'guest' ? state.nowPlaying.by : null;
+  let last = state.nowPlaying && state.nowPlaying.source === 'guest' ? state.nowPlaying.by : null, lastId = state.nowPlaying && state.nowPlaying.songId;
   while (rest.length) {
-    let i = rest.findIndex(s => !(s.source === 'guest' && s.by === last));
+    let i = rest.findIndex(s => !(s.source === 'guest' && s.by === last) && (s.forced || s.songId !== lastId)); // jamais le même titre deux fois de suite (sauf ajout forcé par l'hôte)
     if (i < 0) i = 0; // il ne reste que des demandes de la même personne : on ne bloque pas la musique
     const [s] = rest.splice(i, 1); out.push(s);
-    last = s.source === 'guest' ? s.by : null;
+    last = s.source === 'guest' ? s.by : null; lastId = s.songId;
   }
   state.queue = out;
 }
@@ -302,7 +312,7 @@ function limited(key, max, windowMs) {
 }
 
 const wrap = fn => (req, res) => Promise.resolve(fn(req, res)).catch(e =>
-  res.status(e.code || 500).json({ error: e.key ? tr(reqLang(req), e.key, e.vars) : e.message }));
+  res.status(e.code || 500).json({ error: e.key ? tr(reqLang(req), e.key, e.vars) : e.message, ...(e.extra || {}) }));
 
 // ---------- App ----------
 const app = express();
@@ -419,8 +429,9 @@ app.post('/api/request', wrap(async (req, res) => {
   if (limited('r:' + guestId, 20, 10 * 60e3)) throw E('err.slowDown', 429);
   if (state.queue.filter(s => s.by === guestId).length >= MAX_PENDING)
     throw E('err.maxPending', 429, { n: MAX_PENDING });
-  if (state.queue.some(s => s.songId === songId && s.source !== 'auto') || (state.nowPlaying && state.nowPlaying.songId === songId))
-    throw E('err.inQueue', 409);
+  const dup = dupOf(songId), again = !!(req.body && req.body.again);
+  if (dup && dup.kind !== 'played') throw E('err.inQueue', 409);
+  if (dup && !again) throw Object.assign(E('err.played', 409, { n: dup.min }), { extra: { played: true } }); // le client demande : « la jouer quand même, dans 5 titres ? »
   // limite par appareil (guestId) ; plafond large par IP pour freiner les faux identifiants
   const pk = (state.activePhaseId || '-') + '|' + guestId, pkIp = (state.activePhaseId || '-') + '|ip|' + req.ip, ipMax = Math.max(40, PER_PERIOD * 25);
   if ((state.periodReq[pk] || 0) >= PER_PERIOD)
@@ -430,7 +441,7 @@ app.post('/api/request', wrap(async (req, res) => {
   const byName = String(req.body.name || '').replace(/[^\p{L}\p{N} '-]/gu, '').trim().slice(0, 20);
   const song = await lookupSong(songId, { by: guestId, source: 'guest', byName });
   state.queue = state.queue.filter(s => s.songId !== song.songId); // un titre auto identique cède sa place à la demande
-  enqueue(song); state.songsSinceRequest = 0; state.periodReq[pk] = (state.periodReq[pk] || 0) + 1; state.periodReq[pkIp] = (state.periodReq[pkIp] || 0) + 1;
+  dup ? enqueueLater(song, 5) : enqueue(song); state.songsSinceRequest = 0; state.periodReq[pk] = (state.periodReq[pk] || 0) + 1; state.periodReq[pkIp] = (state.periodReq[pkIp] || 0) + 1;
   logEvent('request', { songId: song.songId, title: song.title, artist: song.artist, named: !!byName });
   const heat = norm(song.artist); state.artistHeat[heat] = (state.artistHeat[heat] || 0) + 1;
   commit(); res.json({ ok: true });
@@ -461,6 +472,7 @@ const TRANS_SOUNDS = ['', 'beats', 'beat_hiphop', 'beat_molly', 'beat_trill', 'b
 if (!TRANS_SOUNDS.includes(state.transSound)) state.transSound = ''; // ancien réglage (effets sonores) : retiré
 let advanceWhy = 'end'; // comment le titre précédent s'est terminé : end | skip (fourni par le dashboard)
 function advance() {
+  if (state.nowPlaying) { (state.playedLog = state.playedLog || []).push({ id: state.nowPlaying.songId, t: state.nowStartedAt || Date.now() }); state.playedLog = state.playedLog.slice(-600); }
   if (state.nowPlaying) { state.history.push(state.nowPlaying.songId); state.history = state.history.slice(-30); }
   // danse en ligne automatique : toutes les N minutes, avant la file (c'est un rendez-vous de la soirée)
   let next = null;
@@ -769,7 +781,9 @@ app.post('/api/next', requireHost, (req, res) => {
   res.json({ nowPlaying, callout });
 });
 app.post('/api/queue/add', requireHost, wrap(async (req, res) => {
-  const song = await lookupSong(req.body.songId, { by: 'host', source: 'host' });
+  const dup = !req.body.force && dupOf(String(req.body.songId || ''));
+  if (dup) throw Object.assign(E(dup.kind === 'now' ? 'err.dupNow' : dup.kind === 'queue' ? 'err.dupQueue' : 'err.dupPlayed', 409, { n: dup.min }), { extra: { dup: true } });
+  const song = await lookupSong(req.body.songId, { by: 'host', source: 'host', ...(req.body.force ? { forced: true } : {}) });
   state.queue = state.queue.filter(s => s.songId !== song.songId || s.source !== 'auto');
   req.body.top ? state.queue.unshift(song) : enqueue(song);
   commit(); res.json({ ok: true });

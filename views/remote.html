@@ -92,6 +92,17 @@ setLang(hostLang());
 let state = null, tt, qAll = false;
 const say = m => { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; }, 2200); };
 const buzz = () => { try { navigator.vibrate && navigator.vibrate(15); } catch {} };
+async function queueAdd(songId, top) { // doublon (en cours, dans la file, joué ce soir) : on confirme, puis on force
+  let force = false;
+  for (;;) {
+    const r = await fetch('/api/queue/add', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: JSON.stringify({ songId, top: !!top, force }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) return true;
+    if (r.status === 401) { location.href = '/login.html?next=/remote'; return false; }
+    if (r.status === 409 && j.dup && !force && confirm(j.error + ' ' + t('h.dupAsk'))) { force = true; continue; }
+    say(j.error || t('c.error')); return false;
+  }
+}
 async function api(url, method = 'POST', body) {
   const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({}));
@@ -151,7 +162,7 @@ $('find').oninput = () => {
 };
 $('found').onclick = e => {
   const b = e.target.closest('button[data-add]'); if (!b) return;
-  api('/api/queue/add', 'POST', { songId: b.dataset.add, top: true }).then(() => { buzz(); say(t('r.nextIs', { title: found[b.dataset.add].title })); $('find').value = ''; $('found').innerHTML = ''; }).catch(() => {});
+  queueAdd(b.dataset.add, true).then(ok => { if (!ok) return; buzz(); say(t('r.nextIs', { title: found[b.dataset.add].title })); $('find').value = ''; $('found').innerHTML = ''; }).catch(() => {});
 };
 document.querySelectorAll('[data-m]').forEach(b => { b.onclick = () => cmd({ cmd: 'moment', src: b.dataset.m }, t('r.talking')); });
 $('bPause').onclick = () => cmd({ cmd: 'pause' });

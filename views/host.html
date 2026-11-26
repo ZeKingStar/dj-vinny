@@ -846,9 +846,22 @@ $('addq').oninput = e => {
       <button class="mini" data-add="${esc(s.songId)}" data-top="1">⏫</button><button class="mini" data-add="${esc(s.songId)}">＋</button></div>`).join('');
   }, 350);
 };
+// Ajout à la file avec garde-fou doublon : l'hôte peut forcer après confirmation
+async function queueAdd(songId, top, quiet) {
+  let force = false;
+  for (;;) {
+    const r = await fetch('/api/queue/add', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: JSON.stringify({ songId, top: !!top, force }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) return true;
+    if (r.status === 401) { location.href = '/login.html'; return false; }
+    if (r.status === 409 && j.dup && !quiet && !force && confirm(j.error + ' ' + t('h.dupAsk'))) { force = true; continue; }
+    if (!quiet || !j.dup) toast(j.error || t('c.error'));
+    return false;
+  }
+}
 $('addres').onclick = async e => {
   const b = e.target.closest('button[data-add]'); if (!b) return;
-  await api('/api/queue/add', 'POST', { songId: b.dataset.add, top: !!b.dataset.top }); toast(t('h.added'));
+  if (await queueAdd(b.dataset.add, b.dataset.top)) toast(t('h.added'));
 };
 $('logout').onclick = async () => { await api('/logout'); location.href = '/login.html'; };
 
@@ -1091,7 +1104,7 @@ $('wishList').onclick = async e => {
     } catch { box.innerHTML = '<p class="muted">' + t('h.searchFail') + '</p>'; }
     return;
   }
-  if (b.dataset.wq) { await api('/api/queue/add', 'POST', { songId: b.dataset.wq, top: !!b.dataset.top }); toast(t(b.dataset.top ? 'h.addedFirst' : 'h.addedQueue')); }
+  if (b.dataset.wq) { if (await queueAdd(b.dataset.wq, b.dataset.top)) toast(t(b.dataset.top ? 'h.addedFirst' : 'h.addedQueue')); }
 };
 $('wishAuto').onclick = async () => { // lot : chaque souhait est cherché ; clair = ajouté à la file ; flou = 3 propositions ; introuvable = retiré
   const btn = $('wishAuto'); if (btn.disabled) return; btn.disabled = true;
@@ -1110,7 +1123,7 @@ $('wishAuto').onclick = async () => { // lot : chaque souhait est cherché ; cla
       if (!list.length) { await api('/api/wishes/done', 'POST', { ids: g.ids }); gone.push(g.text); continue; }
       const sure = wishSure(g.text, list);
       if (sure) {
-        try { await api('/api/queue/add', 'POST', { songId: sure.songId }); await api('/api/wishes/done', 'POST', { ids: g.ids }); wishRes.delete(g.text); added++; continue; } catch {}
+        if (await queueAdd(sure.songId, false, true)) { await api('/api/wishes/done', 'POST', { ids: g.ids }); wishRes.delete(g.text); added++; continue; } // doublon : reste à choisir
       }
       setWishRes(g.text, wishHtml(list, 3)); pick++;
     }
