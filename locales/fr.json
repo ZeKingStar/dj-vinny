@@ -578,6 +578,8 @@
  "err.noTitle": "Titre manquant",
  "set.LICENCE_KEY": "Licence DJ Vinny",
  "set.LICENCE_KEY.help": "Clé reçue à l’achat (djv_ suivi de 48 caractères). Active les passes, les souhaits d’avance et la voix incluse.",
+ "set.HOST_PASSWORD": "Mot de passe hôte",
+ "set.HOST_PASSWORD.help": "Pour te connecter au dashboard et à la télécommande. 6 caractères ou plus. Vide : celui du .env.",
  "set.CONVEX_URL": "Adresse du service DJ Vinny",
  "set.CONVEX_URL.help": "Laisse vide : l’adresse du service est déjà connue. Seulement pour un essai sur un autre service.",
  "h.lic.on": "Licence active · {domain} · passes libres : {achat} achetée(s), {abo} d’abonnement",

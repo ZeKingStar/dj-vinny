@@ -578,6 +578,8 @@
  "err.noTitle": "Missing title",
  "set.LICENCE_KEY": "DJ Vinny licence",
  "set.LICENCE_KEY.help": "Key received at purchase (djv_ followed by 48 characters). Enables passes, advance wishes and included voice.",
+ "set.HOST_PASSWORD": "Host password",
+ "set.HOST_PASSWORD.help": "To sign in to the dashboard and the remote. 6 characters or more. Empty: the one from .env.",
  "set.CONVEX_URL": "DJ Vinny service address",
  "set.CONVEX_URL.help": "Leave empty: the service address is already known. Only for testing against another service.",
  "h.lic.on": "Licence active · {domain} · free passes: {achat} purchased, {abo} subscription",

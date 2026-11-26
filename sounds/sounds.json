@@ -6,32 +6,31 @@
     "carillon.mp3"
   ],
   "fanfare": [
-    "fanfare_grand.mp3",
-    "fanfare_cors.mp3"
+    "fanfare_11l.mp3"
   ],
   "riser": [
-    "impact_presentation.mp3"
+    "riser_11l.mp3"
   ],
   "scratch": [
-    "scratch_dj.mp3"
+    "scratch_11l.mp3"
   ],
   "cornet": [
-    "cornet_fete.mp3"
+    "cornet_11l.mp3"
   ],
   "ovation": [
-    "foule_victoire.mp3"
+    "ovation_11l.mp3"
   ],
   "applause": [
     "applaudissements.mp3"
   ],
   "roulement": [
-    "roulement.mp3"
+    "roulement_11l.mp3"
   ],
   "klaxon": [
-    "klaxon_dj.mp3"
+    "klaxon_11l.mp3"
   ],
   "rewind": [
-    "rewind.mp3"
+    "rewind_11l.mp3"
   ],
   "beat_hiphop": [
     "beat_hiphop.mp3"

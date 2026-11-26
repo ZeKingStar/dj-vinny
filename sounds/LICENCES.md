@@ -33,3 +33,6 @@ Source : Mixkit Stock Music (https://mixkit.co/free-stock-music/beats/), « Mixk
 | beat_trap.mp3 | Trap Beat 6 (Arulo) | https://assets.mixkit.co/music/264/264.mp3 |
 | beat_mustard.mp3 | Mustard Beat (Arulo) | https://assets.mixkit.co/music/300/300.mp3 |
 | beat_astro.mp3 | Hip Hop Astrology Beat (Arulo) | https://assets.mixkit.co/music/246/246.mp3 |
+
+## Sons générés (ElevenLabs Sound Effects, abonnement Starter de Pat, 26 nov. 2026)
+cornet_11l, fanfare_11l, klaxon_11l, ovation_11l, rewind_11l, riser_11l, roulement_11l, scratch_11l : remplacent les sons Mixkit/Freesound correspondants dans sounds.json (les anciens fichiers restent sur disque).

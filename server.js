@@ -17,12 +17,14 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   LOCK_MINUTES: ['number:0:240', '0', v => /^\d+$/.test(v) && v <= 240],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
+  HOST_PASSWORD: ['text', '', v => v.length >= 6 && v.length <= 64], // visible ici (page réservée à l'hôte) ; passe avant le .env
 };
 const MARKET = 'CA'; // catalogue Spotify : Canada
 let overrides = {}, MAX_PENDING, PER_PERIOD, LOCK_MIN, SPOTIFY_CLIENT_ID, TTS_LIVE, LICENCE_KEY, CONVEX_URL;
 const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'default');
 const CONVEX_DEFAUT = 'https://shocking-marten-220.convex.site'; // service de Pop & Show : le client colle seulement sa clé de licence
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
+const hostPw = () => settingValue('HOST_PASSWORD');
 function applySettings() {
   const g = settingValue;
   MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2); LOCK_MIN = Math.min(240, Number(g('LOCK_MINUTES')) || 0);
@@ -300,7 +302,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/login', (req, res) => {
   if (limited('login:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
-  if (!safeEq(req.body.password || '', HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
+  if (!safeEq(req.body.password || '', hostPw())) return fail(req, res, 401, 'err.badPassword');
   const secure = req.secure ? '; Secure' : '';
   res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
   res.json({ ok: true });
@@ -308,7 +310,7 @@ app.post('/login', (req, res) => {
 // Déverrouillage du dashboard : revérifie le mot de passe de l'hôte (ne change pas la session)
 app.post('/api/verify', requireHost, (req, res) => {
   if (limited('verify:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
-  if (!safeEq(String(req.body.password || ''), HOST_PASSWORD)) return fail(req, res, 401, 'err.badPassword');
+  if (!safeEq(String(req.body.password || ''), hostPw())) return fail(req, res, 401, 'err.badPassword');
   res.json({ ok: true });
 });
 app.post('/logout', (req, res) => {
