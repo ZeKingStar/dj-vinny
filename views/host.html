@@ -188,9 +188,10 @@
 
   <div id="tab-souhaits" hidden>
     <div class="card" id="c-souhaits"><h2><span data-i18n="h.wishes">Souhaits des invités</span> <span id="wishCount" class="muted"></span></h2>
-      <div class="inline"><select id="wishEv" data-i18n-aria="h.wishEvAria"></select><button class="ghost" id="wishClear" data-i18n="h.wishClear">Vider cette liste</button></div>
+      <div class="inline"><select id="wishEv" data-i18n-aria="h.wishEvAria"></select><button id="wishAuto" data-i18n="h.wAuto">⚡ Tout traiter</button><button class="ghost" id="wishClear" data-i18n="h.wishClear">Vider cette liste</button></div>
       <p class="muted" id="wishNote"></p>
       <div id="wishList"></div>
+      <p class="muted" id="wishGone"></p>
     </div>
     <div class="card" id="c-lien-souhaits" style="text-align:center"><h2 data-i18n="h.wishLinkTitle">Lien et QR des souhaits</h2>
       <img id="wishQr" src="/api/qr.png?to=souhaits" alt="QR" style="width:170px;border-radius:12px;background:#fff"><br>
@@ -263,6 +264,7 @@ const api = async (url, method = 'POST', body) => {
   if (!r.ok) { toast(j.error || t('c.error')); throw new Error(j.error); }
   return j;
 };
+const wishRes = new Map(); // propositions gardées côté navigateur : le rafraîchissement de la liste (30 s) ne les efface pas
 let wishSel = null, evData = null, evEditing = null, autoPhOff = false, failStreak = 0, cfg = {}, state = null, music = null, started = false, advancing = false, endedUid = null, playlists = [], phaseBusy = false;
 
 // ---------- Rendu ----------
@@ -1061,7 +1063,21 @@ async function loadWishes() {
   if (document.activeElement && $('wishList').contains(document.activeElement)) return;
   $('wishList').innerHTML = w.groups.map(x => '<div class="wg" data-ids="' + esc(x.ids.join(',')) + '" data-text="' + esc(x.text) + '"><div class="row"><div class="t"><b>' + esc(x.text) + '</b><span class="muted">'
     + (x.names.length ? esc(x.names.join(', ')) + ' · ' : '') + ago(x.last) + '</span></div><span class="tag">×' + x.count + '</span></div>'
-    + '<div class="inline"><button class="mini" data-wa="search">' + t('h.wSearch') + '</button><button class="mini" data-wa="done">' + t('h.wDone') + '</button></div><div class="wres"></div></div>').join('');
+    + '<div class="inline"><button class="mini" data-wa="search">' + t('h.wSearch') + '</button><button class="mini" data-wa="done">' + t('h.wDone') + '</button></div><div class="wres">' + (wishRes.get(x.text) || '') + '</div></div>').join('');
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const wishHtml = (list, max) => list.slice(0, max).map(s => '<div class="row"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span class="muted">' + esc(s.artist) + '</span></div>'
+  + '<button class="mini" data-wq="' + esc(s.songId) + '" title="' + t('h.addToQueue') + '">' + t('h.plusQueue') + '</button><button class="mini" data-wq="' + esc(s.songId) + '" data-top="1" title="' + t('h.putFirst') + '">⏫</button></div>').join('');
+function setWishRes(text, html) {
+  wishRes.set(text, html);
+  const g = [...$('wishList').querySelectorAll('.wg')].find(x => x.dataset.text === text); if (g) g.querySelector('.wres').innerHTML = html;
+}
+const wNorm = x => String(x).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+function wishSure(text, list) { // « clair » = un seul titre contient tous les mots du souhait (au moins 2 mots)
+  const toks = wNorm(text).split(' ').filter(x => x.length > 1); if (toks.length < 2) return null;
+  const hits = new Map();
+  for (const s of list) { const hay = ' ' + wNorm(s.title + ' ' + s.artist) + ' '; if (toks.every(x => hay.includes(' ' + x + ' '))) hits.set(wNorm(s.title + ' ' + s.artist), s); }
+  return hits.size === 1 ? [...hits.values()][0] : null;
 }
 $('wishList').onclick = async e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -1071,13 +1087,37 @@ $('wishList').onclick = async e => {
     const box = g.querySelector('.wres'); box.innerHTML = '<p class="muted">' + t('h.searchingShort') + '</p>';
     try {
       const r = await fetch('/api/search?q=' + encodeURIComponent(g.dataset.text)), list = await r.json();
-      box.innerHTML = r.ok && list.length ? list.map(s => '<div class="row"><img src="' + esc(s.artwork) + '" alt=""><div class="t"><b>' + esc(s.title) + '</b><span class="muted">' + esc(s.artist) + '</span></div>'
-        + '<button class="mini" data-wq="' + esc(s.songId) + '" title="' + t('h.addToQueue') + '">' + t('h.plusQueue') + '</button><button class="mini" data-wq="' + esc(s.songId) + '" data-top="1" title="' + t('h.putFirst') + '">⏫</button></div>').join('')
-        : '<p class="muted">' + esc(r.ok ? t('h.noSpResult') : list.error || t('c.error')) + '</p>';
+      box.innerHTML = r.ok && list.length ? wishHtml(list, 10) : '<p class="muted">' + esc(r.ok ? t('h.noSpResult') : list.error || t('c.error')) + '</p>';
     } catch { box.innerHTML = '<p class="muted">' + t('h.searchFail') + '</p>'; }
     return;
   }
   if (b.dataset.wq) { await api('/api/queue/add', 'POST', { songId: b.dataset.wq, top: !!b.dataset.top }); toast(t(b.dataset.top ? 'h.addedFirst' : 'h.addedQueue')); }
+};
+$('wishAuto').onclick = async () => { // lot : chaque souhait est cherché ; clair = ajouté à la file ; flou = 3 propositions ; introuvable = retiré
+  const btn = $('wishAuto'); if (btn.disabled) return; btn.disabled = true;
+  const groups = [...$('wishList').querySelectorAll('.wg')].map(g => ({ text: g.dataset.text, ids: g.dataset.ids.split(',') }));
+  const label = btn.textContent; let added = 0, pick = 0, failed = 0; const gone = [];
+  try {
+    for (let i = 0; i < groups.length; i++) {
+      const g = groups[i]; btn.textContent = t('h.wAutoRun', { i: i + 1, n: groups.length });
+      let list = null;
+      for (let k = 0; k < 3 && list === null; k++) {
+        const r = await fetch('/api/search?q=' + encodeURIComponent(g.text));
+        if (r.ok) list = await r.json(); else if (r.status === 429) await sleep(8000); else break;
+        await sleep(1600); // la recherche est limitée à 40 par minute
+      }
+      if (list === null) { failed++; continue; }
+      if (!list.length) { await api('/api/wishes/done', 'POST', { ids: g.ids }); gone.push(g.text); continue; }
+      const sure = wishSure(g.text, list);
+      if (sure) {
+        try { await api('/api/queue/add', 'POST', { songId: sure.songId }); await api('/api/wishes/done', 'POST', { ids: g.ids }); wishRes.delete(g.text); added++; continue; } catch {}
+      }
+      setWishRes(g.text, wishHtml(list, 3)); pick++;
+    }
+  } finally { btn.disabled = false; btn.textContent = label; }
+  $('wishGone').textContent = gone.length ? t('h.wGone', { list: gone.join(' · ') }) : '';
+  toast(t('h.wAutoDone', { a: added, c: pick, r: gone.length }) + (failed ? ' ' + t('h.wAutoFail', { n: failed }) : ''));
+  loadWishes();
 };
 $('wishClear').onclick = async () => { if (confirm(t('h.wishClearQ'))) { await api('/api/wishes/clear', 'POST', { ev: wishSel || undefined }); loadWishes(); } };
 $('wishEv').onchange = () => { wishSel = $('wishEv').value; loadWishes(); loadLinks(); };
