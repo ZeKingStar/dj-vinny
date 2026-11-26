@@ -17,6 +17,7 @@ const SETTING_DEFS = { // clé : [type, défaut, validation] ; étiquette et aid
   LOCK_MINUTES: ['number:0:240', '0', v => /^\d+$/.test(v) && v <= 240],
   LICENCE_KEY: ['secret', '', v => /^djv_[a-f0-9]{48}$/.test(v)],
   CONVEX_URL: ['text', '', v => v === '' || /^https?:\/\/[^\s]+$/.test(v)],
+  REMOTE_PIN: ['text', '', v => /^\d{4,8}$/.test(v)], // code simple de la télécommande : ouvre seulement /remote
   HOST_PASSWORD: ['text', '', v => v.length >= 6 && v.length <= 64], // visible ici (page réservée à l'hôte) ; passe avant le .env
 };
 const MARKET = 'CA'; // catalogue Spotify : Canada
@@ -25,6 +26,7 @@ const settingSource = k => (overrides[k] ? 'app' : process.env[k] ? 'env' : 'def
 const CONVEX_DEFAUT = 'https://shocking-marten-220.convex.site'; // service de Pop & Show : le client colle seulement sa clé de licence
 const settingValue = k => overrides[k] || process.env[k] || SETTING_DEFS[k][1];
 const hostPw = () => settingValue('HOST_PASSWORD');
+const remotePin = () => settingValue('REMOTE_PIN');
 function applySettings() {
   const g = settingValue;
   MAX_PENDING = Number(g('MAX_PENDING_PER_GUEST')) || 3; PER_PERIOD = Math.max(1, Number(g('REQ_PER_PERIOD')) || 2); LOCK_MIN = Math.min(240, Number(g('LOCK_MINUTES')) || 0);
@@ -265,7 +267,16 @@ const isHost = req => {
   const m = /(?:^|; )host=([^;]+)/.exec(req.headers.cookie || '');
   return !!m && safeEq(m[1], sign());
 };
-const requireHost = (req, res, next) => (isHost(req) ? next() : fail(req, res, 401, 'err.unauthorized'));
+// Télécommande : un code simple (REMOTE_PIN) donne un cookie limité aux routes de /remote ; le mot de passe hôte ouvre tout
+const signRemote = () => crypto.createHmac('sha256', secret).update('remote-session:' + (state.sessionRev || 0) + ':' + remotePin()).digest('hex');
+const isRemote = req => {
+  const m = /(?:^|; )remote=([^;]+)/.exec(req.headers.cookie || '');
+  return !!remotePin() && !!m && safeEq(m[1], signRemote());
+};
+const canRemote = req => isHost(req) || isRemote(req);
+const REMOTE_ROUTES = [['GET', /^\/api\/remote\/status$/], ['POST', /^\/api\/(remote|rate|linedance|queue\/add|queue\/reorder|gain|fx|settings)$/], ['DELETE', /^\/api\/queue\/[\w-]+$/]];
+const remoteAllowed = req => REMOTE_ROUTES.some(([m, re]) => m === req.method && re.test(req.path));
+const requireHost = (req, res, next) => (isHost(req) || (remoteAllowed(req) && isRemote(req)) ? next() : fail(req, res, 401, 'err.unauthorized'));
 
 // Limiteur simple en mémoire
 const hits = new Map();
@@ -302,10 +313,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.post('/login', (req, res) => {
   if (limited('login:' + req.ip, 10, 15 * 60e3)) return fail(req, res, 429, 'err.tooManyTries');
-  if (!safeEq(req.body.password || '', hostPw())) return fail(req, res, 401, 'err.badPassword');
-  const secure = req.secure ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
-  res.json({ ok: true });
+  const pw = req.body.password || '', secure = req.secure ? '; Secure' : '';
+  if (safeEq(pw, hostPw())) {
+    res.setHeader('Set-Cookie', `host=${sign()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
+    return res.json({ ok: true, role: 'host' });
+  }
+  if (remotePin() && !limited('login-remote', 30, 15 * 60e3) && safeEq(pw, remotePin())) {
+    res.setHeader('Set-Cookie', `remote=${signRemote()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure}`);
+    return res.json({ ok: true, role: 'remote' });
+  }
+  fail(req, res, 401, 'err.badPassword');
 });
 // Déverrouillage du dashboard : revérifie le mot de passe de l'hôte (ne change pas la session)
 app.post('/api/verify', requireHost, (req, res) => {
@@ -314,7 +331,7 @@ app.post('/api/verify', requireHost, (req, res) => {
   res.json({ ok: true });
 });
 app.post('/logout', (req, res) => {
-  res.setHeader('Set-Cookie', 'host=; HttpOnly; Path=/; Max-Age=0');
+  res.setHeader('Set-Cookie', ['host=; HttpOnly; Path=/; Max-Age=0', 'remote=; HttpOnly; Path=/; Max-Age=0']);
   res.json({ ok: true });
 });
 // Déconnexion de tous les appareils : change la révision de session (les cookies déjà émis cessent de valoir), y compris celui-ci
@@ -322,7 +339,7 @@ app.post('/logout/all', requireHost, (req, res) => {
   state.sessionRev = (state.sessionRev || 0) + 1; save();
   console.log('Déconnexion de tous les appareils.');
   for (const r of dashClients) { try { r.end(); } catch {} } dashClients.clear();
-  res.setHeader('Set-Cookie', 'host=; HttpOnly; Path=/; Max-Age=0');
+  res.setHeader('Set-Cookie', ['host=; HttpOnly; Path=/; Max-Age=0', 'remote=; HttpOnly; Path=/; Max-Age=0']);
   res.json({ ok: true });
 });
 app.get('/host', (req, res) =>
@@ -334,7 +351,7 @@ const isActiveToken = t => { const e = eventByToken(t); return safeEq(String(t |
 const eventOk = req => isActiveToken(req.get('x-event') || '');
 const loopback = req => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.ip);
 // État et flux temps réel : l'hôte, ce PC (écran animé), ou un invité avec le code de la soirée (en-tête ou ?e=)
-const viewerOk = req => isHost(req) || loopback(req) || eventOk(req) || isActiveToken(req.query.e);
+const viewerOk = req => canRemote(req) || loopback(req) || eventOk(req) || isActiveToken(req.query.e);
 const needEvent = req => { if (!eventOk(req)) throw E('err.badCode', 403); };
 app.get('/api/state', (req, res) => {
   if (viewerOk(req)) return res.json(publicState());
@@ -357,13 +374,13 @@ app.get('/api/events', (req, res) => {
 app.get('/api/qr.png', requireHost, wrap(async (req, res) => { // le QR contient le code de la soirée : réservé à l'hôte
   res.set('Cache-Control', 'no-store');
   const base = guestBase(req);
-  const url = req.query.to === 'remote' ? base + '/remote' // la télécommande n'a pas de code : elle demande le mot de passe hôte
+  const url = req.query.to === 'remote' ? base + '/remote' // la télécommande n'a pas de code de soirée : elle demande son code simple ou le mot de passe hôte
     : base + (req.query.to === 'souhaits' ? '/souhaits.html' : '/') + '?e=' + tokenFor(req);
   res.type('png').send(await QRCode.toBuffer(url, { width: 600, margin: 2 }));
 }));
 const searchCache = new Map();
 app.get('/api/search', wrap(async (req, res) => {
-  if (!isHost(req)) { // les invités : code de la soirée + demandes ouvertes ; l'hôte (dashboard, télécommande) passe
+  if (!canRemote(req)) { // les invités : code de la soirée + demandes ouvertes ; l'hôte (dashboard, télécommande) passe
     needEvent(req); needLive();
     if (!state.requestsOpen) throw E('err.closed', 403);
   }
@@ -809,7 +826,7 @@ app.get('/api/links', requireHost, (req, res) => { // liens à partager (contien
   res.json({ guests: `${b}/?e=${t}`, wishes: `${b}/souhaits.html?e=${t}`, remote: `${b}/remote`, public: !/^https?:\/\/(10\.|192\.168\.|127\.|localhost)/.test(b) });
 });
 app.get('/remote', (req, res) =>
-  isHost(req) ? res.sendFile(path.join(__dirname, 'views', 'remote.html')) : res.redirect('/login.html?next=/remote'));
+  canRemote(req) ? res.sendFile(path.join(__dirname, 'views', 'remote.html')) : res.redirect('/login.html?next=/remote'));
 const REMOTE_JINGLES = ['fanfare', 'carillon', 'riser', 'ding', 'scratch', 'cornet', 'ovation', 'applause', 'roulement', 'klaxon', 'rewind'];
 let dashStatus = { t: 0, started: false, ready: false, active: false }; // état rapporté par le dashboard ouvert sur l'ordinateur
 app.post('/api/remote/ack', requireHost, (req, res) => {

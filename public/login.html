@@ -19,6 +19,6 @@ setLang(hostLang());
 document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
   const r = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-lang': LANG }, body: JSON.stringify({ password: document.getElementById('pw').value }) });
-  if (r.ok) { const n = new URLSearchParams(location.search).get('next'); location.href = n === '/remote' ? '/remote' : '/host'; } else document.getElementById('err').textContent = (await r.json()).error;
+  if (r.ok) { const n = new URLSearchParams(location.search).get('next'), j = await r.json(); location.href = j.role === 'remote' || n === '/remote' ? '/remote' : '/host'; } else document.getElementById('err').textContent = (await r.json()).error;
 };
 </script></body></html>
