@@ -79,7 +79,7 @@ document.getElementById('results').onclick = async e => {
   b.disabled = true;
   const ask = again => fetch('/api/request', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-event': ev, 'x-lang': LANG }, body: JSON.stringify({ songId: b.dataset.id, guestId, name: document.getElementById('name').value, again }) });
   let r = await ask(false), j = await r.json();
-  if (r.status === 409 && j.played && confirm(j.error)) { r = await ask(true); j = await r.json(); } // déjà jouée ce soir : l'invité confirme, elle passe dans 5 titres
+  if (r.status === 409 && j.played && await askBox(j.error, t('c.askYes'), t('c.askNo'))) { r = await ask(true); j = await r.json(); } // déjà jouée ce soir : l'invité confirme, elle passe dans 5 titres
   if (r.ok) { confetti(); toast(t('g.req.added')); b.textContent = t('g.req.addedBtn'); b.classList.add('done'); } else { toast(j.error); b.disabled = false; }
 };
 

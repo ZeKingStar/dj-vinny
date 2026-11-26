@@ -99,7 +99,7 @@ async function queueAdd(songId, top) { // doublon (en cours, dans la file, joué
     const j = await r.json().catch(() => ({}));
     if (r.ok) return true;
     if (r.status === 401) { location.href = '/login.html?next=/remote'; return false; }
-    if (r.status === 409 && j.dup && !force && confirm(j.error + ' ' + t('h.dupAsk'))) { force = true; continue; }
+    if (r.status === 409 && j.dup && !force && await askBox(j.error, t('c.dupAdd'), t('c.cancel'))) { force = true; continue; }
     say(j.error || t('c.error')); return false;
   }
 }

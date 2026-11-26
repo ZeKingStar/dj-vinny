@@ -30,3 +30,25 @@ function hostLang() {
   return /^en/i.test(navigator.language || '') ? 'en' : 'fr';
 }
 const locale = () => (LANG === 'en' ? 'en-CA' : 'fr-CA'); // dates et heures
+
+// Boîte de confirmation aux couleurs de l'app (remplace confirm()) : askBox(message, libelléOui, libelléNon) → Promise<boolean>
+function askBox(msg, yes, no) {
+  if (!askBox.css) {
+    askBox.css = document.createElement('style');
+    askBox.css.textContent = '.askbox{background:var(--card);color:var(--text);border:2px solid var(--line);border-radius:24px;padding:24px 22px 20px;width:min(380px,92vw);text-align:center;font:16px/1.4 Figtree,system-ui,sans-serif}'
+      + '.askbox::backdrop{background:rgba(10,6,30,.75)}.askbox .ico{font-size:40px;line-height:1;margin-bottom:10px}.askbox p{margin:0 0 18px;font-size:17px}'
+      + '.askbox .btns{display:flex;flex-direction:column;gap:10px}.askbox button{width:100%}';
+    document.head.appendChild(askBox.css);
+  }
+  return new Promise(done => {
+    const d = document.createElement('dialog'); d.className = 'askbox';
+    d.innerHTML = '<div class="ico">🔁</div><p></p><div class="btns"><button class="y"></button><button class="ghost n"></button></div>';
+    d.querySelector('p').textContent = msg; d.querySelector('.y').textContent = yes; d.querySelector('.n').textContent = no;
+    let res = false;
+    d.querySelector('.y').onclick = () => { res = true; d.close(); };
+    d.querySelector('.n').onclick = () => d.close();
+    d.addEventListener('click', e => { if (e.target === d) d.close(); });
+    d.addEventListener('close', () => { d.remove(); done(res); });
+    document.body.appendChild(d); d.showModal();
+  });
+}

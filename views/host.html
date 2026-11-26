@@ -854,7 +854,7 @@ async function queueAdd(songId, top, quiet) {
     const j = await r.json().catch(() => ({}));
     if (r.ok) return true;
     if (r.status === 401) { location.href = '/login.html'; return false; }
-    if (r.status === 409 && j.dup && !quiet && !force && confirm(j.error + ' ' + t('h.dupAsk'))) { force = true; continue; }
+    if (r.status === 409 && j.dup && !quiet && !force && await askBox(j.error, t('c.dupAdd'), t('c.cancel'))) { force = true; continue; }
     if (!quiet || !j.dup) toast(j.error || t('c.error'));
     return false;
   }
