@@ -221,8 +221,21 @@ function enqueue(song) { // après les demandes, avant les titres auto
   const i = state.queue.findIndex(s => s.source === 'auto');
   i < 0 ? state.queue.push(song) : state.queue.splice(i, 0, song);
 }
+// Demandes d'invités : ordre d'arrivée, mais jamais deux de la même personne de suite. Une demande bloquée cède sa place au premier titre suivant
+// (autre demande ou titre auto) ; les titres de l'hôte et de la danse en ligne ne sont pas touchés. Idempotent : refait à chaque commit().
+function spaceRequests() {
+  const rest = state.queue.slice(), out = [];
+  let last = state.nowPlaying && state.nowPlaying.source === 'guest' ? state.nowPlaying.by : null;
+  while (rest.length) {
+    let i = rest.findIndex(s => !(s.source === 'guest' && s.by === last));
+    if (i < 0) i = 0; // il ne reste que des demandes de la même personne : on ne bloque pas la musique
+    const [s] = rest.splice(i, 1); out.push(s);
+    last = s.source === 'guest' ? s.by : null;
+  }
+  state.queue = out;
+}
 function commit() {
-  fillAuto();
+  fillAuto(); spaceRequests();
   const ae = activeEvent(); if (ae) ae.phases = clonePhases(state.phases); // le programme de l'événement actif suit les périodes en direct
   save();
   const msg = `data: ${JSON.stringify(publicState())}\n\n`;
