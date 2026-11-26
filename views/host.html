@@ -452,6 +452,7 @@ async function playNext(why) {
   advancing = true; advStart = Date.now();
   try {
     const peek = state.queue[0], announced = peek && (peek.source === 'guest' || peek.source === 'line'); // une annonce remplit déjà le creux
+    music.lat0 = why === 'end' && !announced && !state.transSound ? Date.now() : 0; // mesure du délai de relance (voir enchaînement anticipé)
     if (state.transSound && !announced && why !== 'start' && why !== 'phase') playTransition();
     if (why === 'skip' && state.fade > 0 && music.isPlaying) await fadeTo(0, state.fade);
     if (why === 'phase' && music.isPlaying) await fadeTo(0, 4); // le souper s'éteint doucement avant l'ouverture de la piste
@@ -567,7 +568,7 @@ async function initSpotify() {
   const player = new Spotify.Player({ name: 'DJ Vinny', volume: 0.7, getOAuthToken: cb => SP.access().then(cb) });
   player.activateElement(); // doit être appelé pendant le clic (autoplay)
   const m = music = {
-    player, deviceId: null, playing: false, vol: 0.7, uri: null, pos: 0, dur: 0, at: 0, lastPos: 0,
+    player, deviceId: null, playing: false, vol: 0.7, lead: 1.2, lat0: 0, curId: null, uri: null, pos: 0, dur: 0, at: 0, lastPos: 0,
     get isPlaying() { return this.playing; },
     get volume() { return this.vol; }, set volume(v) { this.vol = v; player.setVolume(v); },
     baseVol: 0.7, resetVolume() { this.volume = this.baseVol; }, seek(ms) { return player.seek(ms); },
@@ -600,6 +601,10 @@ async function initSpotify() {
     // fin de morceau : en pause à 0:00 alors que le titre est déjà dans l'historique (ou était à moins de 3 s de la fin)
     const nowN = state && state.nowPlaying;
     if (!s.paused) m.sawPlaying = true;
+    m.curId = cur.id;
+    if (m.lat0 && !s.paused && nowN && cur.id === nowN.songId && s.position < 8000) { // le titre suivant joue : on retient le délai pour mieux anticiper la prochaine fois
+      const lat = (Date.now() - m.lat0) / 1000; m.lat0 = 0; m.lead = Math.min(2.5, Math.max(0.4, m.lead * 0.6 + lat * 0.4)); jlog('enchainement', 'délai ' + lat.toFixed(2) + ' s, anticipation ' + m.lead.toFixed(2) + ' s');
+    }
     if (s.paused && s.position === 0 && m.sawPlaying && nowN && cur.id === nowN.songId && Date.now() - (m.startAt || 0) > 5000) handleEnded(); // fin naturelle du titre en cours
     else if (s.paused && s.position === 0 && (prevHas || (m.lastPos > 0 && m.dur - m.lastPos < 3000))) handleEnded();
     m.lastPos = s.position;
@@ -615,6 +620,9 @@ async function initSpotify() {
     // fin anticipée : repère mémorisé du titre, sinon les N dernières secondes (toutes périodes)
     if (!m.dur || !m.playing) return;
     const dur = m.dur / 1000, trim = state.trims[n.songId] || {};
+    // enchaînement anticipé : on lance la suite un peu avant la vraie fin (délai mesuré : serveur + Spotify) pour supprimer le trou
+    const nx = state.queue[0];
+    if (m.curId === n.songId && pos > 10 && dur - pos <= m.lead && dur - pos > -1 && (state.queue.length || state.pool.count) && !state.transSound && !(nx && (nx.source === 'guest' || nx.source === 'line'))) { handleEnded(); return; }
     const cutAt = trim.end > 0 ? trim.end : (state.endCut > 0 ? dur - state.endCut : null); // le réglage vaut pour toutes les périodes, souper compris
     if (!cutAt || cutAt >= dur - 0.5) return;
     if (pos >= cutAt) { m.volume = 0; handleEnded(); }
